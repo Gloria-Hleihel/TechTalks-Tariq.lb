@@ -1,14 +1,13 @@
-# RoadScan
-AI-powered road damage detection and mapping for Lebanon
-# RoadScan 🛣️
+# Tariq.lb 🛣️
 
 A smart road-condition app that detects damage in road photos, scores its severity, and maps it automatically — turning scattered complaints about Lebanon's roads into a single, visual, shareable record.
 
+
 ## 📖 Project Description
 
-RoadScan is a full-stack web application built to solve a visibility problem: there's no central, up-to-date picture of *where* Lebanon's roads are damaged or *how bad* it is. Reports are scattered, anecdotal, and impossible to act on.
+Tariq.lb is a full-stack web application built to solve a visibility problem: there's no central, up-to-date picture of *where* Lebanon's roads are damaged or *how bad* it is. Reports are scattered, anecdotal, and impossible to act on.
 
-Instead of relying on word-of-mouth and manual surveys, RoadScan provides:
+Instead of relying on word-of-mouth and manual surveys, Tariq.lb provides:
 
 - **One-Photo Reporting** — Upload a road photo and let the model do the rest
 - **Automatic Damage Detection** — A computer vision model finds and classifies potholes, cracks, and surface wear
@@ -17,7 +16,7 @@ Instead of relying on word-of-mouth and manual surveys, RoadScan provides:
 - **Interactive Damage Map** — Every report becomes a color-coded pin on a live map
 - **Persistent Record** — All uploads and detections are stored, so the map builds up over time
 
-### Why RoadScan?
+### Why Tariq.lb?
 
 ✅ **Effortless to Use** — If you can take a photo, you can file a report
 ✅ **No Manual Classification** — The model identifies and scores damage for you
@@ -73,7 +72,7 @@ Instead of relying on word-of-mouth and manual surveys, RoadScan provides:
 ### Step 1: Clone the Project
 ```bash
 git clone <repository-url>
-cd roadscan
+cd Tariq.lb
 ```
 
 ### Step 2: Set Up the Backend
@@ -125,7 +124,7 @@ You should see:
 ## 📁 Project Structure
 
 ```
-roadscan/
+Tariq.lb/
 │
 ├── backend/                          # Flask server + ML
 │   ├── app.py                        # Main app & route definitions
@@ -138,7 +137,7 @@ roadscan/
 │   ├── utils/
 │   │   └── exif_gps.py               # Reads GPS from photo EXIF
 │   ├── instance/
-│   │   └── roadscan.db               # SQLite database (auto-created)
+│   │   └── tariq.db                  # SQLite database (auto-created)
 │   ├── uploads/                      # Stored uploaded photos
 │   └── requirements.txt
 │
@@ -155,7 +154,7 @@ roadscan/
 
 ---
 
-## 🎯 How to Use RoadScan
+## 🎯 How to Use Tariq.lb
 
 ### 1. Upload a Photo
 - Open the upload page
@@ -271,7 +270,7 @@ GET    /api/stats                  # Totals by damage type / severity
 ## 🔐 Notes & Good Practice
 
 - The detection model runs **locally** — no images are sent to any external API
-- `instance/roadscan.db` and the `uploads/` folder hold user data; don't commit them to Git
+- `instance/tariq.db` and the `uploads/` folder hold user data; don't commit them to Git
 - Add `venv/`, `instance/`, `uploads/`, and `__pycache__/` to your `.gitignore`
 - Use HTTPS if you ever deploy this publicly
 
@@ -292,6 +291,7 @@ For the project demo, running locally is perfectly fine — no hosting needed. I
 - Keep the database and uploaded photos out of version control
 - Set any secrets via the host's environment variables, not in code
 
+---
 
 ## 📄 License
 
