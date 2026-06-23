@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tariq.lb — Road Condition Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand__mark">TL</div>
+      <div class="brand__name">Tariq<span>.lb</span></div>
+    </div>
+    <div class="topbar__stats">
+      <div><b id="stat-total">0</b>reports logged</div>
+      <div><b id="stat-critical">0</b>critical</div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <div id="map"></div>
+
+    <div class="map-pin-banner" id="pinBanner">
+      <span>Tap the map to place this report&rsquo;s location</span>
+      <button id="cancelPinMode">Cancel</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel__tabs">
+        <div class="panel__tab active" data-view="upload">Report Damage</div>
+        <div class="panel__tab" data-view="list">All Reports</div>
+      </div>
+
+      <div class="panel__body">
+
+        <!-- ============ UPLOAD VIEW ============ -->
+        <div class="panel__view active" id="view-upload">
+          <h1 class="upload-title">Spot a damaged road?</h1>
+          <p class="upload-sub">Upload a photo. We&rsquo;ll detect the damage type and severity, then pin it on the map for everyone to see.</p>
+
+          <form id="uploadForm">
+            <label class="dropzone" id="dropzone">
+              <span class="dropzone__icon">📷</span>
+              <span class="dropzone__text"><b>Choose a photo</b> or drag it here<br>JPG or PNG</span>
+              <input type="file" id="fileInput" name="image" accept="image/jpeg,image/png" />
+            </label>
+
+            <div class="preview-wrap" id="previewWrap">
+              <img id="previewImg" src="" alt="Selected road photo preview" />
+            </div>
+
+            <div class="manual-pin-hint" id="manualPinHint">
+              No GPS data found in this photo. After submitting, tap a location on the map to place this report.
+            </div>
+
+            <button type="submit" class="btn btn--primary" id="submitBtn" disabled>Submit Report</button>
+
+            <div class="status-line" id="statusLine"></div>
+          </form>
+
+          <div class="result-card" id="resultCard">
+            <div class="result-card__row">
+              <span class="result-card__label">Damage Type</span>
+              <span id="result-type"></span>
+            </div>
+            <div class="result-card__row">
+              <span class="result-card__label">Severity</span>
+              <span id="result-severity"></span>
+            </div>
+            <div class="result-card__row">
+              <span class="result-card__label">Confidence</span>
+              <span id="result-confidence"></span>
+            </div>
+            <div class="result-card__row">
+              <span class="result-card__label">Location Source</span>
+              <span id="result-source"></span>
+            </div>
+            <button class="btn btn--ghost" id="reportAnotherBtn" style="margin-top:14px;">Report Another</button>
+          </div>
+        </div>
+
+        <!-- ============ LIST VIEW ============ -->
+        <div class="panel__view" id="view-list">
+          <h1 class="upload-title">All Reports</h1>
+          <p class="upload-sub">Every damage report logged so far, newest first.</p>
+          <div id="reportsList">
+            <div class="list-empty">Loading reports&hellip;</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.TARIQ_CONFIG = {
+      defaultLat: {{ default_lat }},
+      defaultLon: {{ default_lon }}
+    };
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+</body>
+</html>

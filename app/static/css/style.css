@@ -1,0 +1,564 @@
+/* ============================================================
+   Tariq.lb -- design tokens
+   Inspired by road signage, asphalt, and the cedar-red of the
+   Lebanese flag. Severity pins borrow the stencil-cut language
+   of highway markers.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Palette */
+  --asphalt-900: #1c1d20;
+  --asphalt-700: #2a2c30;
+  --asphalt-500: #45484e;
+  --cedar-cream: #f4efe6;
+  --cedar-cream-dim: #e8e1d3;
+  --cedar-red: #a8333f;
+  --cedar-red-dark: #832630;
+
+  --severity-low: #5b9279;
+  --severity-medium: #e8a23d;
+  --severity-high: #d8722f;
+  --severity-critical: #d64545;
+
+  --ink: #1c1d20;
+  --ink-soft: #5a5d63;
+  --border-hairline: rgba(28, 29, 32, 0.12);
+  --white: #ffffff;
+
+  /* Type */
+  --font-display: 'Oswald', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Layout */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --shadow-card: 0 2px 10px rgba(28, 29, 32, 0.08);
+  --shadow-lift: 0 8px 28px rgba(28, 29, 32, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--cedar-cream);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ============================================================
+   Top bar
+   ============================================================ */
+
+.topbar {
+  height: 64px;
+  background: var(--asphalt-900);
+  color: var(--cedar-cream);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: relative;
+  z-index: 20;
+  box-shadow: var(--shadow-card);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand__mark {
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--cedar-red);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--cedar-red);
+  transform: rotate(-2deg);
+}
+
+.brand__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.brand__name span { color: var(--cedar-red); }
+
+.topbar__stats {
+  display: flex;
+  gap: 28px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--cedar-cream-dim);
+}
+
+.topbar__stats b {
+  color: var(--cedar-cream);
+  font-size: 15px;
+  margin-right: 5px;
+}
+
+/* ============================================================
+   Layout shell -- dispatch console: map + side panel
+   ============================================================ */
+
+.shell {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  height: calc(100vh - 64px);
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+  background: var(--asphalt-700);
+}
+
+.panel {
+  background: var(--cedar-cream);
+  border-left: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-hairline);
+  flex-shrink: 0;
+}
+
+.panel__tab {
+  flex: 1;
+  padding: 16px 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.panel__tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--cedar-red);
+}
+
+.panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.panel__view { display: none; }
+.panel__view.active { display: block; }
+
+/* ============================================================
+   Upload form
+   ============================================================ */
+
+.upload-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.upload-sub {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.dropzone {
+  border: 2px dashed var(--asphalt-500);
+  border-radius: var(--radius-md);
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--white);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--cedar-red);
+  background: #fdf8f5;
+}
+
+.dropzone input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dropzone__icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  display: block;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.dropzone__text {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  pointer-events: none;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.dropzone__text b { color: var(--cedar-red); }
+
+.preview-wrap {
+  margin-top: 14px;
+  display: none;
+}
+
+.preview-wrap.active { display: block; }
+
+.preview-wrap img {
+  width: 100%;
+  border-radius: var(--radius-md);
+  display: block;
+  box-shadow: var(--shadow-card);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 13px 20px;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  margin-top: 14px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn--primary {
+  background: var(--cedar-red);
+  color: var(--cedar-cream);
+}
+
+.btn--primary:hover { background: var(--cedar-red-dark); }
+
+.btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--asphalt-500);
+  color: var(--ink);
+}
+
+.btn--ghost:hover { border-color: var(--ink); }
+
+.status-line {
+  margin-top: 12px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  display: none;
+}
+
+.status-line.active { display: block; }
+
+.status-line.error { color: var(--cedar-red); }
+.status-line.success { color: var(--severity-low); }
+
+.manual-pin-hint {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #fdf3e9;
+  border: 1px solid var(--severity-medium);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  display: none;
+}
+
+.manual-pin-hint.active { display: block; }
+
+/* Result card after a successful detection */
+.result-card {
+  margin-top: 18px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  display: none;
+}
+
+.result-card.active { display: block; }
+
+.result-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: 13.5px;
+}
+
+.result-card__row:last-child { border-bottom: none; }
+
+.result-card__label {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  color: var(--white);
+}
+
+.badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge--low { background: var(--severity-low); }
+.badge--medium { background: var(--severity-medium); }
+.badge--high { background: var(--severity-high); }
+.badge--critical { background: var(--severity-critical); }
+
+/* ============================================================
+   Reports list
+   ============================================================ */
+
+.list-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
+
+.report-card {
+  display: flex;
+  gap: 12px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  border-left: 4px solid transparent;
+}
+
+.report-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lift);
+}
+
+.report-card--low { border-left-color: var(--severity-low); }
+.report-card--medium { border-left-color: var(--severity-medium); }
+.report-card--high { border-left-color: var(--severity-high); }
+.report-card--critical { border-left-color: var(--severity-critical); }
+
+.report-card__thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--asphalt-700);
+}
+
+.report-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.report-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.report-card__type {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.report-card__meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   Leaflet pin styling
+   ============================================================ */
+
+.tariq-pin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid var(--cedar-cream);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+.tariq-pin--low { background: var(--severity-low); }
+.tariq-pin--medium { background: var(--severity-medium); }
+.tariq-pin--high { background: var(--severity-high); }
+.tariq-pin--critical { background: var(--severity-critical); }
+
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius-md);
+}
+
+.popup-card {
+  font-family: var(--font-body);
+  min-width: 180px;
+}
+
+.popup-card img {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.popup-card__type {
+  font-family: var(--font-display);
+  font-size: 14px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.popup-card__link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--cedar-red);
+  text-decoration: underline;
+}
+
+/* Manual pin placement cursor state */
+.map-pin-mode #map {
+  cursor: crosshair;
+}
+
+.map-pin-banner {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--asphalt-900);
+  color: var(--cedar-cream);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lift);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-pin-banner.active { display: flex; }
+
+.map-pin-banner button {
+  background: var(--cedar-red);
+  color: var(--cedar-cream);
+  padding: 6px 12px;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 45vh 1fr;
+  }
+  .panel {
+    border-left: none;
+    border-top: 1px solid var(--border-hairline);
+  }
+  .topbar__stats { display: none; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* Focus visibility */
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--cedar-red);
+  outline-offset: 2px;
+}

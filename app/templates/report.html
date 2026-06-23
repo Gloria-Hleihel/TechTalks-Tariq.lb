@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report #{{ report.id }} — Tariq.lb</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .detail-shell {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--cedar-red);
+      margin-bottom: 20px;
+    }
+    .detail-image {
+      width: 100%;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      display: block;
+      margin-bottom: 22px;
+      max-height: 420px;
+      object-fit: cover;
+    }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin: 0;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .detail-field {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      padding: 14px 16px;
+    }
+    .detail-field__label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+    .detail-field__value {
+      font-family: var(--font-display);
+      font-size: 17px;
+    }
+    #detailMap {
+      height: 280px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+    }
+    .map-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--ink-soft);
+      margin: 22px 0 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand__mark">TL</div>
+      <div class="brand__name">Tariq<span>.lb</span></div>
+    </div>
+  </header>
+
+  <div class="detail-shell">
+    <a href="/" class="back-link">&larr; Back to map</a>
+
+    <img class="detail-image" src="{{ report.image_url }}" alt="Photo of reported road damage" />
+
+    <div class="detail-header">
+      <h1 class="detail-title">{{ report.damage_type }}</h1>
+      <span class="badge badge--{{ report.severity_level|lower }}">{{ report.severity_level }}</span>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-field__label">Report ID</div>
+        <div class="detail-field__value">#{{ report.id }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field__label">Logged</div>
+        <div class="detail-field__value">{{ report.created_at }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field__label">Confidence Score</div>
+        <div class="detail-field__value">{{ (report.confidence_score * 100)|round|int }}%</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field__label">Severity Score</div>
+        <div class="detail-field__value">{{ (report.severity_score * 100)|round|int }}%</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field__label">Coordinates</div>
+        <div class="detail-field__value">{{ "%.5f"|format(report.latitude) }}, {{ "%.5f"|format(report.longitude) }}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field__label">Location Source</div>
+        <div class="detail-field__value">{{ "Photo GPS" if report.location_source == "exif" else "Manual Pin" }}</div>
+      </div>
+    </div>
+
+    <div class="map-label">Location</div>
+    <div id="detailMap"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('detailMap', { zoomControl: true }).setView(
+      [{{ report.latitude }}, {{ report.longitude }}], 15
+    );
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const severityColors = {
+      Low: '#5b9279',
+      Medium: '#e8a23d',
+      High: '#d8722f',
+      Critical: '#d64545'
+    };
+    const color = severityColors['{{ report.severity_level }}'] || '#a8333f';
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="tariq-pin" style="background:${color};"></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 26]
+    });
+
+    L.marker([{{ report.latitude }}, {{ report.longitude }}], { icon }).addTo(map);
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+app/tariq.db
+app/static/uploads/*
+!app/static/uploads/.gitkeep
