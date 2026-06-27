@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+
+.env
+
+models/*.pt
+test_images/
+static/uploads/
