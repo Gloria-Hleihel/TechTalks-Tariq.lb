@@ -1,9 +1,11 @@
 venv/
 __pycache__/
 *.pyc
-
+*.db
 .env
 
+# YOLO / model files
 models/*.pt
-test_images/
+
+# Uploaded/generated files
 static/uploads/
