@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 
 from app.detection.detector import detect_damage
 from app.detection.severity import calculate_severity
+from models import db, Detection
 
 
 detection_bp = Blueprint("detection", __name__)
@@ -43,9 +44,28 @@ def detect_api():
             "message": detection_result.get("message", "Detection completed.")
         }
 
+        if report_id is not None:
+            detection = Detection(
+                report_id=report_id,
+                damage_type=response["damage_type"],
+                confidence=response["confidence"],
+                severity_score=response["severity_score"],
+                severity_label=response["severity_label"],
+                annotated_image_path=response["annotated_image_path"]
+            )
+
+            db.session.add(detection)
+            db.session.commit()
+
+            response["detection_id"] = detection.id
+            response["saved_to_db"] = True
+        else:
+            response["saved_to_db"] = False
+
         return jsonify(response), 200
 
     except Exception as error:
+        db.session.rollback()
         return jsonify({
             "error": "Detection failed.",
             "reason": str(error)
