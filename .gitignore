@@ -9,3 +9,4 @@ models/*.pt
 
 # Uploaded/generated files
 static/uploads/
+test_images/
