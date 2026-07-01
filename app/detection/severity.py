@@ -3,13 +3,22 @@ DAMAGE_BASE_SCORES = {
     "transverse crack": 55,
     "alligator crack": 75,
     "potholes": 90,
+    "pothole": 90,
+    "crack": 55,
+    "surface_wear": 40,
+    "surface wear": 40,
+    "none": 0,
+    "None": 0,
 }
 
 
-def severity_score(damage_type: str, confidence: float) -> dict:
+def calculate_severity(damage_type: str, confidence: float) -> dict:
     """
     Calculates a severity score and label based on damage type and confidence.
     """
+
+    if not damage_type:
+        damage_type = "none"
 
     normalized_damage_type = damage_type.lower().strip()
 
@@ -17,7 +26,9 @@ def severity_score(damage_type: str, confidence: float) -> dict:
 
     score = int(base_score * confidence)
 
-    if score < 25:
+    if score == 0:
+        label = "None"
+    elif score < 25:
         label = "Low"
     elif score < 50:
         label = "Medium"
@@ -30,3 +41,10 @@ def severity_score(damage_type: str, confidence: float) -> dict:
         "severity_score": score,
         "severity_label": label
     }
+
+
+def severity_score(damage_type: str, confidence: float) -> dict:
+    """
+    Backward-compatible wrapper for older code that still calls severity_score().
+    """
+    return calculate_severity(damage_type, confidence)

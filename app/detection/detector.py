@@ -53,12 +53,13 @@ def detect_damage(image_path: str, confidence_threshold: float = 0.3) -> dict:
 
     if best_detection is None:
         return {
-            "damage_type": "No damage detected",
+            "damage_type": "None",
             "confidence": 0.0,
             "bounding_boxes": [],
             "severity_score": 0,
             "severity_label": "None",
             "annotated_image_path": None,
+            "message": "No damage detected."
         }
 
     severity = severity_score(
@@ -75,6 +76,7 @@ def detect_damage(image_path: str, confidence_threshold: float = 0.3) -> dict:
         "severity_score": severity["severity_score"],
         "severity_label": severity["severity_label"],
         "annotated_image_path": annotated_image_path,
+        "message": "Detection completed."
     }
 
 
