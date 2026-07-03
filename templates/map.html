@@ -3,142 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tariq.lb — Map POC</title>
-
-  <!-- Leaflet CSS (loaded from CDN; your browser fetches this) -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-
+  <title>Tariq.lb — Road Damage Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <style>
-    :root {
-      --bar-bg: #14213d;
-      --bar-fg: #ffffff;
-      --card-bg: #ffffff;
-      --card-border: #e2e6ee;
-      --text: #1b1f2a;
-      --muted: #5a6473;
-    }
-
     * { box-sizing: border-box; }
-
     html, body { height: 100%; margin: 0; }
-
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      background: var(--bar-bg);
-      color: var(--bar-fg);
-      padding: 12px 18px;
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-    }
-    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
-    header span { font-size: 13px; color: #aeb6c6; }
-
+    body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; }
+    header { background: #14213d; color: #fff; padding: 12px 18px; }
+    header h1 { font-size: 18px; margin: 0; }
     #map { flex: 1 1 auto; width: 100%; }
-
-    /* Legend control */
-    .legend {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 13px;
-      line-height: 1.6;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    }
-    .legend h2 {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--muted);
-      margin: 0 0 6px;
-      font-weight: 600;
-    }
+    .legend { background: #fff; border: 1px solid #e2e6ee; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.6; }
+    .legend h2 { font-size: 12px; text-transform: uppercase; color: #5a6473; margin: 0 0 6px; }
     .legend .row { display: flex; align-items: center; gap: 8px; }
-    .legend .dot {
-      width: 12px; height: 12px; border-radius: 50%;
-      border: 1.5px solid rgba(0,0,0,0.25);
-      flex: 0 0 auto;
-    }
+    .legend .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.25); }
+    .pin-popup { font-size: 13px; line-height: 1.5; }
+    .pin-popup .sev { font-weight: 700; }
+    .pin-popup .meta { color: #5a6473; }
+    .pin-popup a { color: #1c6fd6; font-weight: 600; text-decoration: none; }
+    .pin-popup a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Tariq.lb</h1>
-    <span>Road Damage Map — POC</span>
-  </header>
-
+  <header><h1>Tariq.lb — Road Damage Map</h1></header>
   <div id="map"></div>
-
-  <!-- Leaflet JS (loaded from CDN; your browser fetches this) -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
-    // ----- Task 3: severity color constants + getMarkerColor() -----
-    // Single source of truth for severity -> color. Reused everywhere
-    // (markers, legend) so colors never drift apart.
-    const SEVERITY_COLORS = {
-      Low:      "#2e9e44", // green
-      Medium:   "#f2c037", // yellow
-      High:     "#f57c1f", // orange
-      Critical: "#e03131", // red
-    };
-    const DEFAULT_COLOR = "#7a7a7a"; // fallback for unknown labels
+    const SEVERITY_COLORS = { Low: "#2e9e44", Medium: "#f2c037", High: "#f57c1f", Critical: "#e03131" };
+    function getMarkerColor(s) { return SEVERITY_COLORS[s] || "#7a7a7a"; }
 
-    function getMarkerColor(severityLabel) {
-      return SEVERITY_COLORS[severityLabel] || DEFAULT_COLOR;
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
     }
 
-    // ----- Map setup: centered on Lebanon -----
     const map = L.map("map").setView([33.85, 35.86], 9);
-
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19, attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
-    // ----- Task 1: three hardcoded pins, different colors -----
-    // In task 2 this array gets replaced by data passed from Flask.
-    const reports = [
-      { lat: 33.8938, lng: 35.5018, severity: "Critical", note: "Deep pothole, Beirut" },
-      { lat: 33.5630, lng: 35.3760, severity: "High",     note: "Cracked surface, Saida" },
-      { lat: 34.4367, lng: 35.8497, severity: "Medium",   note: "Surface wear, Tripoli" },
-    ];
+    setTimeout(function () { map.invalidateSize(); }, 200);
 
-    reports.forEach((r) => {
-      L.circleMarker([r.lat, r.lng], {
-        radius: 9,
-        color: "#ffffff",                 // thin white outline
-        weight: 2,
-        fillColor: getMarkerColor(r.severity),
-        fillOpacity: 0.95,
+    fetch("/api/reports")
+      .then((response) => response.json())
+      .then((reports) => {
+        reports.forEach((r) => {
+          const popupHtml =
+            '<div class="pin-popup">' +
+              '<div class="sev" style="color:' + getMarkerColor(r.severity_label) + '">' + r.severity_label + '</div>' +
+              '<div>' + r.damage_type + '</div>' +
+              '<div class="meta">' + formatDate(r.date) + '</div>' +
+              '<div style="margin-top:6px"><a href="/reports/' + r.id + '">View Details &rarr;</a></div>' +
+            '</div>';
+          L.circleMarker([r.lat, r.lng], {
+            radius: 9, color: "#ffffff", weight: 2,
+            fillColor: getMarkerColor(r.severity_label), fillOpacity: 0.95,
+          }).addTo(map).bindPopup(popupHtml);
+        });
       })
-        .addTo(map)
-        .bindPopup(`<strong>${r.severity}</strong><br>${r.note}`);
-    });
+      .catch((error) => console.error("Could not load reports:", error));
 
-    // ----- Legend (driven by the same SEVERITY_COLORS constant) -----
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = function () {
       const div = L.DomUtil.create("div", "legend");
       let html = "<h2>Severity</h2>";
       for (const [label, color] of Object.entries(SEVERITY_COLORS)) {
-        html += `<div class="row"><span class="dot" style="background:${color}"></span>${label}</div>`;
+        html += '<div class="row"><span class="dot" style="background:' + color + '"></span>' + label + '</div>';
       }
       div.innerHTML = html;
       return div;
