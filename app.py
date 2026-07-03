@@ -1,6 +1,5 @@
 """
 app.py — Tariq.lb Flask application (Gloria's Week 2 dev version)
-Connects to Zahraa's models + seed data, and adds the map API endpoints.
 """
 from flask import Flask, jsonify, request, render_template, abort
 
@@ -12,10 +11,6 @@ app.config.from_object(config)
 db.init_app(app)
 
 
-# ---------------------------------------------------------------------------
-# Task 1: GET /api/reports  — all reports as JSON (for the map pins).
-# Supports optional ?severity= and ?damage_type= filters.
-# ---------------------------------------------------------------------------
 @app.route("/api/reports")
 def api_reports():
     severity = request.args.get("severity")
@@ -44,19 +39,12 @@ def api_reports():
     return jsonify(results)
 
 
-# ---------------------------------------------------------------------------
-# Task 4: GET /api/reports/<id>  — full details of ONE report as JSON,
-# including the joined detection data (confidence, severity_score,
-# annotated_image_path). Used by the report detail page (Task 5).
-# ---------------------------------------------------------------------------
 @app.route("/api/reports/<int:report_id>")
 def api_report_detail(report_id):
-    # Look up the report; if it doesn't exist, return a 404.
     report = Report.query.get(report_id)
     if report is None:
         abort(404, description="Report not found")
 
-    # Each report has one detection (report.detections[0]).
     detection = report.detections[0] if report.detections else None
 
     data = {
@@ -67,7 +55,6 @@ def api_report_detail(report_id):
         "location_source": report.location_source,
         "status": report.status,
         "date": report.created_at.isoformat(),
-        # Detection fields (None-safe in case a report has no detection yet)
         "damage_type": detection.damage_type if detection else None,
         "confidence": detection.confidence if detection else None,
         "severity_score": detection.severity_score if detection else None,
@@ -78,9 +65,16 @@ def api_report_detail(report_id):
     return jsonify(data)
 
 
-# ---------------------------------------------------------------------------
-# Page routes
-# ---------------------------------------------------------------------------
+@app.route("/reports/<int:report_id>")
+def report_detail_page(report_id):
+    report = Report.query.get(report_id)
+    if report is None:
+        abort(404, description="Report not found")
+
+    detection = report.detections[0] if report.detections else None
+    return render_template("report_detail.html", report=report, detection=detection)
+
+
 @app.route("/")
 def home():
     return "Tariq.lb API running"

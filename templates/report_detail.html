@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tariq.lb — Report #{{ report.id }}</title>
+  <style>
+    :root {
+      --sev-Low: #2e9e44; --sev-Medium: #f2c037;
+      --sev-High: #f57c1f; --sev-Critical: #e03131;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1b1f2a; background: #f4f6fa; }
+    header { background: #14213d; color: #fff; padding: 12px 18px; display: flex; align-items: center; gap: 14px; }
+    header h1 { font-size: 18px; margin: 0; }
+    header a { color: #aeb6c6; text-decoration: none; font-size: 14px; }
+    header a:hover { text-decoration: underline; }
+    .wrap { max-width: 900px; margin: 24px auto; padding: 0 18px; }
+    .card { background: #fff; border: 1px solid #e2e6ee; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+    .title-row h2 { margin: 0; font-size: 22px; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; color: #fff; font-size: 13px; font-weight: 700; }
+    .images { display: flex; gap: 16px; flex-wrap: wrap; }
+    .images figure { margin: 0; flex: 1 1 300px; }
+    .images figcaption { font-size: 12px; color: #5a6473; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+    .images img { width: 100%; border-radius: 8px; border: 1px solid #e2e6ee; background: #eef1f6; min-height: 180px; object-fit: cover; }
+    .img-missing { width: 100%; min-height: 180px; border-radius: 8px; border: 1px dashed #c3cad6; background: #eef1f6; color: #8a93a3; font-size: 13px; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .fact .label { font-size: 12px; color: #5a6473; text-transform: uppercase; }
+    .fact .value { font-size: 16px; font-weight: 600; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tariq.lb</h1>
+    <a href="/map">&larr; Back to map</a>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="title-row">
+        <h2>{{ detection.damage_type if detection else "Unknown damage" }}</h2>
+        {% if detection %}
+          <span class="badge" style="background: var(--sev-{{ detection.severity_label }}, #7a7a7a)">
+            {{ detection.severity_label }}
+          </span>
+        {% endif %}
+      </div>
+      <div style="color:#5a6473; font-size:14px;">Report #{{ report.id }}</div>
+    </div>
+
+    <div class="card">
+      <div class="images">
+        <figure>
+          <figcaption>Original photo</figcaption>
+          {% if report.image_path %}
+            <img src="/{{ report.image_path }}" alt="Original"
+                 onerror="this.outerHTML='<div class=&quot;img-missing&quot;>Image not available (seed data)</div>'">
+          {% else %}
+            <div class="img-missing">No image</div>
+          {% endif %}
+        </figure>
+        <figure>
+          <figcaption>Annotated (AI detection)</figcaption>
+          {% if detection and detection.annotated_image_path %}
+            <img src="/{{ detection.annotated_image_path }}" alt="Annotated"
+                 onerror="this.outerHTML='<div class=&quot;img-missing&quot;>Image not available (seed data)</div>'">
+          {% else %}
+            <div class="img-missing">No annotated image</div>
+          {% endif %}
+        </figure>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="facts">
+        <div class="fact"><div class="label">Damage type</div><div class="value">{{ detection.damage_type if detection else "—" }}</div></div>
+        <div class="fact"><div class="label">Severity</div><div class="value">{{ detection.severity_label if detection else "—" }}{% if detection %} ({{ detection.severity_score }}/100){% endif %}</div></div>
+        <div class="fact"><div class="label">Confidence</div><div class="value">{% if detection %}{{ (detection.confidence * 100) | round(1) }}%{% else %}—{% endif %}</div></div>
+        <div class="fact"><div class="label">GPS coordinates</div><div class="value">{{ report.lat }}, {{ report.lng }}</div></div>
+        <div class="fact"><div class="label">Location source</div><div class="value">{{ report.location_source }}</div></div>
+        <div class="fact"><div class="label">Status</div><div class="value">{{ report.status }}</div></div>
+        <div class="fact"><div class="label">Date</div><div class="value">{{ report.created_at.strftime("%b %d, %Y") }}</div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
