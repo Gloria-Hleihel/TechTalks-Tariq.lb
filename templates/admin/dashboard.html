@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard — Tariq.lb</title>
+</head>
+<body>
+    <h1>Tariq.lb Admin Dashboard</h1>
+    <a href="/admin/logout">Logout</a>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Location</th>
+                <th>Damage Type</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in reports %}
+            <tr>
+                <td>{{ report.id }}</td>
+                <td>{{ report.lat }}, {{ report.lng }}</td>
+                <td>
+                    {% if report.detections %}
+                        {{ report.detections[0].damage_type }}
+                    {% else %}
+                        No detection yet
+                    {% endif %}
+                </td>
+                <td>
+                    {% if report.detections %}
+                        {{ report.detections[0].severity_label }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td>{{ report.status }}</td>
+                <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
