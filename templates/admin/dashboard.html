@@ -38,7 +38,16 @@
                         —
                     {% endif %}
                 </td>
-                <td>{{ report.status }}</td>
+                <td>
+    <form method="POST" action="/admin/update/{{ report.id }}">
+        <select name="status">
+            <option {% if report.status == 'pending' %}selected{% endif %}>pending</option>
+            <option {% if report.status == 'reviewed' %}selected{% endif %}>reviewed</option>
+            <option {% if report.status == 'resolved' %}selected{% endif %}>resolved</option>
+        </select>
+        <button type="submit">Update</button>
+    </form>
+</td>
                 <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
             </tr>
             {% endfor %}
