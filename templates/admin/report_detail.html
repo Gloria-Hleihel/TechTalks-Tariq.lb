@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report #{{ report.id }} — Tariq.lb</title>
+</head>
+<body>
+    <h1>🛣️ Report #{{ report.id }} Details</h1>
+    <a href="/admin/dashboard">← Back to Dashboard</a>
+
+    <h2>📍 Location</h2>
+    <p>Latitude: {{ report.lat }}</p>
+    <p>Longitude: {{ report.lng }}</p>
+    <p>Source: {{ report.location_source }}</p>
+
+    <h2>📅 Submission Info</h2>
+    <p>Date: {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    <p>Status: {{ report.status }}</p>
+
+    <h2>🔍 AI Detection Result</h2>
+    {% if detection %}
+        <p>Damage Type: {{ detection.damage_type }}</p>
+        <p>Severity: {{ detection.severity_label }}</p>
+        <p>Severity Score: {{ detection.severity_score }}/100</p>
+        <p>Confidence: {{ (detection.confidence * 100) | round(1) }}%</p>
+    {% else %}
+        <p>No detection result yet.</p>
+    {% endif %}
+
+    <h2>🖼️ Images</h2>
+    <h3>Original Image</h3>
+    <img src="/{{ report.image_path }}" alt="Original" width="400">
+
+    {% if detection and detection.annotated_image_path %}
+        <h3>Annotated Image</h3>
+        <img src="/{{ detection.annotated_image_path }}" alt="Annotated" width="400">
+    {% endif %}
+</body>
+</html>

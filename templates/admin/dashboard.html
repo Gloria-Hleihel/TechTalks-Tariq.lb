@@ -17,6 +17,7 @@
                 <th>Severity</th>
                 <th>Status</th>
                 <th>Date</th>
+                <th>Details</th>
                 <th>Delete</th>
             </tr>
         </thead>
@@ -50,6 +51,9 @@
                     </form>
                 </td>
                 <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <a href="/admin/reports/{{ report.id }}">View Details</a>
+                </td>
                 <td>
                     <form method="POST" action="/admin/delete/{{ report.id }}" 
                           onsubmit="return confirm('Are you sure you want to delete report #{{ report.id }}? This cannot be undone.')">
