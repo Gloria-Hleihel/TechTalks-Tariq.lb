@@ -11,6 +11,30 @@
     body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; }
     header { background: #14213d; color: #fff; padding: 12px 18px; }
     header h1 { font-size: 18px; margin: 0; }
+
+    /* ── Filter bar ─────────────────────────────────────── */
+    .filters {
+      background: #fff; border-bottom: 1px solid #e2e6ee;
+      padding: 10px 18px; display: flex; flex-wrap: wrap;
+      align-items: center; gap: 16px; font-size: 13px;
+    }
+    .filters .group { display: flex; align-items: center; gap: 8px; }
+    .filters label { font-weight: 600; color: #5a6473; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+    .filters select {
+      font: inherit; padding: 6px 10px; border: 1px solid #cdd4e0;
+      border-radius: 6px; background: #fff; color: #14213d; cursor: pointer;
+    }
+    .sev-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sev-btn {
+      font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+      border: 1px solid #cdd4e0; border-radius: 999px; background: #fff;
+      color: #14213d; display: flex; align-items: center; gap: 6px;
+    }
+    .sev-btn .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .sev-btn:hover { border-color: #14213d; }
+    .sev-btn.active { background: #14213d; border-color: #14213d; color: #fff; }
+    .report-count { margin-left: auto; color: #5a6473; }
+
     #map { flex: 1 1 auto; width: 100%; }
     .legend { background: #fff; border: 1px solid #e2e6ee; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.6; }
     .legend h2 { font-size: 12px; text-transform: uppercase; color: #5a6473; margin: 0 0 6px; }
@@ -25,12 +49,39 @@
 </head>
 <body>
   <header><h1>Tariq.lb — Road Damage Map</h1></header>
+
+  <!-- ── Filter controls ─────────────────────────────────── -->
+  <div class="filters">
+    <div class="group">
+      <label for="damage-type">Damage type</label>
+      <select id="damage-type">
+        <option value="">All</option>
+        <option value="Pothole">Pothole</option>
+        <option value="Road Crack">Road Crack</option>
+        <option value="Surface Wear">Surface Wear</option>
+        <option value="Other">Other</option>
+        <option value="None">No damage detected</option>
+      </select>
+    </div>
+    <div class="group">
+      <label>Severity</label>
+      <div class="sev-buttons" id="sev-buttons">
+        <button class="sev-btn active" data-severity="">All</button>
+        <button class="sev-btn" data-severity="Low"><span class="dot" style="background:#2e9e44"></span>Low</button>
+        <button class="sev-btn" data-severity="Medium"><span class="dot" style="background:#f2c037"></span>Medium</button>
+        <button class="sev-btn" data-severity="High"><span class="dot" style="background:#f57c1f"></span>High</button>
+        <button class="sev-btn" data-severity="Critical"><span class="dot" style="background:#e03131"></span>Critical</button>
+      </div>
+    </div>
+    <span class="report-count" id="report-count"></span>
+  </div>
+
   <div id="map"></div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     const SEVERITY_COLORS = { Low: "#2e9e44", Medium: "#f2c037", High: "#f57c1f", Critical: "#e03131" };
     function getMarkerColor(s) { return SEVERITY_COLORS[s] || "#7a7a7a"; }
-
     function formatDate(iso) {
       const d = new Date(iso);
       return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -40,27 +91,59 @@
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
-
     setTimeout(function () { map.invalidateSize(); }, 200);
 
-    fetch("/api/reports")
-      .then((response) => response.json())
-      .then((reports) => {
-        reports.forEach((r) => {
-          const popupHtml =
-            '<div class="pin-popup">' +
-              '<div class="sev" style="color:' + getMarkerColor(r.severity_label) + '">' + r.severity_label + '</div>' +
-              '<div>' + r.damage_type + '</div>' +
-              '<div class="meta">' + formatDate(r.date) + '</div>' +
-              '<div style="margin-top:6px"><a href="/reports/' + r.id + '">View Details &rarr;</a></div>' +
-            '</div>';
-          L.circleMarker([r.lat, r.lng], {
-            radius: 9, color: "#ffffff", weight: 2,
-            fillColor: getMarkerColor(r.severity_label), fillOpacity: 0.95,
-          }).addTo(map).bindPopup(popupHtml);
-        });
-      })
-      .catch((error) => console.error("Could not load reports:", error));
+    // ── Filter state + marker layer ─────────────────────────
+    const filters = { severity: "", damage_type: "" };
+    const markersLayer = L.layerGroup().addTo(map);
+
+    function loadReports() {
+      const params = new URLSearchParams();
+      if (filters.severity) params.set("severity", filters.severity);
+      if (filters.damage_type) params.set("damage_type", filters.damage_type);
+      const qs = params.toString();
+      const url = "/api/reports" + (qs ? "?" + qs : "");
+
+      fetch(url)
+        .then((response) => response.json())
+        .then((reports) => {
+          markersLayer.clearLayers();
+          reports.forEach((r) => {
+            const popupHtml =
+              '<div class="pin-popup">' +
+                '<div class="sev" style="color:' + getMarkerColor(r.severity_label) + '">' + r.severity_label + '</div>' +
+                '<div>' + r.damage_type + '</div>' +
+                '<div class="meta">' + formatDate(r.date) + '</div>' +
+                '<div style="margin-top:6px"><a href="/reports/' + r.id + '">View Details &rarr;</a></div>' +
+              '</div>';
+            L.circleMarker([r.lat, r.lng], {
+              radius: 9, color: "#ffffff", weight: 2,
+              fillColor: getMarkerColor(r.severity_label), fillOpacity: 0.95,
+            }).addTo(markersLayer).bindPopup(popupHtml);
+          });
+          const n = reports.length;
+          document.getElementById("report-count").textContent =
+            n === 0 ? "No reports match these filters" : n + (n === 1 ? " report shown" : " reports shown");
+        })
+        .catch((error) => console.error("Could not load reports:", error));
+    }
+
+    // ── Filter controls wiring ──────────────────────────────
+    document.getElementById("damage-type").addEventListener("change", function () {
+      filters.damage_type = this.value;
+      loadReports();
+    });
+
+    document.getElementById("sev-buttons").addEventListener("click", function (e) {
+      const btn = e.target.closest(".sev-btn");
+      if (!btn) return;
+      document.querySelectorAll(".sev-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      filters.severity = btn.dataset.severity;
+      loadReports();
+    });
+
+    loadReports(); // initial load, no filters
 
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = function () {
