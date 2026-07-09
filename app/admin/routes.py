@@ -39,7 +39,34 @@ def logout():
 @login_required
 def dashboard():
     reports = Report.query.all()
-    return render_template("admin/dashboard.html", reports=reports)
+
+    # Analytics
+    total_reports = Report.query.count()
+
+    severity_counts = {
+        "Low": Detection.query.filter_by(severity_label="Low").count(),
+        "Medium": Detection.query.filter_by(severity_label="Medium").count(),
+        "High": Detection.query.filter_by(severity_label="High").count(),
+        "Critical": Detection.query.filter_by(severity_label="Critical").count(),
+    }
+
+    damage_counts = {
+        "Pothole": Detection.query.filter_by(damage_type="Pothole").count(),
+        "Road Crack": Detection.query.filter_by(damage_type="Road Crack").count(),
+        "Surface Wear": Detection.query.filter_by(damage_type="Surface Wear").count(),
+        "Other": Detection.query.filter_by(damage_type="Other").count(),
+    }
+
+    latest_report = Report.query.order_by(Report.created_at.desc()).first()
+
+    return render_template(
+        "admin/dashboard.html",
+        reports=reports,
+        total_reports=total_reports,
+        severity_counts=severity_counts,
+        damage_counts=damage_counts,
+        latest_report=latest_report,
+    )
 
 
 @admin_bp.route("/api/admin/reports", methods=["GET"])

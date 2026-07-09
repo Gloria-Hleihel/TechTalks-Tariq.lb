@@ -7,6 +7,25 @@
 <body>
     <h1>Tariq.lb Admin Dashboard</h1>
     <a href="/admin/logout">Logout</a>
+    <hr>
+    <h2>📊 Analytics Summary</h2>
+
+    <p>📋 Total Reports: <strong>{{ total_reports }}</strong></p>
+    <p>🕒 Latest Report: <strong>{{ latest_report.created_at.strftime('%Y-%m-%d') if latest_report else 'None' }}</strong></p>
+
+    <h3>By Severity</h3>
+    <p>🟢 Low: <strong>{{ severity_counts.Low }}</strong></p>
+    <p>🟡 Medium: <strong>{{ severity_counts.Medium }}</strong></p>
+    <p>🟠 High: <strong>{{ severity_counts.High }}</strong></p>
+    <p>🔴 Critical: <strong>{{ severity_counts.Critical }}</strong></p>
+
+    <h3>By Damage Type</h3>
+    <p>🕳️ Pothole: <strong>{{ damage_counts.Pothole }}</strong></p>
+    <p>🛣️ Road Crack: <strong>{{ damage_counts['Road Crack'] }}</strong></p>
+    <p>🔄 Surface Wear: <strong>{{ damage_counts['Surface Wear'] }}</strong></p>
+    <p>❓ Other: <strong>{{ damage_counts.Other }}</strong></p>
+
+    <hr>
 
     <table border="1">
         <thead>
