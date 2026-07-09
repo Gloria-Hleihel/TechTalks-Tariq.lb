@@ -17,6 +17,7 @@
                 <th>Severity</th>
                 <th>Status</th>
                 <th>Date</th>
+                <th>Delete</th>
             </tr>
         </thead>
         <tbody>
@@ -39,16 +40,22 @@
                     {% endif %}
                 </td>
                 <td>
-    <form method="POST" action="/admin/update/{{ report.id }}">
-        <select name="status">
-            <option {% if report.status == 'pending' %}selected{% endif %}>pending</option>
-            <option {% if report.status == 'reviewed' %}selected{% endif %}>reviewed</option>
-            <option {% if report.status == 'resolved' %}selected{% endif %}>resolved</option>
-        </select>
-        <button type="submit">Update</button>
-    </form>
-</td>
+                    <form method="POST" action="/admin/update/{{ report.id }}">
+                        <select name="status">
+                            <option {% if report.status == 'pending' %}selected{% endif %}>pending</option>
+                            <option {% if report.status == 'reviewed' %}selected{% endif %}>reviewed</option>
+                            <option {% if report.status == 'resolved' %}selected{% endif %}>resolved</option>
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
                 <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <form method="POST" action="/admin/delete/{{ report.id }}" 
+                          onsubmit="return confirm('Are you sure you want to delete report #{{ report.id }}? This cannot be undone.')">
+                        <button type="submit" style="color: red;">Delete</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

@@ -3,22 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Login — Tariq.lb</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        .login-card h1 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+        .login-card p {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper span {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button[type="submit"]:hover {
+            background-color: #1a252f;
+        }
+        .error {
+            color: red;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Tariq.lb Admin Login</h1>
+    <div class="login-card">
+        <h1>🛣️ Tariq.lb</h1>
+        <p>Admin Panel — Sign in to continue</p>
 
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
 
-    <form method="POST" action="/admin/login">
-        <label>Username</label>
-        <input type="text" name="username" required>
-        
-        <label>Password</label>
-        <input type="password" name="password" required>
-        
-        <button type="submit">Login</button>
-    </form>
+        <form method="POST" action="/admin/login">
+            <input type="text" name="username" placeholder="Username" required>
+            
+            <div class="password-wrapper">
+                <input type="password" name="password" id="password" placeholder="Password" required>
+                <span onclick="togglePassword()">👁️</span>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <script>
+    function togglePassword() {
+        const input = document.getElementById("password");
+        if (input.type === "password") {
+            input.type = "text";
+        } else {
+            input.type = "password";
+        }
+    }
+    </script>
 </body>
 </html>
