@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.detection.detector import (
@@ -12,7 +12,11 @@ from app.detection.detector import (
     UnsupportedImageTypeError,
     detect_damage,
 )
-from models import db, Detection, Report
+from app.detection.jobs import (
+    create_detection_job,
+    get_detection_job,
+)
+from models import Detection, Report, db
 
 
 detection_bp = Blueprint("detection", __name__)
@@ -24,7 +28,7 @@ def error_response(
     code: str,
 ):
     """
-    Return errors using one consistent JSON structure.
+    Return API errors using one consistent JSON structure.
     """
     return jsonify({
         "success": False,
@@ -35,23 +39,18 @@ def error_response(
     }), status_code
 
 
-@detection_bp.route("/api/detect", methods=["POST"])
-def detect_api():
+def parse_detection_request():
     """
-    Run road-damage detection on an existing image path.
+    Validate and extract image_path and report_id from a JSON request.
 
-    Expected JSON:
-    {
-        "image_path": "test_images/road1.png",
-        "report_id": 1
-    }
-
-    report_id is optional. When supplied, the detection result is saved
-    to the database and linked to the matching report.
+    Returns:
+        A tuple containing:
+            - image_path
+            - report_id
+            - error response, or None when validation succeeds
     """
-
     if not request.is_json:
-        return error_response(
+        return None, None, error_response(
             "Content-Type must be application/json.",
             415,
             "UNSUPPORTED_MEDIA_TYPE",
@@ -60,7 +59,7 @@ def detect_api():
     data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
-        return error_response(
+        return None, None, error_response(
             "Request body must contain valid JSON.",
             400,
             "INVALID_JSON",
@@ -70,7 +69,7 @@ def detect_api():
     report_id = data.get("report_id")
 
     if not isinstance(image_path, str) or not image_path.strip():
-        return error_response(
+        return None, None, error_response(
             "image_path is required and must be a non-empty string.",
             400,
             "MISSING_IMAGE_PATH",
@@ -80,7 +79,7 @@ def detect_api():
 
     if report_id is not None:
         if isinstance(report_id, bool):
-            return error_response(
+            return None, None, error_response(
                 "report_id must be an integer.",
                 400,
                 "INVALID_REPORT_ID",
@@ -89,18 +88,42 @@ def detect_api():
         try:
             report_id = int(report_id)
         except (TypeError, ValueError):
-            return error_response(
+            return None, None, error_response(
                 "report_id must be an integer.",
                 400,
                 "INVALID_REPORT_ID",
             )
 
         if report_id <= 0:
-            return error_response(
+            return None, None, error_response(
                 "report_id must be a positive integer.",
                 400,
                 "INVALID_REPORT_ID",
             )
+
+    return image_path, report_id, None
+
+
+@detection_bp.route("/api/detect", methods=["POST"])
+def detect_api():
+    """
+    Run road-damage detection synchronously.
+
+    Expected JSON:
+    {
+        "image_path": "test_images/road1.png",
+        "report_id": 1
+    }
+
+    report_id is optional. When included, the result is saved to the
+    database and linked to that report.
+    """
+    image_path, report_id, validation_error = (
+        parse_detection_request()
+    )
+
+    if validation_error is not None:
+        return validation_error
 
     try:
         detection_result = detect_damage(image_path)
@@ -239,3 +262,69 @@ def detect_api():
             )
 
     return jsonify(response), 200
+
+
+@detection_bp.route("/api/detect/jobs", methods=["POST"])
+def create_detect_job_api():
+    """
+    Create an asynchronous road-damage detection job.
+
+    The request returns immediately with HTTP 202 and a job ID.
+    The frontend can then poll the status URL until the job finishes.
+
+    Expected JSON:
+    {
+        "image_path": "test_images/road1.png",
+        "report_id": 1
+    }
+    """
+    image_path, report_id, validation_error = (
+        parse_detection_request()
+    )
+
+    if validation_error is not None:
+        return validation_error
+
+    app = current_app._get_current_object()
+
+    job = create_detection_job(
+        app=app,
+        image_path=image_path,
+        report_id=report_id,
+    )
+
+    return jsonify({
+        "success": True,
+        "message": "Detection job accepted.",
+        "job": job,
+        "status_url": f"/api/detect/jobs/{job['job_id']}",
+    }), 202
+
+
+@detection_bp.route(
+    "/api/detect/jobs/<string:job_id>",
+    methods=["GET"],
+)
+def get_detect_job_api(job_id: str):
+    """
+    Return the current state and result of a detection job.
+
+    Possible statuses:
+        queued
+        processing
+        completed
+        failed
+    """
+    job = get_detection_job(job_id)
+
+    if job is None:
+        return error_response(
+            "The requested detection job does not exist.",
+            404,
+            "JOB_NOT_FOUND",
+        )
+
+    return jsonify({
+        "success": True,
+        "job": job,
+    }), 200
