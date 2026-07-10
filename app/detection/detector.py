@@ -6,24 +6,128 @@ from ultralytics import YOLO
 from app.detection.severity import severity_score
 
 
-MODEL_PATH = "models/road_damage.pt"
-ANNOTATED_DIR = Path("static/uploads/annotated")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MODEL_PATH = PROJECT_ROOT / "models" / "road_damage.pt"
+ANNOTATED_DIR = PROJECT_ROOT / "static" / "uploads" / "annotated"
+
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 ANNOTATED_DIR.mkdir(parents=True, exist_ok=True)
 
-model = YOLO(MODEL_PATH)
+_model = None
 
 
-def detect_damage(image_path: str, confidence_threshold: float = 0.3) -> dict:
+class DetectionError(Exception):
+    """Base exception for detection-related failures."""
+
+
+class InvalidImagePathError(DetectionError):
+    """Raised when the supplied image path is invalid."""
+
+
+class ImageNotFoundError(DetectionError):
+    """Raised when the requested image does not exist."""
+
+
+class UnsupportedImageTypeError(DetectionError):
+    """Raised when the image extension is unsupported."""
+
+
+class InvalidImageError(DetectionError):
+    """Raised when OpenCV cannot read the image."""
+
+
+class ModelNotFoundError(DetectionError):
+    """Raised when the YOLO weights file cannot be found."""
+
+
+class ModelLoadError(DetectionError):
+    """Raised when the YOLO model cannot be loaded."""
+
+
+class InferenceError(DetectionError):
+    """Raised when YOLO inference fails."""
+
+
+def get_model():
     """
-    Runs YOLOv8 road damage detection on an image.
-
-    Returns:
-        A dictionary containing damage type, confidence, bounding boxes,
-        severity score, severity label, and annotated image path.
+    Load the YOLO model once and reuse it.
     """
+    global _model
 
-    results = model(image_path, conf=confidence_threshold)
+    if _model is not None:
+        return _model
+
+    if not MODEL_PATH.is_file():
+        raise ModelNotFoundError(
+            f"Model weights were not found at: {MODEL_PATH}"
+        )
+
+    try:
+        _model = YOLO(str(MODEL_PATH))
+    except Exception as error:
+        raise ModelLoadError(
+            "The detection model could not be loaded."
+        ) from error
+
+    return _model
+
+
+def validate_image(image_path: str) -> Path:
+    """
+    Validate the image path and check that the image is readable.
+    """
+    if not isinstance(image_path, str) or not image_path.strip():
+        raise InvalidImagePathError(
+            "A valid image path is required."
+        )
+
+    path = Path(image_path)
+
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+
+    path = path.resolve()
+
+    if not path.is_file():
+        raise ImageNotFoundError(
+            "The image file does not exist."
+        )
+
+    if path.suffix.lower() not in ALLOWED_IMAGE_EXTENSIONS:
+        raise UnsupportedImageTypeError(
+            "Only JPG, JPEG, and PNG images are supported."
+        )
+
+    image = cv2.imread(str(path))
+
+    if image is None:
+        raise InvalidImageError(
+            "The file is not a valid or readable image."
+        )
+
+    return path
+
+
+def detect_damage(
+    image_path: str,
+    confidence_threshold: float = 0.3
+) -> dict:
+    """
+    Run YOLOv8 road-damage detection on one image.
+    """
+    validated_path = validate_image(image_path)
+    model = get_model()
+
+    try:
+        results = model(
+            str(validated_path),
+            conf=confidence_threshold
+        )
+    except Exception as error:
+        raise InferenceError(
+            "The model failed while analyzing the image."
+        ) from error
 
     detections = []
     best_detection = None
@@ -43,12 +147,18 @@ def detect_damage(image_path: str, confidence_threshold: float = 0.3) -> dict:
             detection = {
                 "damage_type": damage_type,
                 "confidence": round(confidence, 4),
-                "bounding_box": [round(value, 2) for value in bbox],
+                "bounding_box": [
+                    round(value, 2) for value in bbox
+                ],
             }
 
             detections.append(detection)
 
-            if best_detection is None or detection["confidence"] > best_detection["confidence"]:
+            if (
+                best_detection is None
+                or detection["confidence"]
+                > best_detection["confidence"]
+            ):
                 best_detection = detection
 
     if best_detection is None:
@@ -67,7 +177,10 @@ def detect_damage(image_path: str, confidence_threshold: float = 0.3) -> dict:
         best_detection["confidence"],
     )
 
-    annotated_image_path = save_annotated_result(results, image_path)
+    annotated_image_path = save_annotated_result(
+        results,
+        validated_path
+    )
 
     return {
         "damage_type": best_detection["damage_type"],
@@ -80,17 +193,32 @@ def detect_damage(image_path: str, confidence_threshold: float = 0.3) -> dict:
     }
 
 
-def save_annotated_result(results, image_path: str) -> str:
+def save_annotated_result(results, image_path: Path) -> str:
     """
-    Saves the YOLO annotated image with bounding boxes.
+    Save the first annotated YOLO result.
     """
-
-    original_name = Path(image_path).stem
-    output_path = ANNOTATED_DIR / f"{original_name}_annotated.jpg"
+    output_path = (
+        ANNOTATED_DIR
+        / f"{image_path.stem}_annotated.jpg"
+    )
 
     for result in results:
         annotated_image = result.plot()
-        cv2.imwrite(str(output_path), annotated_image)
+
+        saved = cv2.imwrite(
+            str(output_path),
+            annotated_image
+        )
+
+        if not saved:
+            raise DetectionError(
+                "The annotated image could not be saved."
+            )
+
         break
 
-    return str(output_path)
+    try:
+        relative_path = output_path.relative_to(PROJECT_ROOT)
+        return str(relative_path).replace("\\", "/")
+    except ValueError:
+        return str(output_path)
