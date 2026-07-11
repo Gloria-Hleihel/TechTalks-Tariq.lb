@@ -1,0 +1,16 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+.env
+# Virtual environment
+venv/
+.env
+
+# Uploaded images and generated outputs
+static/uploads/
+static/uploads/annotated/
+
+# Python cache
+__pycache__/
+*.pyc

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tariq.lb — Upload (Malek Week 1 POC)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet CSS from CDN -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background: #f7f7f7; }
+    .container { max-width: 960px; margin: 0 auto; }
+    .card { background: #fff; border: 1px solid #e0e0e0; padding: 18px; border-radius: 8px; }
+    h1 { margin-top: 0; font-size: 1.4rem; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 300px; }
+    #map { height: 360px; border: 1px solid #ddd; border-radius: 6px; }
+    .messages { margin-bottom: 12px; }
+    .msg { padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 0.95rem; }
+    .msg.success { background: #e6ffed; border: 1px solid #b7f0c6; color: #0b5f2b; }
+    .msg.info { background: #eef6ff; border: 1px solid #cfe9ff; color: #0b3a66; }
+    .msg.error { background: #ffeaea; border: 1px solid #ffbdbd; color: #5a0b0b; }
+    .coords { font-weight: 700; }
+    .preview { max-width: 100%; height: auto; margin-top: 8px; border-radius: 4px; }
+    label { display:block; margin-bottom:6px; font-weight:600; }
+    input[type="file"] { display:block; }
+    .btn { background: #1976d2; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; margin-top:8px; }
+    .note { color:#666; font-size:0.9rem; margin-top:12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Tariq.lb — Upload (Malek Week 1 POC)</h1>
+
+      <div class="messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="msg {{ cat }}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <form method="post" enctype="multipart/form-data" id="uploadForm">
+            <label for="image">Select image (jpg / jpeg / png)</label>
+            <input type="file" name="image" id="image" accept="image/jpeg,image/png" required />
+            <button class="btn" type="submit">Upload and Extract EXIF GPS</button>
+
+            <!-- Hidden manual lat/lng fields (populated by map clicks) -->
+            <input type="hidden" name="lat" id="lat" />
+            <input type="hidden" name="lng" id="lng" />
+
+            <div id="savedInfo" style="margin-top:12px;">
+              {% if saved_filename %}
+                <div>Saved file:
+                  {% set rel = saved_filename %}
+                  <a href="{{ url_for('static', filename=rel.split('static/')[-1]) }}" target="_blank">{{ rel }}</a>
+                </div>
+                <img class="preview" src="{{ url_for('static', filename=rel.split('static/')[-1]) }}" alt="Uploaded preview" />
+              {% endif %}
+            </div>
+          </form>
+
+          <div style="margin-top:12px;">
+            {% if gps %}
+              <div>Detected GPS: <span class="coords">{{ gps.lat }}, {{ gps.lng }}</span></div>
+            {% else %}
+              <div>No GPS detected from image EXIF.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col">
+          <label>Select location on map (if image has no GPS or to override)</label>
+          <div id="map"></div>
+          <div style="margin-top:8px;">
+            Selected: <span id="selectedCoords">None</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        Note: Week 1 proof-of-concept. Image is saved locally with a UUID filename. Report persistence and detection will be added in Week 2.
+      </p>
+    </div>
+  </div>
+
+  <!-- Leaflet JS from CDN -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    // Use config values if provided via Flask config in templates
+    const defaultLat = {{ config['MAP_DEFAULT_LAT'] if config and 'MAP_DEFAULT_LAT' in config else 33.85 }};
+    const defaultLng = {{ config['MAP_DEFAULT_LNG'] if config and 'MAP_DEFAULT_LNG' in config else 35.86 }};
+    const defaultZoom = {{ config['MAP_DEFAULT_ZOOM'] if config and 'MAP_DEFAULT_ZOOM' in config else 9 }};
+
+    const map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    function setMarker(lat, lng) {
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+      document.getElementById('selectedCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    }
+
+    map.on('click', function(e) {
+      setMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    // If server provided gps, show marker
+    {% if gps %}
+      setMarker({{ gps.lat }}, {{ gps.lng }});
+      map.setView([{{ gps.lat }}, {{ gps.lng }}], 14);
+    {% endif %}
+  </script>
+</body>
+</html>
