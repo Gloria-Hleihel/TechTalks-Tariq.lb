@@ -1,43 +1,54 @@
 import os
 import uuid
+
 from werkzeug.utils import secure_filename
+
 import config
 
-# Read allowed extensions and upload folder from config.py (Zahraa base)
-ALLOWED_EXT = set(getattr(config, "ALLOWED_EXTENSIONS", {"jpg", "jpeg", "png"}))
-UPLOAD_FOLDER = getattr(config, "UPLOAD_FOLDER", "static/uploads")
 
-def _is_allowed(filename: str) -> bool:
+def allowed_file(filename: str) -> bool:
+    """Return True if the file has an allowed image extension."""
     if not filename or "." not in filename:
         return False
-    ext = filename.rsplit(".", 1)[1].lower()
-    return ext in ALLOWED_EXT
+
+    extension = filename.rsplit(".", 1)[1].lower()
+    return extension in getattr(config, "ALLOWED_EXTENSIONS", {"jpg", "jpeg", "png"})
+
+
+def get_file_size(file) -> int:
+    """Return uploaded file size in bytes without consuming the file."""
+    try:
+        current_position = file.stream.tell()
+        file.stream.seek(0, os.SEEK_END)
+        size = file.stream.tell()
+        file.stream.seek(current_position)
+        return size
+    except Exception:
+        return 0
+
 
 def save_image(file) -> str:
     """
-    Save uploaded Werkzeug FileStorage to UPLOAD_FOLDER using a UUID filename.
-    Returns relative path (e.g., "static/uploads/<uuid>.jpg") on success, or empty string on failure.
+    Save uploaded image using a UUID filename.
+
+    Returns a path relative to the Flask static folder, for example:
+        uploads/abc123.jpg
+
+    This path is stored in Report.image_path and used with:
+        url_for("static", filename=image_path)
     """
-    filename = secure_filename(getattr(file, "filename", "") or "")
-    if not _is_allowed(filename):
+    original_filename = secure_filename(getattr(file, "filename", "") or "")
+
+    if not allowed_file(original_filename):
         return ""
 
-    # Resolve upload directory to an absolute path
-    if os.path.isabs(UPLOAD_FOLDER):
-        upload_dir = UPLOAD_FOLDER
-    else:
-        upload_dir = os.path.join(os.getcwd(), UPLOAD_FOLDER)
+    upload_folder = getattr(config, "UPLOAD_FOLDER", os.path.join("static", "uploads"))
+    os.makedirs(upload_folder, exist_ok=True)
 
-    # Ensure upload directory exists
-    os.makedirs(upload_dir, exist_ok=True)
+    extension = original_filename.rsplit(".", 1)[1].lower()
+    new_filename = f"{uuid.uuid4().hex}.{extension}"
 
-    ext = filename.rsplit(".", 1)[1].lower()
-    new_name = f"{uuid.uuid4().hex}.{ext}"
-    save_path = os.path.join(upload_dir, new_name)
+    absolute_path = os.path.join(upload_folder, new_filename)
+    file.save(absolute_path)
 
-    # Save file
-    file.save(save_path)
-
-    # Return path relative to project root usable by templates (forward slashes)
-    rel_path = os.path.join(UPLOAD_FOLDER, new_name).replace("\\", "/")
-    return rel_path
+    return f"uploads/{new_filename}"
