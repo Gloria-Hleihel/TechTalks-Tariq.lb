@@ -1,48 +1,124 @@
-def trigger_detection(report, image_path: str) -> dict | None:
-    """
-    Temporary Week 2 detection trigger.
+from typing import Any, Dict
 
-    Later, this should call Majd's real POST /api/detect endpoint
-    or Majd's detect_damage() function.
+import config
 
-    For now:
-    - Try to import Majd's detector if it exists.
-    - If not available, return a mock detection result.
-    - Never crash the upload flow.
+
+def _load_detector():
+    """Load Majd's detector from either supported package location."""
+    try:
+        from app.detection.detector import detect_damage
+
+        return detect_damage
+    except ImportError:
+        try:
+            from app.detect.detector import detect_damage
+
+            return detect_damage
+        except ImportError:
+            return None
+
+
+def _failed(message: str) -> Dict[str, Any]:
+    return {
+        "status": "failed",
+        "error": message,
+    }
+
+
+def trigger_detection(
+    report,
+    image_path: str,
+) -> Dict[str, Any]:
     """
+    Trigger road-damage detection without inventing a result.
+
+    Possible statuses:
+    - completed
+    - pending
+    - failed
+    """
+    try:
+        detect_damage = _load_detector()
+    except Exception as exc:
+        return _failed(
+            f"Detection module could not be loaded: {exc}"
+        )
+
+    if detect_damage is None:
+        return {
+            "status": "pending",
+            "error": "Detection module is not available yet.",
+        }
 
     try:
-        detect_damage = None
+        result = detect_damage(image_path)
+    except Exception as exc:
+        return _failed(f"Detection failed: {exc}")
 
-        try:
-            from app.detection.detector import detect_damage
-        except ImportError:
-            try:
-                from app.detect.detector import detect_damage
-            except ImportError:
-                detect_damage = None
+    if not isinstance(result, dict):
+        return _failed(
+            "Detection returned no usable result."
+        )
 
-        if detect_damage:
-            result = detect_damage(image_path)
+    if result.get("status") in {"pending", "failed"}:
+        return {
+            "status": result["status"],
+            "error": result.get(
+                "error",
+                "Detection did not complete.",
+            ),
+        }
 
-            if result:
-                return {
-                    "damage_type": result.get("damage_type", "Other"),
-                    "confidence": float(result.get("confidence", 0.0)),
-                    "severity_score": int(result.get("severity_score", 50)),
-                    "severity_label": result.get("severity_label", "Medium"),
-                    "annotated_image_path": result.get("annotated_image_path"),
-                }
+    required_fields = {
+        "damage_type",
+        "confidence",
+        "severity_score",
+        "severity_label",
+    }
 
-    except Exception:
-        return None
+    if not required_fields.issubset(result):
+        return _failed(
+            "Detection result is missing required fields."
+        )
 
-    # Mock result so Malek's Week 2 upload flow works before Majd's
-    # real detection module is integrated.
+    damage_type = str(result["damage_type"])
+    severity_label = str(result["severity_label"])
+
+    if damage_type not in config.DAMAGE_TYPES:
+        return _failed(
+            f"Unsupported damage type: {damage_type}"
+        )
+
+    if severity_label not in config.SEVERITY_LEVELS:
+        return _failed(
+            f"Unsupported severity label: {severity_label}"
+        )
+
+    try:
+        confidence = float(result["confidence"])
+        severity_score = int(result["severity_score"])
+    except (TypeError, ValueError):
+        return _failed(
+            "Detection returned invalid numeric values."
+        )
+
+    if not 0.0 <= confidence <= 1.0:
+        return _failed(
+            "Detection confidence must be between 0 and 1."
+        )
+
+    if not 0 <= severity_score <= 100:
+        return _failed(
+            "Detection severity score must be between 0 and 100."
+        )
+
     return {
-        "damage_type": "Pothole",
-        "confidence": 0.85,
-        "severity_score": 70,
-        "severity_label": "High",
-        "annotated_image_path": None,
+        "status": "completed",
+        "damage_type": damage_type,
+        "confidence": confidence,
+        "severity_score": severity_score,
+        "severity_label": severity_label,
+        "annotated_image_path": result.get(
+            "annotated_image_path"
+        ),
     }
