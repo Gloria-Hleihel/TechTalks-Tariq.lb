@@ -123,7 +123,7 @@ You should see:
 
 ## 📁 Project Structure
 
-```
+```text
 Tariq.lb/
 │
 ├── backend/                          # Flask server + ML
@@ -209,7 +209,7 @@ Two tables, linked one-to-many:
 ## 📚 API Endpoints Reference
 
 ### Photos & Detection
-```
+```text
 POST   /api/upload                 # Upload a photo, run detection, store results
 GET    /api/photos                 # List all uploaded photos
 GET    /api/photos/:id             # Get one photo and its detections
@@ -217,13 +217,13 @@ DELETE /api/photos/:id             # Delete a photo and its detections
 ```
 
 ### Map Data
-```
+```text
 GET    /api/detections             # All detections (used to render map pins)
 GET    /api/detections/:id         # Single detection detail
 ```
 
 ### Stats (optional)
-```
+```text
 GET    /api/stats                  # Totals by damage type / severity
 ```
 

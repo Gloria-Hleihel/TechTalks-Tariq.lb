@@ -1,5 +1,17 @@
+# Virtual environments and secrets
 venv/
+.env
+
+# Python cache
 __pycache__/
 *.pyc
+
+# Local databases
 *.db
-.env
+
+# Uploaded images and generated outputs
+static/uploads/
+static/uploads/annotated/
+
+# Editor-specific settings
+.vscode/

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tariq.lb — Report #{{ report.id }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 20px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h1, h2, h3 {
+      color: #183b68;
+    }
+
+    .messages {
+      margin-bottom: 14px;
+    }
+
+    .msg {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .success {
+      background: #e6ffed;
+      border: 1px solid #b7f0c6;
+      color: #0b5f2b;
+    }
+
+    .error {
+      background: #ffeaea;
+      border: 1px solid #ffbdbd;
+      color: #5a0b0b;
+    }
+
+    .info {
+      background: #eef6ff;
+      border: 1px solid #cfe9ff;
+      color: #0b3a66;
+    }
+
+    .report-image {
+      max-width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .badge-low {
+      background: green;
+    }
+
+    .badge-medium {
+      background: #c9a300;
+      color: #222;
+    }
+
+    .badge-high {
+      background: orange;
+      color: #222;
+    }
+
+    .badge-critical {
+      background: red;
+    }
+
+    .links a {
+      display: inline-block;
+      margin-right: 12px;
+      color: #1976d2;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 700px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="messages">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="msg {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <div class="card">
+      <h1>Report Submitted Successfully</h1>
+      <p>Your road-condition report was saved.</p>
+
+      <div class="details-grid">
+        <div class="label">Report ID</div>
+        <div>#{{ report.id }}</div>
+
+        <div class="label">Latitude</div>
+        <div>{{ "%.6f"|format(report.lat) }}</div>
+
+        <div class="label">Longitude</div>
+        <div>{{ "%.6f"|format(report.lng) }}</div>
+
+        <div class="label">Location source</div>
+        <div>{{ report.location_source }}</div>
+
+        <div class="label">Status</div>
+        <div>{{ report.status }}</div>
+
+        <div class="label">Created at</div>
+        <div>{{ report.created_at }}</div>
+      </div>
+
+      <h2>Original Image</h2>
+
+      <img
+        class="report-image"
+        src="{{ url_for('static', filename=report.image_path.replace('static/', '')) }}"
+        alt="Uploaded road image"
+      />
+    </div>
+
+    <div class="card">
+      {% include "_detection_result.html" %}
+    </div>
+
+    <div class="card links">
+      <a href="{{ url_for('reports.upload') }}">Upload another report</a>
+      <a href="/map">View map</a>
+    </div>
+  </div>
+</body>
+</html>
