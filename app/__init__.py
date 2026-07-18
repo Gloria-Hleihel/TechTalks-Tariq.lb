@@ -3,7 +3,7 @@ from models import db
 import config
 
 def create_app():
-    app = Flask(__name__, template_folder="../templates")
+    app = Flask(__name__, template_folder="../templates", static_folder="../static")
     
     # Load all settings from config.py
     app.config.from_object(config)

@@ -2,38 +2,426 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Report #{{ report.id }} — Tariq.lb</title>
+    <title>Report Details — Tariq.lb</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f0ee;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #7b0d1e, #9b2335);
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .navbar-brand i {
+            font-size: 22px;
+            color: #4a7c59;
+        }
+
+        .navbar-brand .brand-text span {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        .navbar-brand .brand-text small {
+            font-size: 11px;
+            opacity: 0.7;
+            display: block;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .navbar-tagline {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-tagline .line-red {
+            height: 1px;
+            width: 16px;
+            background: rgba(255,255,255,0.4);
+        }
+
+        .navbar-tagline .line-green {
+            height: 1px;
+            width: 16px;
+            background: #4a7c59;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            background: rgba(255,255,255,0.12);
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.22);
+        }
+
+        /* Content */
+        .content {
+            padding: 28px 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Back button */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #7b0d1e;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: gap 0.2s;
+        }
+
+        .back-btn:hover {
+            gap: 12px;
+        }
+
+        /* Page title */
+        .page-title {
+            margin-bottom: 24px;
+        }
+
+        .page-title h1 {
+            font-size: 22px;
+            color: #2c2c2c;
+            font-weight: bold;
+        }
+
+        .page-title .title-underline {
+            height: 3px;
+            width: 48px;
+            background: linear-gradient(to right, #7b0d1e, #4a7c59);
+            border-radius: 2px;
+            margin-top: 6px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #f5f5f5;
+            padding-bottom: 12px;
+        }
+
+        .card-title i {
+            color: #7b0d1e;
+        }
+
+        .card:nth-child(even) .card-title i {
+            color: #4a7c59;
+        }
+
+        /* Info rows */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f9f9f9;
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #999;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #2c2c2c;
+            font-weight: 500;
+        }
+
+        /* Severity badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-low { background: #e8f5e9; color: #2e7d32; }
+        .badge-medium { background: #fff8e1; color: #f59f00; }
+        .badge-high { background: #fff3e0; color: #e65100; }
+        .badge-critical { background: #fdecea; color: #7b0d1e; }
+        .badge-pending { background: #f5f5f5; color: #888; }
+        .badge-reviewed { background: #e3f2fd; color: #1565c0; }
+        .badge-resolved { background: #e8f5e9; color: #2e7d32; }
+
+        /* Images grid */
+        .images-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .image-box {
+            text-align: center;
+        }
+
+        .image-box p {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .image-box img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .no-image {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            color: #ccc;
+            font-size: 13px;
+        }
+
+        .no-image i {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+    </style>
 </head>
 <body>
-    <h1>🛣️ Report #{{ report.id }} Details</h1>
-    <a href="/admin/dashboard">← Back to Dashboard</a>
 
-    <h2>📍 Location</h2>
-    <p>Latitude: {{ report.lat }}</p>
-    <p>Longitude: {{ report.lng }}</p>
-    <p>Source: {{ report.location_source }}</p>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <div class="brand-text">
+                <span>Tariq.lb</span>
+                <small>Admin Control Panel</small>
+            </div>
+        </div>
+        <div class="navbar-right">
+            <div class="navbar-tagline">
+                <div class="line-red"></div>
+                Roads. Solutions. Progress.
+                <div class="line-green"></div>
+            </div>
+            <a href="/admin/logout" class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </a>
+        </div>
+    </nav>
 
-    <h2>📅 Submission Info</h2>
-    <p>Date: {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-    <p>Status: {{ report.status }}</p>
+    <div class="content">
 
-    <h2>🔍 AI Detection Result</h2>
-    {% if detection %}
-        <p>Damage Type: {{ detection.damage_type }}</p>
-        <p>Severity: {{ detection.severity_label }}</p>
-        <p>Severity Score: {{ detection.severity_score }}/100</p>
-        <p>Confidence: {{ (detection.confidence * 100) | round(1) }}%</p>
-    {% else %}
-        <p>No detection result yet.</p>
-    {% endif %}
+        <a href="/admin/dashboard" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
 
-    <h2>🖼️ Images</h2>
-    <h3>Original Image</h3>
-    <img src="/{{ report.image_path }}" alt="Original" width="400">
+        <div class="page-title">
+            <h1>Report #{{ report.id }} Details</h1>
+            <div class="title-underline"></div>
+        </div>
 
-    {% if detection and detection.annotated_image_path %}
-        <h3>Annotated Image</h3>
-        <img src="/{{ detection.annotated_image_path }}" alt="Annotated" width="400">
-    {% endif %}
+        <!-- Submission Info -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-circle-info"></i>
+                Submission Information
+            </div>
+            <div class="info-row">
+                <span class="info-label">Report ID</span>
+                <span class="info-value">#{{ report.id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date Submitted</span>
+                <span class="info-value">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="info-value">
+                    {% if report.status == 'pending' %}
+                        <span class="badge badge-pending">Pending</span>
+                    {% elif report.status == 'reviewed' %}
+                        <span class="badge badge-reviewed">Reviewed</span>
+                    {% elif report.status == 'resolved' %}
+                        <span class="badge badge-resolved">Resolved</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-location-dot"></i>
+                Location
+            </div>
+            <div class="info-row">
+                <span class="info-label">Latitude</span>
+                <span class="info-value">{{ report.lat }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Longitude</span>
+                <span class="info-value">{{ report.lng }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Location Source</span>
+                <span class="info-value">
+                    {% if report.location_source == 'gps' %}
+                        <i class="fa-solid fa-satellite" style="color:#4a7c59;"></i> GPS (Auto-detected)
+                    {% else %}
+                        <i class="fa-solid fa-hand-pointer" style="color:#7b0d1e;"></i> Manual (Map pin)
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- AI Detection -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-microchip"></i>
+                AI Detection Result
+            </div>
+            {% if detection %}
+                <div class="info-row">
+                    <span class="info-label">Damage Type</span>
+                    <span class="info-value">{{ detection.damage_type }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Severity</span>
+                    <span class="info-value">
+                        {% if detection.severity_label == 'Low' %}
+                            <span class="badge badge-low">Low</span>
+                        {% elif detection.severity_label == 'Medium' %}
+                            <span class="badge badge-medium">Medium</span>
+                        {% elif detection.severity_label == 'High' %}
+                            <span class="badge badge-high">High</span>
+                        {% elif detection.severity_label == 'Critical' %}
+                            <span class="badge badge-critical">Critical</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Severity Score</span>
+                    <span class="info-value">{{ detection.severity_score }}/100</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Confidence</span>
+                    <span class="info-value">{{ (detection.confidence * 100) | round(1) }}%</span>
+                </div>
+            {% else %}
+                <p style="color:#bbb; font-size:13px; text-align:center; padding:20px;">
+                    <i class="fa-solid fa-circle-xmark" style="display:block; font-size:24px; margin-bottom:8px;"></i>
+                    No detection result available yet
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Images -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-images"></i>
+                Images
+            </div>
+            <div class="images-grid">
+                <div class="image-box">
+                    <p>Original Image</p>
+                    {% if report.image_path %}
+                        <img src="/{{ report.image_path }}" alt="Original">
+                    {% else %}
+                        <div class="no-image">
+                            <i class="fa-solid fa-image"></i>
+                            No image available
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="image-box">
+                    <p>Annotated Image</p>
+                    {% if detection and detection.annotated_image_path %}
+                        <img src="/{{ detection.annotated_image_path }}" alt="Annotated">
+                    {% else %}
+                        <div class="no-image">
+                            <i class="fa-solid fa-image"></i>
+                            No annotated image yet
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </body>
 </html>
