@@ -1,12 +1,21 @@
+# Virtual environments and secrets
 venv/
-__pycache__/
-*.pyc
-*.db
 .env
 
-# YOLO / model files
-models/*.pt
+# Python cache
+__pycache__/
+*.pyc
 
-# Uploaded/generated files
+# Local databases
+*.db
+
+# Uploaded images and generated outputs
 static/uploads/
+static/uploads/annotated/
+
+# Editor-specific settings
+.vscode/
+
+# Local model files and test images
+models/
 test_images/

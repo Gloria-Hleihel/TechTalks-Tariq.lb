@@ -23,7 +23,13 @@ MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB, per the Week 3 validation task
 
 # --- Damage classification ----------------------------------------------
 # Matches Section 11 delivery checklist exactly.
-DAMAGE_TYPES = ["Pothole", "Road Crack", "Surface Wear", "Other", "None"]
+DAMAGE_TYPES = [
+    "Pothole",
+    "Road Crack",
+    "Surface Wear",
+    "Other",
+    "None",
+]
 
 # --- Severity ------------------------------------------------------------
 SEVERITY_LEVELS = ["Low", "Medium", "High", "Critical"]
@@ -49,4 +55,4 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
 # --- Map defaults (centered on Lebanon) -----------------------------------
 MAP_DEFAULT_LAT = 33.85
 MAP_DEFAULT_LNG = 35.86
-MAP_DEFAULT_ZOOM = 9
+MAP_DEFAULT_ZOOM = 9 
