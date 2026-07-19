@@ -22,7 +22,7 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB, per the Week 3 validation task
 
 # --- Damage classification ----------------------------------------------
-# Matches Section 11 delivery checklist exactly.
+# Matches Majd's YOLOv8 model output (RDD2022 dataset)
 DAMAGE_TYPES = ["Longitudinal Crack", "Transverse Crack", "Alligator Crack", "Potholes", "None"]
 
 # --- Severity ------------------------------------------------------------

@@ -117,6 +117,31 @@ The interactive map is centered on Lebanon (lat: 33.85, lng: 35.86) and displays
 
 ---
 
+## 🔧 Troubleshooting
+
+### Problem: Port 5000 Already in Use
+- Run `flask run --port 3001`
+
+### Problem: No module named ultralytics
+- Make sure your virtual environment is activated before pip install
+- Re-run `pip install -r requirements.txt`
+
+### Problem: Model fails to load / roaddamage.pt not found
+- Confirm the weights file is in the project root
+- Re-download from the oracl4 repo if corrupted
+
+### Problem: Pins don't appear on the map
+- Check the photo actually had GPS data; if not, use the manual pin fallback
+- Open the browser console (F12) and confirm GET /api/reports returns data
+
+### Problem: Map tiles don't load
+- Confirm you have an internet connection (Leaflet fetches tiles from OpenStreetMap)
+
+### Problem: Detection is slow
+- The first inference loads the model into memory and is always slowest
+
+---
+
 ## ⚠️ Notes
 
 - This app runs locally only — no cloud deployment required

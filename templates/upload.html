@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tariq.lb — Submit Road Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 20px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #183b68;
+    }
+
+    .row {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .col {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      background: #1976d2;
+      color: white;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: #1259a0;
+    }
+
+    #map {
+      height: 380px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .messages {
+      margin-bottom: 14px;
+    }
+
+    .msg {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .success {
+      background: #e6ffed;
+      border: 1px solid #b7f0c6;
+      color: #0b5f2b;
+    }
+
+    .info {
+      background: #eef6ff;
+      border: 1px solid #cfe9ff;
+      color: #0b3a66;
+    }
+
+    .error {
+      background: #ffeaea;
+      border: 1px solid #ffbdbd;
+      color: #5a0b0b;
+    }
+
+    .gps-box {
+      background: #f5f8ff;
+      border: 1px solid #d7e6ff;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 12px 0;
+      font-size: 0.95rem;
+    }
+
+    .coords {
+      font-weight: bold;
+    }
+
+    .note {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 14px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        margin: 10px;
+      }
+
+      #map {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Tariq.lb — Submit Road Report</h1>
+
+      <div class="messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="msg {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <form
+        method="post"
+        action="{{ url_for('reports.create_report') }}"
+        enctype="multipart/form-data"
+        id="uploadForm"
+      >
+        <div class="row">
+          <div class="col">
+            <label for="image">Select road image</label>
+
+            <input
+              type="file"
+              name="image"
+              id="image"
+              accept="image/jpeg,image/png"
+              required
+            />
+
+            <div class="gps-box info" id="gpsStatus">
+              Choose an image. GPS will be checked after upload. If no GPS is found, select the location on the map.
+            </div>
+
+            <input type="hidden" name="lat" id="lat" />
+            <input type="hidden" name="lng" id="lng" />
+
+            <button class="btn" type="submit">Submit Report</button>
+
+            <p class="note">
+              Allowed files: JPG, JPEG, PNG. Maximum size: 5MB.
+              If the photo has GPS EXIF data, Tariq.lb will use it automatically.
+              Otherwise, click the map to choose the road location manually.
+            </p>
+          </div>
+
+          <div class="col">
+            <label>Manual location fallback</label>
+            <div id="map"></div>
+
+            <div class="gps-box">
+              Selected coordinates:
+              <span id="selectedCoords" class="coords">None</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <script>
+    const defaultLat = {{ config.get('MAP_DEFAULT_LAT', 33.85) }};
+    const defaultLng = {{ config.get('MAP_DEFAULT_LNG', 35.86) }};
+    const defaultZoom = {{ config.get('MAP_DEFAULT_ZOOM', 9) }};
+
+    const map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    function setMarker(lat, lng) {
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+      document.getElementById('selectedCoords').textContent =
+        lat.toFixed(6) + ', ' + lng.toFixed(6);
+    }
+
+    map.on('click', function(e) {
+      setMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    const imageInput = document.getElementById('image');
+    const gpsStatus = document.getElementById('gpsStatus');
+
+    imageInput.addEventListener('change', function() {
+      const file = imageInput.files[0];
+
+      if (!file) {
+        gpsStatus.textContent = 'Choose an image.';
+        gpsStatus.className = 'gps-box info';
+        return;
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/png'];
+      const maxSize = 5 * 1024 * 1024;
+
+      if (!allowedTypes.includes(file.type)) {
+        gpsStatus.textContent = 'Invalid file type. Please choose JPG, JPEG, or PNG.';
+        gpsStatus.className = 'gps-box error';
+        return;
+      }
+
+      if (file.size > maxSize) {
+        gpsStatus.textContent = 'File is too large. Maximum size is 5MB.';
+        gpsStatus.className = 'gps-box error';
+        return;
+      }
+
+      gpsStatus.textContent =
+        'Image selected. GPS will be checked after upload. If no GPS is found, select location on the map.';
+      gpsStatus.className = 'gps-box info';
+    });
+  </script>
+</body>
+</html>
