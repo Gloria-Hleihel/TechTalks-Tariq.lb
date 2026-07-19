@@ -1,34 +1,46 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>Tariq.lb — Report #{{ report.id }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, Helvetica, sans-serif;
-      margin: 20px;
-      background: #f7f7f7;
-      color: #222;
+      margin: 0;
+      padding: 24px;
+      background: #f4f7fb;
+      color: #1f2937;
     }
 
     .container {
-      max-width: 950px;
+      max-width: 980px;
       margin: 0 auto;
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 22px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
     }
 
-    h1, h2, h3 {
+    h1,
+    h2,
+    h3 {
       color: #183b68;
+    }
+
+    h1 {
+      margin-top: 0;
     }
 
     .messages {
@@ -36,91 +48,206 @@
     }
 
     .msg {
-      padding: 10px;
-      border-radius: 5px;
+      padding: 12px 14px;
+      border-radius: 8px;
       margin-bottom: 8px;
       font-size: 0.95rem;
     }
 
     .success {
-      background: #e6ffed;
-      border: 1px solid #b7f0c6;
-      color: #0b5f2b;
+      background: #e8f8ee;
+      border: 1px solid #b7e4c7;
+      color: #166534;
     }
 
     .error {
-      background: #ffeaea;
-      border: 1px solid #ffbdbd;
-      color: #5a0b0b;
+      background: #feecec;
+      border: 1px solid #fecaca;
+      color: #991b1b;
     }
 
     .info {
       background: #eef6ff;
-      border: 1px solid #cfe9ff;
-      color: #0b3a66;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
     }
 
     .report-image {
+      display: block;
+      width: 100%;
       max-width: 100%;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid #dbe3ec;
+      margin-top: 12px;
+      object-fit: contain;
     }
 
     .details-grid {
       display: grid;
       grid-template-columns: 180px 1fr;
-      gap: 8px;
-      margin: 12px 0;
+      gap: 10px 16px;
+      margin: 18px 0;
     }
 
     .label {
       font-weight: bold;
-      color: #555;
+      color: #475569;
     }
 
     .badge {
       display: inline-block;
-      padding: 4px 8px;
+      padding: 6px 11px;
       border-radius: 999px;
-      color: white;
+      color: #ffffff;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
     .badge-low {
-      background: green;
+      background: #16a34a;
     }
 
     .badge-medium {
-      background: #c9a300;
-      color: #222;
+      background: #ca8a04;
     }
 
     .badge-high {
-      background: orange;
-      color: #222;
+      background: #ea580c;
     }
 
     .badge-critical {
-      background: red;
+      background: #dc2626;
+    }
+
+    .detection-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .detection-header h2 {
+      margin: 4px 0 0;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: #1976d2;
+      font-size: 0.78rem;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .result-box {
+      padding: 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+
+    .result-label {
+      display: block;
+      color: #64748b;
+      font-size: 0.84rem;
+      margin-bottom: 7px;
+    }
+
+    .result-box strong {
+      color: #183b68;
+      font-size: 1.08rem;
+    }
+
+    .confidence-section {
+      margin-bottom: 26px;
+    }
+
+    .confidence-text {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #475569;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .confidence-track {
+      height: 11px;
+      overflow: hidden;
+      background: #e2e8f0;
+      border-radius: 999px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #0ea5e9);
+      border-radius: inherit;
+    }
+
+    .annotated-section {
+      margin-top: 26px;
+    }
+
+    .muted {
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .links a {
       display: inline-block;
-      margin-right: 12px;
-      color: #1976d2;
+      padding: 10px 14px;
+      color: #ffffff;
+      background: #1976d2;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: bold;
     }
 
     .links a:hover {
-      text-decoration: underline;
+      background: #155fa8;
     }
 
     @media (max-width: 700px) {
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        padding: 17px;
+      }
+
       .details-grid {
         grid-template-columns: 1fr;
+      }
+
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detection-header {
+        flex-direction: column;
+      }
+
+      .links {
+        flex-direction: column;
+      }
+
+      .links a {
+        text-align: center;
       }
     }
   </style>
@@ -128,11 +255,14 @@
 
 <body>
   <div class="container">
+
     <div class="messages">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="msg {{ category }}">{{ message }}</div>
+            <div class="msg {{ category }}">
+              {{ message }}
+            </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
@@ -168,7 +298,7 @@
         class="report-image"
         src="{{ url_for('static', filename=report.image_path.replace('static/', '')) }}"
         alt="Uploaded road image"
-      />
+      >
     </div>
 
     <div class="card">
@@ -176,9 +306,15 @@
     </div>
 
     <div class="card links">
-      <a href="{{ url_for('reports.upload') }}">Upload another report</a>
-      <a href="/map">View map</a>
+      <a href="{{ url_for('reports.upload') }}">
+        Upload another report
+      </a>
+
+      <a href="/map">
+        View map
+      </a>
     </div>
+
   </div>
 </body>
 </html>
