@@ -24,10 +24,10 @@ MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB, per the Week 3 validation task
 # --- Damage classification ----------------------------------------------
 # Matches Section 11 delivery checklist exactly.
 DAMAGE_TYPES = [
-    "Pothole",
-    "Road Crack",
-    "Surface Wear",
-    "Other",
+    "Longitudinal Crack",
+    "Transverse Crack",
+    "Alligator Crack",
+    "Potholes",
     "None",
 ]
 

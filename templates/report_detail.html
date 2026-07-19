@@ -2,236 +2,727 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Tariq.lb — Report #{{ report.id }}</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>
+    Tariq.lb — Report #{{ report.id }}
+  </title>
 
   <style>
+    :root {
+      --red: #7b0d1e;
+      --red-dark: #5f0a17;
+      --red-soft: #f5e7ea;
+
+      --green: #4a7c59;
+      --green-dark: #365c42;
+      --green-soft: #eaf1ec;
+
+      --dark: #1a1a1a;
+      --cream: #f6f1ea;
+      --cream-light: #fbf8f4;
+
+      --white: #ffffff;
+      --muted: #6f7175;
+      --border: #e3ddd5;
+
+      --shadow:
+        0 18px 55px rgba(38, 26, 22, 0.09);
+    }
+
     * {
       box-sizing: border-box;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
-      font-family: Arial, Helvetica, sans-serif;
       margin: 0;
-      padding: 24px;
-      background: #f4f7fb;
-      color: #1f2937;
+      min-height: 100vh;
+      font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        Helvetica,
+        sans-serif;
+      background:
+        radial-gradient(
+          circle at top right,
+          rgba(123, 13, 30, 0.08),
+          transparent 32%
+        ),
+        var(--cream);
+      color: var(--dark);
     }
 
-    .container {
-      max-width: 980px;
+    .site-header {
+      background:
+        linear-gradient(
+          110deg,
+          var(--red),
+          var(--red-dark)
+        );
+      color: var(--white);
+      border-bottom: 5px solid var(--green);
+      box-shadow:
+        0 8px 25px rgba(95, 10, 23, 0.2);
+    }
+
+    .header-inner {
+      max-width: 1180px;
       margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
     }
 
-    .card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      padding: 22px;
-      border-radius: 14px;
-      margin-bottom: 18px;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
 
-    h1,
-    h2,
-    h3 {
-      color: #183b68;
+    .logo-box {
+      width: 76px;
+      height: 58px;
+      padding: 5px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--white);
+      box-shadow:
+        0 6px 15px rgba(0, 0, 0, 0.16);
     }
 
-    h1 {
-      margin-top: 0;
+    .logo-box img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 1.25rem;
+      letter-spacing: 0.01em;
+    }
+
+    .brand-copy span {
+      display: block;
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .header-link {
+      padding: 10px 14px;
+      color: var(--white);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.86rem;
+      font-weight: 700;
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .header-link:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .page-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
     }
 
     .messages {
-      margin-bottom: 14px;
+      margin-bottom: 18px;
     }
 
     .msg {
-      padding: 12px 14px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
+      padding: 14px 17px;
+      margin-bottom: 10px;
+      border: 1px solid;
+      border-radius: 13px;
+      font-size: 0.91rem;
+      line-height: 1.5;
     }
 
     .success {
-      background: #e8f8ee;
-      border: 1px solid #b7e4c7;
-      color: #166534;
+      background: var(--green-soft);
+      border-color: #bdd2c4;
+      color: var(--green-dark);
     }
 
     .error {
-      background: #feecec;
-      border: 1px solid #fecaca;
-      color: #991b1b;
+      background: #fff0f2;
+      border-color: #e7bdc4;
+      color: var(--red-dark);
     }
 
     .info {
-      background: #eef6ff;
-      border: 1px solid #bfdbfe;
-      color: #1e3a8a;
+      background: #edf3f5;
+      border-color: #cbd9dd;
+      color: #365d67;
+    }
+
+    .report-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+      margin-bottom: 22px;
+      border-radius: 23px;
+      color: var(--white);
+      background:
+        linear-gradient(
+          120deg,
+          var(--red),
+          var(--red-dark)
+        );
+      box-shadow:
+        0 16px 40px rgba(95, 10, 23, 0.2);
+    }
+
+    .report-hero::after {
+      content: "";
+      position: absolute;
+      top: -95px;
+      right: -75px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      border: 45px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 9px;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .hero-eyebrow::before {
+      content: "";
+      width: 29px;
+      height: 3px;
+      border-radius: 99px;
+      background: var(--green);
+    }
+
+    .report-hero h1 {
+      margin: 0;
+      font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      line-height: 1.05;
+    }
+
+    .report-hero p {
+      max-width: 650px;
+      margin: 12px 0 0;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.6;
+    }
+
+    .report-number {
+      min-width: 105px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .report-number span {
+      display: block;
+      color: rgba(255, 255, 255, 0.67);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .report-number strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.55rem;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 0.95fr)
+        minmax(380px, 1.05fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .column {
+      display: grid;
+      gap: 22px;
+    }
+
+    .card {
+      overflow: hidden;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 19px 22px;
+      border-bottom: 1px solid var(--border);
+      background: var(--cream-light);
+    }
+
+    .card-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 10px;
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      color: var(--dark);
+      font-size: 1rem;
+    }
+
+    .card-header p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .card-body {
+      padding: 22px;
+    }
+
+    .details-list {
+      display: grid;
+      margin: 0;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid #eee9e3;
+    }
+
+    .detail-row:first-child {
+      padding-top: 0;
+    }
+
+    .detail-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .detail-value {
+      color: var(--dark);
+      font-weight: 700;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: capitalize;
+    }
+
+    .status-badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .image-frame {
+      padding: 10px;
+      background:
+        linear-gradient(
+          145deg,
+          var(--cream),
+          var(--white)
+        );
+      border: 1px solid var(--border);
+      border-radius: 16px;
     }
 
     .report-image {
       display: block;
       width: 100%;
-      max-width: 100%;
-      border-radius: 12px;
-      border: 1px solid #dbe3ec;
-      margin-top: 12px;
+      max-height: 560px;
       object-fit: contain;
+      border-radius: 11px;
+      background: var(--white);
     }
 
-    .details-grid {
-      display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 10px 16px;
-      margin: 18px 0;
+    .image-caption {
+      margin: 13px 2px 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
     }
 
-    .label {
-      font-weight: bold;
-      color: #475569;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 6px 11px;
-      border-radius: 999px;
-      color: #ffffff;
-      font-weight: bold;
-      font-size: 0.85rem;
-    }
-
-    .badge-low {
-      background: #16a34a;
-    }
-
-    .badge-medium {
-      background: #ca8a04;
-    }
-
-    .badge-high {
-      background: #ea580c;
-    }
-
-    .badge-critical {
-      background: #dc2626;
+    .detection-card {
+      color: var(--dark);
     }
 
     .detection-header {
       display: flex;
-      justify-content: space-between;
       align-items: flex-start;
+      justify-content: space-between;
       gap: 16px;
-      margin-bottom: 22px;
+      margin-bottom: 21px;
+    }
+
+    .detection-header .eyebrow {
+      margin: 0 0 6px;
+      color: var(--red);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
     .detection-header h2 {
-      margin: 4px 0 0;
+      margin: 0;
+      color: var(--dark);
+      font-size: 1.4rem;
     }
 
-    .eyebrow {
-      margin: 0;
-      color: #1976d2;
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      color: var(--white);
       font-size: 0.78rem;
-      font-weight: bold;
-      letter-spacing: 0.1em;
+      font-weight: 800;
       text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-low {
+      background: var(--green);
+    }
+
+    .badge-medium {
+      background: #b88a1c;
+    }
+
+    .badge-high {
+      background: #cc6728;
+    }
+
+    .badge-critical {
+      background: var(--red);
     }
 
     .result-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
+      gap: 12px;
+      margin-bottom: 23px;
     }
 
     .result-box {
-      padding: 18px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--cream-light);
     }
 
     .result-label {
       display: block;
-      color: #64748b;
-      font-size: 0.84rem;
       margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.73rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .result-box strong {
-      color: #183b68;
-      font-size: 1.08rem;
+      color: var(--dark);
+      font-size: 1rem;
     }
 
     .confidence-section {
-      margin-bottom: 26px;
+      padding: 15px;
+      margin-bottom: 22px;
+      border-radius: 14px;
+      background: var(--red-soft);
     }
 
     .confidence-text {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
-      color: #475569;
-      font-size: 0.9rem;
-      font-weight: bold;
+      gap: 15px;
+      margin-bottom: 9px;
+      color: var(--red-dark);
+      font-size: 0.82rem;
+      font-weight: 800;
     }
 
     .confidence-track {
-      height: 11px;
+      height: 10px;
       overflow: hidden;
-      background: #e2e8f0;
       border-radius: 999px;
+      background: rgba(123, 13, 30, 0.14);
     }
 
     .confidence-fill {
       height: 100%;
-      background: linear-gradient(90deg, #2563eb, #0ea5e9);
       border-radius: inherit;
+      background:
+        linear-gradient(
+          90deg,
+          var(--red),
+          var(--green)
+        );
     }
 
     .annotated-section {
-      margin-top: 26px;
+      margin-top: 21px;
+    }
+
+    .annotated-section h3 {
+      margin: 0;
+      color: var(--dark);
+      font-size: 1rem;
     }
 
     .muted {
-      color: #64748b;
+      margin: 6px 0 13px;
+      color: var(--muted);
+      font-size: 0.83rem;
       line-height: 1.5;
     }
 
-    .links {
+    .empty-state {
+      padding: 25px 10px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 13px;
+      border-radius: 17px;
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 1.45rem;
+    }
+
+    .empty-state h2 {
+      margin: 0 0 8px;
+      color: var(--dark);
+    }
+
+    .empty-state p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .actions-card {
+      margin-top: 22px;
+      padding: 19px;
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
     }
 
-    .links a {
-      display: inline-block;
-      padding: 10px 14px;
-      color: #ffffff;
-      background: #1976d2;
-      border-radius: 8px;
+    .actions-copy strong {
+      display: block;
+      color: var(--dark);
+    }
+
+    .actions-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 15px;
+      border-radius: 10px;
       text-decoration: none;
-      font-weight: bold;
+      font-size: 0.84rem;
+      font-weight: 800;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
     }
 
-    .links a:hover {
-      background: #155fa8;
+    .button:hover {
+      transform: translateY(-1px);
     }
 
-    @media (max-width: 700px) {
-      body {
-        padding: 14px;
+    .button-primary {
+      background:
+        linear-gradient(
+          110deg,
+          var(--red),
+          var(--red-dark)
+        );
+      color: var(--white);
+      box-shadow:
+        0 8px 18px rgba(123, 13, 30, 0.22);
+    }
+
+    .button-secondary {
+      background: var(--green-soft);
+      color: var(--green-dark);
+      border: 1px solid #c9d9ce;
+    }
+
+    @media (max-width: 900px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .header-inner {
+        padding: 12px 15px;
+      }
+
+      .logo-box {
+        width: 64px;
+        height: 49px;
+      }
+
+      .brand-copy span {
+        display: none;
+      }
+
+      .header-links .header-link:first-child {
+        display: none;
+      }
+
+      .page-shell {
+        padding: 26px 14px 42px;
+      }
+
+      .report-hero {
+        padding: 23px 20px;
+        border-radius: 18px;
+      }
+
+      .hero-content {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .report-number {
+        min-width: 90px;
       }
 
       .card {
-        padding: 17px;
+        border-radius: 17px;
       }
 
-      .details-grid {
+      .card-body {
+        padding: 18px;
+      }
+
+      .detail-row {
         grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      .detail-value {
+        text-align: left;
       }
 
       .result-grid {
@@ -242,20 +733,58 @@
         flex-direction: column;
       }
 
-      .links {
+      .actions-card {
+        align-items: stretch;
         flex-direction: column;
       }
 
-      .links a {
-        text-align: center;
+      .actions {
+        flex-direction: column;
+      }
+
+      .button {
+        width: 100%;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo-box">
+          <img
+  src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}"
+  alt="Tariq.lb logo"
+>
+        </div>
 
+        <div class="brand-copy">
+          <strong>Tariq.lb</strong>
+          <span>Roads. Solutions. Progress.</span>
+        </div>
+      </div>
+
+      <nav class="header-links">
+        <a
+          class="header-link"
+          href="/map"
+        >
+          Road Map
+        </a>
+
+        <a
+          class="header-link"
+          href="{{ url_for('reports.upload') }}"
+        >
+          New Report
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-shell">
     <div class="messages">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -268,53 +797,183 @@
       {% endwith %}
     </div>
 
-    <div class="card">
-      <h1>Report Submitted Successfully</h1>
-      <p>Your road-condition report was saved.</p>
+    <section class="report-hero">
+      <div class="hero-content">
+        <div>
+          <p class="hero-eyebrow">
+            Road report completed
+          </p>
 
-      <div class="details-grid">
-        <div class="label">Report ID</div>
-        <div>#{{ report.id }}</div>
+          <h1>
+            Report submitted successfully.
+          </h1>
 
-        <div class="label">Latitude</div>
-        <div>{{ "%.6f"|format(report.lat) }}</div>
+          <p>
+            The road image and location have been saved.
+            The AI detection result is displayed below.
+          </p>
+        </div>
 
-        <div class="label">Longitude</div>
-        <div>{{ "%.6f"|format(report.lng) }}</div>
+        <div class="report-number">
+          <span>Report</span>
+          <strong>#{{ report.id }}</strong>
+        </div>
+      </div>
+    </section>
 
-        <div class="label">Location source</div>
-        <div>{{ report.location_source }}</div>
+    <div class="content-grid">
+      <div class="column">
+        <section class="card">
+          <div class="card-header">
+            <div class="card-icon">i</div>
 
-        <div class="label">Status</div>
-        <div>{{ report.status }}</div>
+            <div>
+              <h2>Report Information</h2>
+              <p>Submission and location details</p>
+            </div>
+          </div>
 
-        <div class="label">Created at</div>
-        <div>{{ report.created_at }}</div>
+          <div class="card-body">
+            <div class="details-list">
+              <div class="detail-row">
+                <span class="detail-label">
+                  Report ID
+                </span>
+
+                <span class="detail-value">
+                  #{{ report.id }}
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">
+                  Status
+                </span>
+
+                <span class="detail-value">
+                  <span class="status-badge">
+                    {{ report.status }}
+                  </span>
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">
+                  Created at
+                </span>
+
+                <span class="detail-value">
+                  {{ report.created_at }}
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">
+                  Latitude
+                </span>
+
+                <span class="detail-value">
+                  {{ "%.6f"|format(report.lat) }}
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">
+                  Longitude
+                </span>
+
+                <span class="detail-value">
+                  {{ "%.6f"|format(report.lng) }}
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">
+                  Location source
+                </span>
+
+                <span class="detail-value">
+                  {% if report.location_source == "gps" %}
+                    GPS detected
+                  {% else %}
+                    Manually selected
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div class="card-icon">📷</div>
+
+            <div>
+              <h2>Original Road Image</h2>
+              <p>The image submitted with this report</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="image-frame">
+              <img
+                class="report-image"
+                src="{{ url_for('static', filename=report.image_path.replace('static/', '')) }}"
+                alt="Uploaded road image"
+              >
+            </div>
+
+            <p class="image-caption">
+              This is the original image before AI annotations
+              were added.
+            </p>
+          </div>
+        </section>
       </div>
 
-      <h2>Original Image</h2>
+      <div class="column">
+        <section class="card">
+          <div class="card-header">
+            <div class="card-icon">◇</div>
 
-      <img
-        class="report-image"
-        src="{{ url_for('static', filename=report.image_path.replace('static/', '')) }}"
-        alt="Uploaded road image"
-      >
+            <div>
+              <h2>AI Detection Analysis</h2>
+              <p>Road-damage model result</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            {% include "_detection_result.html" %}
+          </div>
+        </section>
+      </div>
     </div>
 
-    <div class="card">
-      {% include "_detection_result.html" %}
-    </div>
+    <section class="actions-card">
+      <div class="actions-copy">
+        <strong>What would you like to do next?</strong>
 
-    <div class="card links">
-      <a href="{{ url_for('reports.upload') }}">
-        Upload another report
-      </a>
+        <span>
+          Submit another report or view reported roads on the map.
+        </span>
+      </div>
 
-      <a href="/map">
-        View map
-      </a>
-    </div>
+      <div class="actions">
+        <a
+          class="button button-secondary"
+          href="/map"
+        >
+          View Road Map
+        </a>
 
-  </div>
+        <a
+          class="button button-primary"
+          href="{{ url_for('reports.upload') }}"
+        >
+          Submit Another Report
+        </a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
