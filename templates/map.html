@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tariq.lb — Road Damage Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Leaflet.markercluster plugin (groups nearby pins) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
@@ -113,6 +116,7 @@
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     const SEVERITY_COLORS = { Low: "#2e9e44", Medium: "#f2c037", High: "#f57c1f", Critical: "#e03131" };
     function getMarkerColor(s) { return SEVERITY_COLORS[s] || "#7a7a7a"; }
@@ -131,7 +135,14 @@
 
     // ── Filter state + marker layer ─────────────────────────
     const filters = { severity: "", damage_type: "" };
-    const markersLayer = L.layerGroup().addTo(map);
+    // markerClusterGroup groups nearby pins into a numbered circle that
+    // splits apart as you zoom in. Same .addLayer / .clearLayers API as
+    // a layerGroup, so the filter logic below is unchanged.
+    const markersLayer = L.markerClusterGroup({
+      maxClusterRadius: 45,          // how close pins must be to merge (px)
+      spiderfyOnMaxZoom: true,       // fan out overlapping pins at max zoom
+      showCoverageOnHover: false,    // don't draw the blue coverage polygon
+    }).addTo(map);
 
     function loadReports() {
       const params = new URLSearchParams();
@@ -153,10 +164,11 @@
                 (dateStr ? '<div class="meta">' + dateStr + '</div>' : '') +
                 '<div style="margin-top:6px"><a href="/reports/' + r.id + '">View Details &rarr;</a></div>' +
               '</div>';
-            L.circleMarker([r.lat, r.lng], {
+            const marker = L.circleMarker([r.lat, r.lng], {
               radius: 8, color: "#ffffff", weight: 2,
               fillColor: getMarkerColor(r.severity_label), fillOpacity: 0.9,
-            }).addTo(markersLayer).bindPopup(popupHtml);
+            }).bindPopup(popupHtml);
+            markersLayer.addLayer(marker);
           });
           const n = reports.length;
           document.getElementById("report-count").textContent =
