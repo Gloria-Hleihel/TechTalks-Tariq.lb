@@ -51,12 +51,12 @@ def dashboard():
     }
 
     damage_counts = {
-        "Pothole": Detection.query.filter_by(damage_type="Pothole").count(),
-        "Road Crack": Detection.query.filter_by(damage_type="Road Crack").count(),
-        "Surface Wear": Detection.query.filter_by(damage_type="Surface Wear").count(),
-        "Other": Detection.query.filter_by(damage_type="Other").count(),
-    }
-
+    "Longitudinal Crack": Detection.query.filter_by(damage_type="Longitudinal Crack").count(),
+    "Transverse Crack": Detection.query.filter_by(damage_type="Transverse Crack").count(),
+    "Alligator Crack": Detection.query.filter_by(damage_type="Alligator Crack").count(),
+    "Potholes": Detection.query.filter_by(damage_type="Potholes").count(),
+    "None": Detection.query.filter_by(damage_type="None").count(),
+}
     latest_report = Report.query.order_by(Report.created_at.desc()).first()
 
     return render_template(
@@ -96,7 +96,9 @@ def get_reports():
 @login_required
 def update_report_status(report_id):
     report = Report.query.get_or_404(report_id)
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not data:
+        return {"error": "Invalid or missing JSON body"}, 400
     new_status = data.get("status")
     if new_status not in config.REPORT_STATUSES:
         return {"error": f"Invalid status. Must be one of: {config.REPORT_STATUSES}"}, 400
