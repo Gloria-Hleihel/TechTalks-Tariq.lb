@@ -8,47 +8,81 @@
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; }
-    header { background: #14213d; color: #fff; padding: 12px 18px; }
-    header h1 { font-size: 18px; margin: 0; }
+    body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; color: #14213d; }
+
+    header { background: #14213d; color: #fff; padding: 14px 20px; display: flex; align-items: baseline; gap: 12px; }
+    header h1 { font-size: 18px; margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+    header .tagline { font-size: 12px; color: #9aa7bd; font-weight: 500; }
 
     /* ── Filter bar ─────────────────────────────────────── */
     .filters {
       background: #fff; border-bottom: 1px solid #e2e6ee;
-      padding: 10px 18px; display: flex; flex-wrap: wrap;
-      align-items: center; gap: 16px; font-size: 13px;
+      padding: 12px 20px; display: flex; flex-wrap: wrap;
+      align-items: center; gap: 14px 24px; font-size: 13px;
     }
-    .filters .group { display: flex; align-items: center; gap: 8px; }
-    .filters label { font-weight: 600; color: #5a6473; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+    .filters .group { display: flex; align-items: center; gap: 10px; }
+    .filters label { font-weight: 600; color: #5a6473; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
     .filters select {
-      font: inherit; padding: 6px 10px; border: 1px solid #cdd4e0;
+      font: inherit; padding: 7px 12px; border: 1px solid #cdd4e0;
       border-radius: 6px; background: #fff; color: #14213d; cursor: pointer;
+      transition: border-color 0.15s ease;
     }
+    .filters select:hover { border-color: #14213d; }
+    .filters select:focus-visible { outline: 2px solid #1c6fd6; outline-offset: 1px; }
+
     .sev-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
     .sev-btn {
-      font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+      font: inherit; font-size: 13px; padding: 6px 13px; cursor: pointer;
       border: 1px solid #cdd4e0; border-radius: 999px; background: #fff;
-      color: #14213d; display: flex; align-items: center; gap: 6px;
+      color: #14213d; display: flex; align-items: center; gap: 7px;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
     }
-    .sev-btn .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .sev-btn .dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
     .sev-btn:hover { border-color: #14213d; }
+    .sev-btn:focus-visible { outline: 2px solid #1c6fd6; outline-offset: 1px; }
     .sev-btn.active { background: #14213d; border-color: #14213d; color: #fff; }
-    .report-count { margin-left: auto; color: #5a6473; }
+    .sev-btn.active .dot { box-shadow: 0 0 0 1px rgba(255,255,255,0.5); }
+
+    .report-count { margin-left: auto; color: #5a6473; font-weight: 500; white-space: nowrap; }
 
     #map { flex: 1 1 auto; width: 100%; }
-    .legend { background: #fff; border: 1px solid #e2e6ee; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.6; }
-    .legend h2 { font-size: 12px; text-transform: uppercase; color: #5a6473; margin: 0 0 6px; }
+
+    /* ── Legend ─────────────────────────────────────────── */
+    .legend {
+      background: rgba(255,255,255,0.96); border: 1px solid #e2e6ee;
+      border-radius: 8px; padding: 11px 13px; font-size: 13px; line-height: 1.7;
+      box-shadow: 0 1px 6px rgba(20,33,61,0.12);
+    }
+    .legend h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #5a6473; margin: 0 0 7px; }
     .legend .row { display: flex; align-items: center; gap: 8px; }
     .legend .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.25); }
+
+    /* ── Popups ─────────────────────────────────────────── */
     .pin-popup { font-size: 13px; line-height: 1.5; }
     .pin-popup .sev { font-weight: 700; }
     .pin-popup .meta { color: #5a6473; }
     .pin-popup a { color: #1c6fd6; font-weight: 600; text-decoration: none; }
     .pin-popup a:hover { text-decoration: underline; }
+
+    /* ── Smaller screens ────────────────────────────────── */
+    @media (max-width: 620px) {
+      .filters { gap: 10px 14px; padding: 10px 14px; }
+      .filters .group { width: 100%; }
+      .filters select { flex: 1; }
+      .report-count { margin-left: 0; width: 100%; }
+      header { padding: 12px 14px; flex-wrap: wrap; gap: 2px 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .filters select, .sev-btn { transition: none; }
+    }
   </style>
 </head>
 <body>
-  <header><h1>Tariq.lb — Road Damage Map</h1></header>
+  <header>
+    <h1>Tariq.lb — Road Damage Map</h1>
+    <span class="tagline">Reported road damage across Lebanon</span>
+  </header>
 
   <!-- ── Filter controls ─────────────────────────────────── -->
   <div class="filters">
@@ -83,7 +117,9 @@
     const SEVERITY_COLORS = { Low: "#2e9e44", Medium: "#f2c037", High: "#f57c1f", Critical: "#e03131" };
     function getMarkerColor(s) { return SEVERITY_COLORS[s] || "#7a7a7a"; }
     function formatDate(iso) {
+      if (!iso) return "";
       const d = new Date(iso);
+      if (isNaN(d)) return "";
       return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
     }
 
@@ -109,16 +145,17 @@
         .then((reports) => {
           markersLayer.clearLayers();
           reports.forEach((r) => {
+            const dateStr = formatDate(r.created_at || r.date);
             const popupHtml =
               '<div class="pin-popup">' +
                 '<div class="sev" style="color:' + getMarkerColor(r.severity_label) + '">' + r.severity_label + '</div>' +
                 '<div>' + r.damage_type + '</div>' +
-                '<div class="meta">' + formatDate(r.date) + '</div>' +
+                (dateStr ? '<div class="meta">' + dateStr + '</div>' : '') +
                 '<div style="margin-top:6px"><a href="/reports/' + r.id + '">View Details &rarr;</a></div>' +
               '</div>';
             L.circleMarker([r.lat, r.lng], {
-              radius: 9, color: "#ffffff", weight: 2,
-              fillColor: getMarkerColor(r.severity_label), fillOpacity: 0.95,
+              radius: 8, color: "#ffffff", weight: 2,
+              fillColor: getMarkerColor(r.severity_label), fillOpacity: 0.9,
             }).addTo(markersLayer).bindPopup(popupHtml);
           });
           const n = reports.length;
