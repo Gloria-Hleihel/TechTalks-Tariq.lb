@@ -39,7 +39,7 @@ Updates report status via form submission (used by dashboard UI).
 
 ---
 
-### DELETE /admin/delete/:id
+### POST /admin/delete/:id
 Deletes a report and its linked detection record (cascade delete).
 
 **URL parameters:**

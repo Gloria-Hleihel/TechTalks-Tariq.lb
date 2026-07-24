@@ -63,7 +63,7 @@ pip install -r requirements.txt
 
 ### 4. Download YOLOv8 model weights
 
-Download roaddamage.pt from oracl4/RoadDamageDetection (trained on RDD2022) and place it in the project root.
+Download roaddamage.pt from oracl4/RoadDamageDetection (trained on RDD2022) and place it in models/road_damage.pt
 
 ### 5. Seed the database
 

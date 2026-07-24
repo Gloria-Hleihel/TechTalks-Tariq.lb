@@ -538,14 +538,14 @@
                         </td>
                         <td>
                             {% if report.detections %}
-                                {{ report.detections[0].damage_type }}
+                                {{ report.best_detection.damage_type }}
                             {% else %}
                                 <span style="color:#bbb;">No detection</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if report.detections %}
-                                {% set sev = report.detections[0].severity_label %}
+                                {% set sev = report.best_detection.severity_label %}
                                 {% if sev == 'Low' %}
                                     <span class="badge badge-low">Low</span>
                                 {% elif sev == 'Medium' %}

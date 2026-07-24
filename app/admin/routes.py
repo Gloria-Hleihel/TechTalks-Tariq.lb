@@ -39,6 +39,13 @@ def logout():
 @login_required
 def dashboard():
     reports = Report.query.all()
+    
+    # For each report, find the detection with highest confidence
+    for report in reports:
+        if report.detections:
+            report.best_detection = max(report.detections, key=lambda d: d.confidence)
+        else:
+            report.best_detection = None
 
     # Analytics
     total_reports = Report.query.count()
@@ -69,7 +76,7 @@ def dashboard():
     )
 
 
-@admin_bp.route("/api/admin/reports", methods=["GET"])
+@admin_bp.route("/reports", methods=["GET"])
 @login_required
 def get_reports():
     status_filter = request.args.get("status")
@@ -92,7 +99,7 @@ def get_reports():
     return {"reports": result}
 
 
-@admin_bp.route("/api/admin/reports/<int:report_id>", methods=["PATCH"])
+@admin_bp.route("/reports/<int:report_id>", methods=["PATCH"])
 @login_required
 def update_report_status(report_id):
     report = Report.query.get_or_404(report_id)
@@ -131,5 +138,5 @@ def delete_report(report_id):
 @login_required
 def report_detail(report_id):
     report = Report.query.get_or_404(report_id)
-    detection = report.detections[0] if report.detections else None
+    detection = max(report.detections, key=lambda d: d.confidence) if report.detections else None
     return render_template("admin/report_detail.html", report=report, detection=detection)
