@@ -296,3 +296,48 @@ def test_report_detail_page_renders_after_redirect(
     assert b"Detection Pending" in response.data
     assert b"Report Information" in response.data
     assert b"Original Road Image" in response.data
+
+def test_browser_location_source_is_saved_when_exif_is_missing(
+    app,
+    client,
+    monkeypatch,
+):
+    """Browser coordinates should be stored with their own source."""
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: None,
+    )
+
+    monkeypatch.setattr(
+        "app.reports.routes.trigger_detection",
+        lambda _report, _path: {
+            "status": "pending",
+            "error": "Detector unavailable in test.",
+        },
+    )
+
+    response = client.post(
+        "/upload",
+        data={
+            "image": (
+                image_bytes(),
+                "road.png",
+            ),
+            "lat": "33.8938",
+            "lng": "35.5018",
+            "location_source": "browser",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    with app.app_context():
+        report = db.session.get(Report, 1)
+
+        assert report is not None
+        assert report.location_source == "browser"
+        assert report.lat == pytest.approx(33.8938)
+        assert report.lng == pytest.approx(35.5018)
+

@@ -447,6 +447,42 @@
       color: var(--error);
     }
 
+    .location-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+
+    .location-btn {
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--green);
+      color: var(--white);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 800;
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .location-btn:hover {
+      background: var(--green-dark);
+      transform: translateY(-1px);
+    }
+
+    .location-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+    }
+
+    .location-status {
+      margin: 0 0 14px;
+    }
+
     #map {
       height: 415px;
       overflow: hidden;
@@ -776,6 +812,13 @@
               id="lng"
             >
 
+            <input
+              type="hidden"
+              name="location_source"
+              id="locationSource"
+              value="manual"
+            >
+
             <ul class="helper-list">
               <li>
                 JPG, JPEG and PNG images are supported.
@@ -810,6 +853,23 @@
             <div class="section-label">
               <span class="step-number">2</span>
               Confirm the location
+            </div>
+
+            <div class="location-actions">
+              <button
+                class="location-btn"
+                type="button"
+                id="useCurrentLocationButton"
+              >
+                Use my current location
+              </button>
+            </div>
+
+            <div
+              class="status-box gps-box info location-status"
+              id="locationStatus"
+            >
+              Click the map or use your current location.
             </div>
 
             <div id="map"></div>
@@ -868,7 +928,24 @@
 
     let marker = null;
 
-    function setMarker(lat, lng) {
+    const locationSourceInput =
+      document.getElementById('locationSource');
+
+    const locationStatus =
+      document.getElementById('locationStatus');
+
+    const useCurrentLocationButton =
+      document.getElementById('useCurrentLocationButton');
+
+    function setLocationStatus(message, isError) {
+      locationStatus.textContent = message;
+      locationStatus.className =
+        isError
+          ? 'status-box gps-box error location-status'
+          : 'status-box gps-box info location-status';
+    }
+
+    function setMarker(lat, lng, source, shouldZoom) {
       if (marker) {
         marker.setLatLng([lat, lng]);
       } else {
@@ -877,19 +954,94 @@
 
       document.getElementById('lat').value = lat;
       document.getElementById('lng').value = lng;
+      locationSourceInput.value = source || 'manual';
 
       document.getElementById(
         'selectedCoords'
       ).textContent =
         lat.toFixed(6) + ', ' + lng.toFixed(6);
+
+      if (shouldZoom) {
+        map.setView([lat, lng], Math.max(map.getZoom(), 16));
+      }
     }
 
     map.on('click', function(event) {
       setMarker(
         event.latlng.lat,
-        event.latlng.lng
+        event.latlng.lng,
+        'manual',
+        false
+      );
+
+      setLocationStatus(
+        'Map location selected.',
+        false
       );
     });
+
+    useCurrentLocationButton.addEventListener(
+      'click',
+      function() {
+        if (!navigator.geolocation) {
+          setLocationStatus(
+            'Your browser does not support current-location detection.',
+            true
+          );
+          return;
+        }
+
+        useCurrentLocationButton.disabled = true;
+        useCurrentLocationButton.textContent =
+          'Finding location...';
+
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            setMarker(
+              position.coords.latitude,
+              position.coords.longitude,
+              'browser',
+              true
+            );
+
+            setLocationStatus(
+              'Current location selected. You can still adjust it on the map.',
+              false
+            );
+
+            useCurrentLocationButton.disabled = false;
+            useCurrentLocationButton.textContent =
+              'Use my current location';
+          },
+          function(error) {
+            let message =
+              'Could not get your current location.';
+
+            if (error.code === error.PERMISSION_DENIED) {
+              message =
+                'Location permission was denied. Select the road on the map.';
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              message =
+                'Current location is unavailable. Select the road on the map.';
+            } else if (error.code === error.TIMEOUT) {
+              message =
+                'Location lookup timed out. Select the road on the map.';
+            }
+
+            setLocationStatus(message, true);
+
+            useCurrentLocationButton.disabled = false;
+            useCurrentLocationButton.textContent =
+              'Use my current location';
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        );
+      }
+    );
 
     const imageInput =
       document.getElementById('image');

@@ -36,6 +36,16 @@ def _manual_coordinates():
     return lat, lng
 
 
+def _location_source_from_form() -> str:
+    """Return whether fallback coordinates came from the browser or map."""
+    source = (request.form.get("location_source") or "manual").strip().lower()
+
+    if source == "browser":
+        return "browser"
+
+    return "manual"
+
+
 def _saved_image_is_allowed(saved_image_path: str) -> bool:
     """
     Validate a previously uploaded image path.
@@ -170,7 +180,7 @@ def create_report():
             )
 
         lat, lng = manual
-        location_source = "manual"
+        location_source = _location_source_from_form()
 
     report = Report(
         image_path=saved_rel_path,

@@ -895,6 +895,8 @@
                 <span class="detail-value">
                   {% if report.location_source == "gps" %}
                     GPS detected
+                  {% elif report.location_source == "browser" %}
+                    Browser location
                   {% else %}
                     Manually selected
                   {% endif %}

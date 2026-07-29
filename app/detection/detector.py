@@ -7,8 +7,10 @@ from app.detection.severity import severity_score
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-MODEL_PATH = PROJECT_ROOT / "models" / "road_damage.pt"
-ANNOTATED_DIR = PROJECT_ROOT / "static" / "uploads" / "annotated"
+MODEL_PATH = PROJECT_ROOT / "models" / "road_damage_v3.pt"
+ANNOTATED_DIR = (
+    PROJECT_ROOT / "static" / "uploads" / "annotated"
+)
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
@@ -111,7 +113,7 @@ def validate_image(image_path: str) -> Path:
 
 def detect_damage(
     image_path: str,
-    confidence_threshold: float = 0.3
+    confidence_threshold: float = 0.30,
 ) -> dict:
     """
     Run YOLOv8 road-damage detection on one image.
@@ -122,7 +124,8 @@ def detect_damage(
     try:
         results = model(
             str(validated_path),
-            conf=confidence_threshold
+            conf=confidence_threshold,
+            imgsz=640,
         )
     except Exception as error:
         raise InferenceError(
@@ -148,7 +151,8 @@ def detect_damage(
                 "damage_type": damage_type,
                 "confidence": round(confidence, 4),
                 "bounding_box": [
-                    round(value, 2) for value in bbox
+                    round(value, 2)
+                    for value in bbox
                 ],
             }
 
@@ -179,7 +183,7 @@ def detect_damage(
 
     annotated_image_path = save_annotated_result(
         results,
-        validated_path
+        validated_path,
     )
 
     return {
@@ -193,7 +197,10 @@ def detect_damage(
     }
 
 
-def save_annotated_result(results, image_path: Path) -> str:
+def save_annotated_result(
+    results,
+    image_path: Path,
+) -> str:
     """
     Save the first annotated YOLO result.
     """
@@ -207,7 +214,7 @@ def save_annotated_result(results, image_path: Path) -> str:
 
         saved = cv2.imwrite(
             str(output_path),
-            annotated_image
+            annotated_image,
         )
 
         if not saved:
@@ -218,7 +225,9 @@ def save_annotated_result(results, image_path: Path) -> str:
         break
 
     try:
-        relative_path = output_path.relative_to(PROJECT_ROOT)
+        relative_path = output_path.relative_to(
+            PROJECT_ROOT
+        )
         return str(relative_path).replace("\\", "/")
     except ValueError:
         return str(output_path)

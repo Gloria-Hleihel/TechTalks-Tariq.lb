@@ -44,7 +44,7 @@ SEVERITY_COLORS = {
 
 # --- Report workflow -----------------------------------------------------
 REPORT_STATUSES = ["pending", "reviewed", "resolved"]
-LOCATION_SOURCES = ["gps", "manual"]
+LOCATION_SOURCES = ["gps", "browser", "manual"]
 
 # --- Admin auth ------------------------------------------------------------
 # Simple Flask session-based auth per project assumptions — no role
