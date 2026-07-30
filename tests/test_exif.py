@@ -38,14 +38,14 @@ def _gps_exif(
 ):
     exif = Image.Exif()
 
-    gps_ifd = exif.get_ifd(
-        ExifTags.IFD.GPSInfo
-    )
+    gps_ifd = {
+        1: latitude_ref,
+        2: latitude,
+        3: longitude_ref,
+        4: longitude,
+    }
 
-    gps_ifd[1] = latitude_ref
-    gps_ifd[2] = latitude
-    gps_ifd[3] = longitude_ref
-    gps_ifd[4] = longitude
+    exif[ExifTags.IFD.GPSInfo] = gps_ifd
 
     return exif
 

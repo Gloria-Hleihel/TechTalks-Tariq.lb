@@ -13,17 +13,23 @@ def make_image(fmt="JPEG", gps=None):
 
     if gps:
         exif = Image.Exif()
-        gps_ifd = exif.get_ifd(ExifTags.IFD.GPSInfo)
-        gps_ifd[1] = "N" if gps[0] >= 0 else "S"
-        gps_ifd[2] = (abs(gps[0]), 0.0, 0.0)
-        gps_ifd[3] = "E" if gps[1] >= 0 else "W"
-        gps_ifd[4] = (abs(gps[1]), 0.0, 0.0)
+
+        gps_ifd = {
+            1: "N" if gps[0] >= 0 else "S",
+            2: (abs(gps[0]), 0.0, 0.0),
+            3: "E" if gps[1] >= 0 else "W",
+            4: (abs(gps[1]), 0.0, 0.0),
+        }
+
+        exif[ExifTags.IFD.GPSInfo] = gps_ifd
 
     image = Image.new("RGB", (14, 14), "white")
+
     if exif is None:
         image.save(stream, format=fmt)
     else:
         image.save(stream, format=fmt, exif=exif)
+
     stream.seek(0)
     return stream
 
@@ -63,6 +69,7 @@ def test_complete_submission_flow_five_times(app, client, monkeypatch):
 
     def detection_result(_report, _path):
         calls["count"] += 1
+
         if calls["count"] in {2, 5}:
             return {
                 "status": "pending",
@@ -115,6 +122,7 @@ def test_complete_submission_flow_five_times(app, client, monkeypatch):
 
     for expected_id, case in enumerate(cases, start=1):
         form_data = {"image": (case["stream"], case["filename"])}
+
         if "lat" in case:
             form_data["lat"] = case["lat"]
             form_data["lng"] = case["lng"]
@@ -126,10 +134,13 @@ def test_complete_submission_flow_five_times(app, client, monkeypatch):
         )
 
         assert response.status_code == 201
+
         payload = response.get_json()
+
         assert payload["report"]["id"] == expected_id
 
         detail_response = client.get(payload["redirect_url"])
+
         assert detail_response.status_code == 200
         assert f"Report #{expected_id}".encode() in detail_response.data
 

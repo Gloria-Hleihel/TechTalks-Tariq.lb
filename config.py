@@ -53,6 +53,13 @@ DETECTION_API_TIMEOUT = float(
     )
 )
 
+DETECTION_ESTIMATED_WAIT_SECONDS = int(
+    os.environ.get(
+        "DETECTION_ESTIMATED_WAIT_SECONDS",
+        "15",
+    )
+)
+
 DETECTION_STATUSES = [
     "pending",
     "completed",
@@ -61,10 +68,10 @@ DETECTION_STATUSES = [
 
 # Damage classification
 DAMAGE_TYPES = [
-    "Pothole",
-    "Road Crack",
-    "Surface Wear",
-    "Other",
+    "Longitudinal Crack",
+    "Transverse Crack",
+    "Alligator Crack",
+    "Potholes",
     "None",
 ]
 
@@ -94,6 +101,7 @@ REPORT_STATUSES = [
 
 LOCATION_SOURCES = [
     "gps",
+    "browser",
     "manual",
 ]
 
@@ -114,27 +122,3 @@ ADMIN_PASSWORD = os.environ.get(
 MAP_DEFAULT_LAT = 33.85
 MAP_DEFAULT_LNG = 35.86
 MAP_DEFAULT_ZOOM = 9
-
-# Detection API
-DETECTION_API_URL = os.environ.get(
-    "DETECTION_API_URL",
-    "http://127.0.0.1:5000/api/detect",
-)
-
-DETECTION_API_TIMEOUT = float(
-    os.environ.get(
-        "DETECTION_API_TIMEOUT",
-        "15",
-    )
-)
-DETECTION_ESTIMATED_WAIT_SECONDS = int(
-    os.environ.get(
-        "DETECTION_ESTIMATED_WAIT_SECONDS",
-        "15",
-    )
-)
-
-DETECTION_STATUSES = [
-    "pending",
-    "completed",
-]

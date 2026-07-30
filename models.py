@@ -35,6 +35,7 @@ class Report(db.Model):
         nullable=False,
     )
 
+    # "gps" from EXIF, "browser" from device location, "manual" from map click
     location_source = db.Column(
         db.String(10),
         nullable=False,

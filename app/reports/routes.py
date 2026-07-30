@@ -30,6 +30,7 @@ class SubmissionError(Exception):
     message: str
     status_code: int = 400
     field: str | None = None
+    saved_image_path: str | None = None
 
     def __str__(self) -> str:
         return self.message
@@ -68,11 +69,54 @@ def _manual_coordinates():
 def _absolute_upload_path(
     relative_path: str,
 ) -> str:
-    """Convert a stored path into an absolute file path."""
+    """Convert a stored upload path into an absolute file path."""
     return os.path.join(
         current_app.config["UPLOAD_FOLDER"],
         os.path.basename(relative_path),
     )
+
+
+def _location_source_from_form() -> str:
+    """Return whether fallback coordinates came from the browser or map."""
+    source = (
+        request.form.get("location_source")
+        or "manual"
+    ).strip().lower()
+
+    if source == "browser":
+        return "browser"
+
+    return "manual"
+
+
+def _saved_image_is_allowed(saved_image_path: str) -> bool:
+    """
+    Validate a previously uploaded image path.
+
+    save_image() returns paths such as uploads/abc123.jpg.
+    """
+    if not saved_image_path:
+        return False
+
+    normalized_path = saved_image_path.replace("\\", "/")
+
+    if not normalized_path.startswith("uploads/"):
+        return False
+
+    filename = os.path.basename(normalized_path)
+
+    if not filename:
+        return False
+
+    allowed_extensions = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+    }
+
+    extension = os.path.splitext(filename)[1].lower()
+
+    return extension in allowed_extensions
 
 
 def _mark_detection_pending(
@@ -222,68 +266,105 @@ def _process_detection(
 
 
 def _validate_and_save_upload():
-    """Validate and save the uploaded image."""
+    """
+    Validate and save the uploaded image.
+
+    Supports two cases:
+    1. New image uploaded by the user.
+    2. Previously saved image reused after missing-location fallback.
+    """
     file = request.files.get("image")
 
-    if not file or not file.filename:
+    saved_image_path = (
+        request.form.get("saved_image_path")
+        or ""
+    ).strip()
+
+    using_saved_image = False
+
+    if file and file.filename:
+        if not allowed_file(file.filename):
+            raise SubmissionError(
+                "Unsupported file type. "
+                "Choose a JPG, JPEG, or PNG image.",
+                field="image",
+            )
+
+        file_size = get_file_size(file)
+
+        max_size = current_app.config[
+            "MAX_CONTENT_LENGTH"
+        ]
+
+        if file_size <= 0:
+            raise SubmissionError(
+                "The selected file is empty or unreadable. "
+                "Choose another image.",
+                field="image",
+            )
+
+        if file_size > max_size:
+            raise SubmissionError(
+                "The image is larger than 5MB. "
+                "Compress it or choose a smaller image.",
+                status_code=413,
+                field="image",
+            )
+
+        try:
+            saved_rel_path = save_image(file)
+
+        except OSError as exc:
+            current_app.logger.exception(
+                "Could not save uploaded image"
+            )
+
+            raise SubmissionError(
+                "The image could not be saved. "
+                "Check storage permissions and try again.",
+                status_code=500,
+                field="image",
+            ) from exc
+
+        if not saved_rel_path:
+            raise SubmissionError(
+                "The file is not a valid JPG or PNG image. "
+                "Choose a different file.",
+                field="image",
+            )
+
+    elif saved_image_path:
+        if not _saved_image_is_allowed(saved_image_path):
+            raise SubmissionError(
+                "The previously uploaded image path is invalid. "
+                "Please choose the image again.",
+                field="image",
+            )
+
+        saved_rel_path = saved_image_path.replace("\\", "/")
+        using_saved_image = True
+
+    else:
         raise SubmissionError(
             "Please choose a JPG, JPEG, or PNG road image.",
             field="image",
         )
 
-    if not allowed_file(file.filename):
+    saved_abs_path = _absolute_upload_path(
+        saved_rel_path
+    )
+
+    if using_saved_image and not os.path.isfile(saved_abs_path):
         raise SubmissionError(
-            "Unsupported file type. "
-            "Choose a JPG, JPEG, or PNG image.",
-            field="image",
-        )
-
-    file_size = get_file_size(file)
-
-    max_size = current_app.config[
-        "MAX_CONTENT_LENGTH"
-    ]
-
-    if file_size <= 0:
-        raise SubmissionError(
-            "The selected file is empty or unreadable. "
-            "Choose another image.",
-            field="image",
-        )
-
-    if file_size > max_size:
-        raise SubmissionError(
-            "The image is larger than 5MB. "
-            "Compress it or choose a smaller image.",
-            status_code=413,
-            field="image",
-        )
-
-    try:
-        saved_rel_path = save_image(file)
-
-    except OSError as exc:
-        current_app.logger.exception(
-            "Could not save uploaded image"
-        )
-
-        raise SubmissionError(
-            "The image could not be saved. "
-            "Check storage permissions and try again.",
-            status_code=500,
-            field="image",
-        ) from exc
-
-    if not saved_rel_path:
-        raise SubmissionError(
-            "The file is not a valid JPG or PNG image. "
-            "Choose a different file.",
+            "The previously uploaded image could not be found. "
+            "Please choose it again.",
             field="image",
         )
 
     return (
         saved_rel_path,
-        _absolute_upload_path(saved_rel_path),
+        saved_abs_path,
+        using_saved_image,
     )
 
 
@@ -291,7 +372,7 @@ def _resolve_location(
     saved_rel_path: str,
     saved_abs_path: str,
 ):
-    """Use GPS first and manual coordinates as fallback."""
+    """Use GPS first and manual/browser coordinates as fallback."""
     manual = _manual_coordinates()
     gps_warning = None
 
@@ -326,27 +407,29 @@ def _resolve_location(
         return (
             lat,
             lng,
-            "manual",
+            _location_source_from_form(),
             gps_warning,
         )
 
-    delete_image(
-        saved_rel_path
-    )
-
     if gps_warning:
-        raise SubmissionError(
+        message = (
             f"{gps_warning} "
             "Select the road location on the map "
-            "and submit again.",
-            field="location",
+            "and submit again. Your uploaded image "
+            "has been kept."
+        )
+    else:
+        message = (
+            "No GPS location was found. "
+            "Click the map to select the road location, "
+            "then submit again. Your uploaded image "
+            "has been kept."
         )
 
     raise SubmissionError(
-        "No GPS location was found. "
-        "Click the map to select the road location, "
-        "then submit again.",
+        message,
         field="location",
+        saved_image_path=saved_rel_path,
     )
 
 
@@ -355,6 +438,7 @@ def _create_report_submission():
     (
         saved_rel_path,
         saved_abs_path,
+        using_saved_image,
     ) = _validate_and_save_upload()
 
     try:
@@ -372,9 +456,10 @@ def _create_report_submission():
         raise
 
     except Exception as exc:
-        delete_image(
-            saved_rel_path
-        )
+        if not using_saved_image:
+            delete_image(
+                saved_rel_path
+            )
 
         current_app.logger.exception(
             "Unexpected location processing failure"
@@ -405,9 +490,10 @@ def _create_report_submission():
     except Exception as exc:
         db.session.rollback()
 
-        delete_image(
-            saved_rel_path
-        )
+        if not using_saved_image:
+            delete_image(
+                saved_rel_path
+            )
 
         current_app.logger.exception(
             "Could not create report"
@@ -505,24 +591,43 @@ def create_report():
             "error",
         )
 
+        if (
+            exc.field == "location"
+            and exc.saved_image_path
+        ):
+            return render_template(
+                "upload.html",
+                saved_image_path=exc.saved_image_path,
+                saved_image_name=os.path.basename(
+                    exc.saved_image_path
+                ),
+                estimated_wait_seconds=(
+                    current_app.config.get(
+                        "DETECTION_ESTIMATED_WAIT_SECONDS",
+                        15,
+                    )
+                ),
+            )
+
         return redirect(
             url_for("reports.upload")
         )
 
     if (
         gps_warning
-        and report.location_source == "manual"
+        and report.location_source != "gps"
     ):
         flash(
             "The photo GPS metadata could not be read, "
-            "so your selected map location was used.",
+            "so your selected location was used.",
             "info",
         )
 
-    if detection_result["status"] == "completed":
-        category = "success"
-    else:
-        category = "info"
+    category = (
+        "success"
+        if detection_result["status"] == "completed"
+        else "info"
+    )
 
     flash(
         detection_result["user_message"],
@@ -557,6 +662,7 @@ def api_create_report():
                     "ok": False,
                     "error": exc.message,
                     "field": exc.field,
+                    "saved_image_path": exc.saved_image_path,
                 }
             ),
             exc.status_code,
@@ -566,11 +672,11 @@ def api_create_report():
 
     if (
         gps_warning
-        and report.location_source == "manual"
+        and report.location_source != "gps"
     ):
         warning = (
             "The photo GPS metadata could not be read, "
-            "so your selected map location was used."
+            "so your selected location was used."
         )
 
     return (
@@ -608,10 +714,11 @@ def report_detail(report_id):
         report_id,
     )
 
-    if report.detections:
-        detection = report.detections[0]
-    else:
-        detection = None
+    detection = (
+        report.detections[0]
+        if report.detections
+        else None
+    )
 
     return render_template(
         "report_detail.html",
@@ -676,10 +783,11 @@ def retry_detection(report_id):
         image_path,
     )
 
-    if result["status"] == "completed":
-        category = "success"
-    else:
-        category = "info"
+    category = (
+        "success"
+        if result["status"] == "completed"
+        else "info"
+    )
 
     flash(
         result["user_message"],
