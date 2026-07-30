@@ -1,6 +1,6 @@
 # Database Schema — Tariq.lb
 
-Owner: Zahraa · Last updated: Week 1
+Owner: Zahraa · Last updated: Week 4
 
 This document covers the full SQLite schema: both tables, every field,
 data types, keys, and constraints. If a change is needed after Week 1,
