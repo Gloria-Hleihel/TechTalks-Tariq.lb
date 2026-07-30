@@ -1,6 +1,6 @@
 ---
 
-### PATCH /admin/api/admin/reports/:id
+### PATCH /admin/reports/:id
 Updates the status of a specific report.
 
 **URL parameters:**

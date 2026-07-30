@@ -88,9 +88,10 @@ def get_reports():
     for report in reports:
         report_data = report.to_dict()
         if report.detections:
-            report_data["damage_type"] = report.detections[0].damage_type
-            report_data["severity_label"] = report.detections[0].severity_label
-            report_data["confidence"] = report.detections[0].confidence
+            best = max(report.detections, key=lambda d: d.confidence)
+            report_data["damage_type"] = best.damage_type
+            report_data["severity_label"] = best.severity_label
+            report_data["confidence"] = best.confidence
         else:
             report_data["damage_type"] = "No detection yet"
             report_data["severity_label"] = "—"

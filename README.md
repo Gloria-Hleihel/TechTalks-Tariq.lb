@@ -127,7 +127,7 @@ The interactive map is centered on Lebanon (lat: 33.85, lng: 35.86) and displays
 - Re-run `pip install -r requirements.txt`
 
 ### Problem: Model fails to load / roaddamage.pt not found
-- Confirm the weights file is in the project root
+- Confirm the weights file exists at models/road_damage.pt
 - Re-download from the oracl4 repo if corrupted
 
 ### Problem: Pins don't appear on the map
