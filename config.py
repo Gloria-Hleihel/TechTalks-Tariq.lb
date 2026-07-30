@@ -55,4 +55,4 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
 # --- Map defaults (centered on Lebanon) -----------------------------------
 MAP_DEFAULT_LAT = 33.85
 MAP_DEFAULT_LNG = 35.86
-MAP_DEFAULT_ZOOM = 9 
+MAP_DEFAULT_ZOOM = 9

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" width="240" height="180">
+
+  <!-- T letter -->
+  <rect x="10" y="10" width="80" height="16" rx="5" fill="#1a1a1a"/>
+  <rect x="38" y="10" width="24" height="80" rx="5" fill="#1a1a1a"/>
+
+  <!-- Curved road from T to B -->
+  <path d="M50 30 Q50 70 95 75" stroke="#555" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <!-- Road dashes -->
+  <path d="M50 30 Q50 70 95 75" stroke="white" stroke-width="2" fill="none" stroke-dasharray="8,6" stroke-linecap="round"/>
+
+  <!-- B vertical bar -->
+  <rect x="105" y="10" width="12" height="80" rx="3" fill="#1a1a1a"/>
+
+  <!-- B top curve — red -->
+  <path d="M117 10 Q150 10 150 30 Q150 50 117 50 Z" fill="#7b0d1e"/>
+
+  <!-- B bottom curve — green -->
+  <path d="M117 50 Q155 50 155 65 Q155 90 117 90 Z" fill="#4a7c59"/>
+
+  <!-- Cedar tree in green bump -->
+  <polygon points="138,84 132,68 126,84" fill="white" opacity="0.95"/>
+  <polygon points="137,75 132,61 127,75" fill="white" opacity="0.95"/>
+  <rect x="131" y="84" width="2" height="5" fill="white" opacity="0.8"/>
+
+  <!-- TARIQ in dark -->
+  <text x="10" y="128" font-family="Arial Black, Arial" font-weight="900" font-size="22" fill="#1a1a1a" letter-spacing="2">TARIQ</text>
+
+  <!-- L in red -->
+  <text x="118" y="128" font-family="Arial Black, Arial" font-weight="900" font-size="22" fill="#7b0d1e" letter-spacing="2">L</text>
+
+  <!-- B in green -->
+  <text x="135" y="128" font-family="Arial Black, Arial" font-weight="900" font-size="22" fill="#4a7c59" letter-spacing="2">B</text>
+
+  <!-- Tagline with symmetric dashes -->
+  <line x1="10" y1="142" x2="28" y2="142" stroke="#7b0d1e" stroke-width="1.5"/>
+  <text x="32" y="146" font-family="Arial" font-size="8" fill="#888" letter-spacing="1.8">ROADS. SOLUTIONS. PROGRESS.</text>
+  <line x1="202" y1="142" x2="220" y2="142" stroke="#4a7c59" stroke-width="1.5"/>
+
+</svg>
