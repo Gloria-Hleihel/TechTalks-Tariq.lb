@@ -1,73 +1,81 @@
+import mimetypes
+import os
 from typing import Any, Dict
+
+import requests
+from flask import current_app
 
 import config
 
 
-def _load_detector():
-    """Load Majd's detector from either supported package location."""
+def _setting(
+    name: str,
+    default,
+):
+    """Read a Flask setting or fall back to config.py."""
     try:
-        from app.detection.detector import detect_damage
+        return current_app.config.get(
+            name,
+            default,
+        )
+    except RuntimeError:
+        return getattr(
+            config,
+            name,
+            default,
+        )
 
-        return detect_damage
-    except ImportError:
-        try:
-            from app.detect.detector import detect_damage
 
-            return detect_damage
-        except ImportError:
-            return None
-
-
-def _failed(message: str) -> Dict[str, Any]:
+def _pending(
+    error: str,
+    user_message: str,
+) -> Dict[str, Any]:
+    """Return a retryable failed-detection result."""
     return {
-        "status": "failed",
-        "error": message,
+        "status": "pending",
+        "error": error,
+        "user_message": user_message,
     }
 
 
-def trigger_detection(
-    report,
-    image_path: str,
+def _normalize_result(
+    payload: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """
-    Trigger road-damage detection without inventing a result.
-
-    Possible statuses:
-    - completed
-    - pending
-    - failed
-    """
-    try:
-        detect_damage = _load_detector()
-    except Exception as exc:
-        return _failed(
-            f"Detection module could not be loaded: {exc}"
-        )
-
-    if detect_damage is None:
-        return {
-            "status": "pending",
-            "error": "Detection module is not available yet.",
-        }
-
-    try:
-        result = detect_damage(image_path)
-    except Exception as exc:
-        return _failed(f"Detection failed: {exc}")
+    """Validate the detection API response."""
+    result = payload.get(
+        "detection",
+        payload,
+    )
 
     if not isinstance(result, dict):
-        return _failed(
-            "Detection returned no usable result."
+        return _pending(
+            "Detection API returned an invalid JSON structure.",
+            (
+                "Your report was saved, but the detection "
+                "response was invalid. "
+                "Please retry detection later."
+            ),
         )
 
-    if result.get("status") in {"pending", "failed"}:
-        return {
-            "status": result["status"],
-            "error": result.get(
-                "error",
-                "Detection did not complete.",
+    if result.get("status") in {
+        "pending",
+        "failed",
+        "error",
+    }:
+        api_error = str(
+            result.get("error")
+            or result.get("message")
+            or "Detection did not complete."
+        )
+
+        return _pending(
+            api_error,
+            (
+                "Your report was saved, but detection "
+                "did not complete. "
+                "Please retry detection later."
             ),
-        }
+        )
 
     required_fields = {
         "damage_type",
@@ -77,39 +85,89 @@ def trigger_detection(
     }
 
     if not required_fields.issubset(result):
-        return _failed(
-            "Detection result is missing required fields."
+        return _pending(
+            "Detection API response is missing required fields.",
+            (
+                "Your report was saved, but the detection "
+                "response was incomplete. "
+                "Please retry detection later."
+            ),
         )
 
-    damage_type = str(result["damage_type"])
-    severity_label = str(result["severity_label"])
+    damage_type = str(
+        result["damage_type"]
+    )
+
+    severity_label = str(
+        result["severity_label"]
+    )
 
     if damage_type not in config.DAMAGE_TYPES:
-        return _failed(
-            f"Unsupported damage type: {damage_type}"
+        return _pending(
+            (
+                "Unsupported damage type returned: "
+                f"{damage_type}"
+            ),
+            (
+                "Your report was saved, but detection returned "
+                "an unsupported result. "
+                "Please retry detection later."
+            ),
         )
 
     if severity_label not in config.SEVERITY_LEVELS:
-        return _failed(
-            f"Unsupported severity label: {severity_label}"
+        return _pending(
+            (
+                "Unsupported severity label returned: "
+                f"{severity_label}"
+            ),
+            (
+                "Your report was saved, but detection returned "
+                "an unsupported severity. "
+                "Please retry detection later."
+            ),
         )
 
     try:
-        confidence = float(result["confidence"])
-        severity_score = int(result["severity_score"])
+        confidence = float(
+            result["confidence"]
+        )
+
+        severity_score = int(
+            result["severity_score"]
+        )
+
     except (TypeError, ValueError):
-        return _failed(
-            "Detection returned invalid numeric values."
+        return _pending(
+            "Detection API returned invalid numeric values.",
+            (
+                "Your report was saved, but detection "
+                "returned invalid values. "
+                "Please retry detection later."
+            ),
         )
 
     if not 0.0 <= confidence <= 1.0:
-        return _failed(
-            "Detection confidence must be between 0 and 1."
+        return _pending(
+            "Detection confidence must be between 0 and 1.",
+            (
+                "Your report was saved, but detection returned "
+                "invalid confidence. "
+                "Please retry detection later."
+            ),
         )
 
     if not 0 <= severity_score <= 100:
-        return _failed(
-            "Detection severity score must be between 0 and 100."
+        return _pending(
+            (
+                "Detection severity score must be "
+                "between 0 and 100."
+            ),
+            (
+                "Your report was saved, but detection returned "
+                "an invalid severity score. "
+                "Please retry detection later."
+            ),
         )
 
     return {
@@ -118,7 +176,158 @@ def trigger_detection(
         "confidence": confidence,
         "severity_score": severity_score,
         "severity_label": severity_label,
-        "annotated_image_path": result.get(
-            "annotated_image_path"
+        "annotated_image_path": (
+            result.get("annotated_image_path")
+            or result.get("annotated_path")
         ),
     }
+
+
+def trigger_detection(
+    report,
+    image_path: str,
+) -> Dict[str, Any]:
+    """
+    Send the saved image to POST /api/detect.
+
+    Any API or network failure returns pending so the Report
+    remains saved and detection can be retried.
+    """
+    api_url = _setting(
+        "DETECTION_API_URL",
+        config.DETECTION_API_URL,
+    )
+
+    timeout = float(
+        _setting(
+            "DETECTION_API_TIMEOUT",
+            config.DETECTION_API_TIMEOUT,
+        )
+    )
+
+    if not os.path.isfile(image_path):
+        return _pending(
+            "Saved upload is missing from disk.",
+            (
+                "The report was saved, but its image "
+                "could not be sent for detection."
+            ),
+        )
+
+    mime_type = (
+        mimetypes.guess_type(image_path)[0]
+        or "application/octet-stream"
+    )
+
+    try:
+        with open(
+            image_path,
+            "rb",
+        ) as image_file:
+            response = requests.post(
+                api_url,
+                files={
+                    "image": (
+                        os.path.basename(image_path),
+                        image_file,
+                        mime_type,
+                    )
+                },
+                data={
+                    "report_id": str(report.id),
+                },
+                timeout=timeout,
+            )
+
+    except requests.Timeout:
+        return _pending(
+            (
+                "Detection API timed out after "
+                f"{timeout:g} seconds."
+            ),
+            (
+                "Your report was saved, but detection "
+                "timed out. Please retry detection later."
+            ),
+        )
+
+    except requests.ConnectionError:
+        return _pending(
+            "Detection API is unavailable.",
+            (
+                "Your report was saved, but the detection "
+                "service is unavailable. "
+                "Please retry detection later."
+            ),
+        )
+
+    except requests.RequestException as exc:
+        return _pending(
+            f"Detection API request failed: {exc}",
+            (
+                "Your report was saved, but detection "
+                "could not be started. "
+                "Please retry detection later."
+            ),
+        )
+
+    except OSError as exc:
+        return _pending(
+            (
+                "Could not open the saved upload "
+                f"for detection: {exc}"
+            ),
+            (
+                "Your report was saved, but its image "
+                "could not be read for detection."
+            ),
+        )
+
+    if not response.ok:
+        detail = ""
+
+        try:
+            body = response.json()
+
+            detail = str(
+                body.get("error")
+                or body.get("message")
+                or ""
+            )
+
+        except (ValueError, AttributeError):
+            detail = response.text.strip()[:200]
+
+        error = (
+            "Detection API returned HTTP "
+            f"{response.status_code}."
+        )
+
+        if detail:
+            error = f"{error} {detail}"
+
+        return _pending(
+            error,
+            (
+                "Your report was saved, but the detection "
+                "service returned an error. "
+                "Please retry detection later."
+            ),
+        )
+
+    try:
+        payload = response.json()
+
+    except ValueError:
+        return _pending(
+            "Detection API returned non-JSON data.",
+            (
+                "Your report was saved, but the detection "
+                "response could not be read. "
+                "Please retry detection later."
+            ),
+        )
+
+    return _normalize_result(
+        payload
+    )

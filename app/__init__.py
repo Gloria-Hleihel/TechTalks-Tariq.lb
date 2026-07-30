@@ -1,6 +1,7 @@
 import os
 
-from flask import Flask
+from flask import Flask, flash, jsonify, redirect, request, url_for
+from werkzeug.exceptions import RequestEntityTooLarge
 
 import config
 from models import db
@@ -12,12 +13,18 @@ def create_app(test_config=None):
 
     static_folder = test_config.get(
         "STATIC_FOLDER",
-        os.path.join(config.BASE_DIR, "static"),
+        os.path.join(
+            config.BASE_DIR,
+            "static",
+        ),
     )
 
     template_folder = test_config.get(
         "TEMPLATE_FOLDER",
-        os.path.join(config.BASE_DIR, "templates"),
+        os.path.join(
+            config.BASE_DIR,
+            "templates",
+        ),
     )
 
     app = Flask(
@@ -44,6 +51,35 @@ def create_app(test_config=None):
     from app.reports import bp as reports_bp
 
     app.register_blueprint(reports_bp)
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_large_upload(_error):
+        message = (
+            "The upload is larger than 5MB. "
+            "Compress the image or choose a smaller file."
+        )
+
+        if request.path.startswith("/api/"):
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "error": message,
+                        "field": "image",
+                    }
+                ),
+                413,
+            )
+
+        flash(
+            message,
+            "error",
+        )
+
+        return redirect(
+            url_for("reports.upload"),
+            code=303,
+        )
 
     with app.app_context():
         db.create_all()

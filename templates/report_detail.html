@@ -2,33 +2,116 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Tariq.lb — Report #{{ report.id }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>
+    Tariq.lb — Report #{{ report.id }}
+  </title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
 
   <style>
+    :root {
+      --brand-red: #7b0d1e;
+      --brand-red-hover: #620a18;
+
+      --brand-green: #4a7c59;
+      --brand-green-hover: #3c6649;
+
+      --brand-dark: #1a1a1a;
+
+      --page-background: #f6f4f2;
+      --card-background: #ffffff;
+      --panel-background: #faf9f7;
+
+      --text-color: #1a1a1a;
+      --muted-text: #666666;
+      --border-color: #dedbd7;
+
+      --success-background: #edf5ef;
+      --success-border: #a9c5b1;
+      --success-text: #31543d;
+
+      --info-background: #f4f1ed;
+      --info-border: #d8d1ca;
+      --info-text: #1a1a1a;
+
+      --error-background: #f9ecef;
+      --error-border: #d8a5ae;
+      --error-text: #7b0d1e;
+
+      --warning-background: #f6f1e8;
+      --warning-border: #d9c7a4;
+      --warning-text: #65490f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
     body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 16px;
       font-family: Arial, Helvetica, sans-serif;
-      margin: 20px;
-      background: #f7f7f7;
-      color: #222;
+      background: var(--page-background);
+      color: var(--text-color);
+    }
+
+    button {
+      font: inherit;
     }
 
     .container {
-      max-width: 950px;
+      width: 100%;
+      max-width: 900px;
       margin: 0 auto;
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 18px;
+      padding: 22px;
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(26, 26, 26, 0.07);
     }
 
-    h1, h2, h3 {
-      color: #183b68;
+    .card:first-of-type {
+      border-top: 5px solid var(--brand-red);
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: var(--brand-red);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      line-height: 1.2;
+    }
+
+    h2 {
+      margin: 24px 0 12px;
+      font-size: 1.2rem;
+    }
+
+    h3 {
+      margin: 18px 0 10px;
+    }
+
+    p {
+      line-height: 1.55;
     }
 
     .messages {
@@ -36,91 +119,223 @@
     }
 
     .msg {
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
+      margin-bottom: 10px;
+      padding: 12px 14px;
+      border-radius: 9px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
     }
 
     .success {
-      background: #e6ffed;
-      border: 1px solid #b7f0c6;
-      color: #0b5f2b;
-    }
-
-    .error {
-      background: #ffeaea;
-      border: 1px solid #ffbdbd;
-      color: #5a0b0b;
+      background: var(--success-background);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
     }
 
     .info {
-      background: #eef6ff;
-      border: 1px solid #cfe9ff;
-      color: #0b3a66;
+      background: var(--info-background);
+      border: 1px solid var(--info-border);
+      color: var(--info-text);
     }
 
-    .report-image {
-      max-width: 100%;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      margin-top: 10px;
+    .error,
+    .detection-error {
+      padding: 12px 14px;
+      background: var(--error-background);
+      border: 1px solid var(--error-border);
+      border-radius: 9px;
+      color: var(--error-text);
+      line-height: 1.4;
+      overflow-wrap: anywhere;
     }
 
     .details-grid {
       display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 8px;
-      margin: 12px 0;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 12px 18px;
+      margin: 22px 0;
+      padding: 18px;
+      background: var(--panel-background);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
     }
 
     .label {
-      font-weight: bold;
-      color: #555;
+      color: var(--muted-text);
+      font-weight: 700;
+    }
+
+    .details-grid > div:nth-child(even) {
+      color: var(--brand-dark);
+      overflow-wrap: anywhere;
+    }
+
+    .report-image {
+      display: block;
+      width: 100%;
+      max-width: 720px;
+      height: auto;
+      margin-top: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: #eeeeee;
     }
 
     .badge {
       display: inline-block;
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 999px;
-      color: white;
-      font-weight: bold;
+      color: #ffffff;
       font-size: 0.9rem;
+      font-weight: 700;
     }
 
     .badge-low {
-      background: green;
+      background: var(--brand-green);
     }
 
     .badge-medium {
-      background: #c9a300;
-      color: #222;
+      background: #b28b30;
+      color: var(--brand-dark);
     }
 
     .badge-high {
-      background: orange;
-      color: #222;
+      background: #b45f2a;
+      color: #ffffff;
     }
 
     .badge-critical {
-      background: red;
+      background: var(--brand-red);
+    }
+
+    .retry-button {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 15px;
+      background: var(--brand-red);
+      border: 0;
+      border-radius: 8px;
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 700;
+      transition:
+        background 0.16s ease,
+        transform 0.16s ease;
+    }
+
+    .retry-button:hover {
+      background: var(--brand-red-hover);
+      transform: translateY(-1px);
+    }
+
+    .retry-button:focus-visible {
+      outline: 3px solid rgba(123, 13, 30, 0.25);
+      outline-offset: 2px;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
     }
 
     .links a {
-      display: inline-block;
-      margin-right: 12px;
-      color: #1976d2;
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 8px;
       text-decoration: none;
-      font-weight: bold;
+      font-weight: 700;
+      transition:
+        background 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
     }
 
-    .links a:hover {
-      text-decoration: underline;
+    .links a:first-child {
+      background: var(--brand-red);
+      color: #ffffff;
+    }
+
+    .links a:first-child:hover {
+      background: var(--brand-red-hover);
+      transform: translateY(-1px);
+    }
+
+    .links a:last-child {
+      background: var(--brand-green);
+      color: #ffffff;
+    }
+
+    .links a:last-child:hover {
+      background: var(--brand-green-hover);
+      transform: translateY(-1px);
     }
 
     @media (max-width: 700px) {
+      body {
+        padding: 0;
+      }
+
+      .container {
+        max-width: 100%;
+      }
+
+      .card {
+        margin-bottom: 12px;
+        padding: 18px 16px;
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+      }
+
       .details-grid {
         grid-template-columns: 1fr;
+        gap: 5px;
+        padding: 15px;
+      }
+
+      .details-grid .label:not(:first-child) {
+        margin-top: 10px;
+      }
+
+      .retry-button {
+        width: 100%;
+      }
+
+      .links {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .links a {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 400px) {
+      h1 {
+        font-size: 1.45rem;
+      }
+
+      .card {
+        padding: 16px 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
     }
   </style>
@@ -129,34 +344,50 @@
 <body>
   <div class="container">
     <div class="messages">
-      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% with messages =
+        get_flashed_messages(with_categories=true)
+      %}
+
         {% if messages %}
           {% for category, message in messages %}
-            <div class="msg {{ category }}">{{ message }}</div>
+            <div class="msg {{ category }}">
+              {{ message }}
+            </div>
           {% endfor %}
         {% endif %}
+
       {% endwith %}
     </div>
 
     <div class="card">
       <h1>Report Submitted Successfully</h1>
-      <p>Your road-condition report was saved.</p>
+
+      <p>
+        Your road-condition report and location were saved.
+      </p>
 
       <div class="details-grid">
         <div class="label">Report ID</div>
         <div>#{{ report.id }}</div>
 
         <div class="label">Latitude</div>
-        <div>{{ "%.6f"|format(report.lat) }}</div>
+        <div>
+          {{ "%.6f"|format(report.lat) }}
+        </div>
 
         <div class="label">Longitude</div>
-        <div>{{ "%.6f"|format(report.lng) }}</div>
+        <div>
+          {{ "%.6f"|format(report.lng) }}
+        </div>
 
         <div class="label">Location source</div>
         <div>{{ report.location_source }}</div>
 
-        <div class="label">Status</div>
+        <div class="label">Report status</div>
         <div>{{ report.status }}</div>
+
+        <div class="label">Detection status</div>
+        <div>{{ report.detection_status }}</div>
 
         <div class="label">Created at</div>
         <div>{{ report.created_at }}</div>
@@ -166,7 +397,10 @@
 
       <img
         class="report-image"
-        src="{{ url_for('static', filename=report.image_path.replace('static/', '')) }}"
+        src="{{ url_for(
+          'static',
+          filename=report.image_path.replace('static/', '')
+        ) }}"
         alt="Uploaded road image"
       />
     </div>
@@ -176,8 +410,13 @@
     </div>
 
     <div class="card links">
-      <a href="{{ url_for('reports.upload') }}">Upload another report</a>
-      <a href="/map">View map</a>
+      <a href="{{ url_for('reports.upload') }}">
+        Upload another report
+      </a>
+
+      <a href="/map">
+        View report on map
+      </a>
     </div>
   </div>
 </body>

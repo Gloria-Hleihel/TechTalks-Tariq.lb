@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+
   <title>Tariq.lb — Submit Road Report</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
 
   <link
     rel="stylesheet"
@@ -12,261 +17,1106 @@
   />
 
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      margin: 20px;
-      background: #f7f7f7;
-      color: #222;
+    :root {
+      --brand-red: #7b0d1e;
+      --brand-red-hover: #620a18;
+
+      --brand-green: #4a7c59;
+      --brand-green-hover: #3c6649;
+
+      --brand-dark: #1a1a1a;
+
+      --page-background: #f6f4f2;
+      --card-background: #ffffff;
+      --panel-background: #faf9f7;
+
+      --text-color: #1a1a1a;
+      --muted-text: #666666;
+      --border-color: #dedbd7;
+
+      --success-background: #edf5ef;
+      --success-border: #a9c5b1;
+      --success-text: #31543d;
+
+      --info-background: #f4f1ed;
+      --info-border: #d8d1ca;
+      --info-text: #1a1a1a;
+
+      --error-background: #f9ecef;
+      --error-border: #d8a5ae;
+      --error-text: #7b0d1e;
+
+      --warning-background: #f6f1e8;
+      --warning-border: #d9c7a4;
+      --warning-text: #65490f;
     }
 
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--page-background);
+      color: var(--text-color);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .page-shell {
+      width: min(1080px, calc(100% - 32px));
+      margin: 28px auto;
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 14px 38px rgba(26, 26, 26, 0.08);
+      overflow: hidden;
     }
 
-    h1 {
-      margin-top: 0;
-      color: #183b68;
+    .card-header {
+      padding: 24px 26px 18px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--brand-red);
+      color: #ffffff;
     }
 
-    .row {
-      display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
+    .card-header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.55rem, 3vw, 2.1rem);
+      line-height: 1.15;
+      color: #ffffff;
     }
 
-    .col {
-      flex: 1;
-      min-width: 300px;
+    .card-header p {
+      margin: 0;
+      max-width: 760px;
+      color: #f2dfe3;
+      line-height: 1.5;
+    }
+
+    .card-body {
+      padding: 24px 26px 28px;
+    }
+
+    .messages {
+      margin-bottom: 16px;
+    }
+
+    .msg {
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border-radius: 9px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .success {
+      background: var(--success-background);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    .info {
+      background: var(--info-background);
+      border: 1px solid var(--info-border);
+      color: var(--info-text);
+    }
+
+    .error {
+      background: var(--error-background);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      background: var(--panel-background);
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 1.05rem;
+      color: var(--brand-red);
     }
 
     label {
       display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
+      margin-bottom: 7px;
+      color: var(--brand-dark);
+      font-weight: 700;
     }
 
     input[type="file"] {
-      display: block;
-      margin-bottom: 12px;
-    }
-
-    .btn {
-      background: #1976d2;
-      color: white;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .btn:hover {
-      background: #1259a0;
-    }
-
-    #map {
-      height: 380px;
-      border: 1px solid #ddd;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
       border-radius: 8px;
+      background: #ffffff;
+      color: var(--brand-dark);
     }
 
-    .messages {
-      margin-bottom: 14px;
+    input[type="file"]:focus,
+    .primary-btn:focus-visible {
+      outline: 3px solid rgba(123, 13, 30, 0.25);
+      outline-offset: 2px;
     }
 
-    .msg {
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
+    .status-box {
+      margin: 14px 0;
+      padding: 12px;
+      border: 1px solid var(--info-border);
+      border-radius: 9px;
+      background: var(--info-background);
+      color: var(--info-text);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
     }
 
-    .success {
-      background: #e6ffed;
-      border: 1px solid #b7f0c6;
-      color: #0b5f2b;
+    .wait-note {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      margin: 14px 0;
+      padding: 11px 12px;
+      border-radius: 9px;
+      background: var(--warning-background);
+      border: 1px solid var(--warning-border);
+      color: var(--warning-text);
+      line-height: 1.4;
+      font-size: 0.92rem;
     }
 
-    .info {
-      background: #eef6ff;
-      border: 1px solid #cfe9ff;
-      color: #0b3a66;
+    .primary-btn {
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 18px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--brand-red);
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 700;
+      transition:
+        background 0.16s ease,
+        transform 0.16s ease;
     }
 
-    .error {
-      background: #ffeaea;
-      border: 1px solid #ffbdbd;
-      color: #5a0b0b;
+    .primary-btn:hover:not(:disabled) {
+      background: var(--brand-red-hover);
+      transform: translateY(-1px);
     }
 
-    .gps-box {
-      background: #f5f8ff;
-      border: 1px solid #d7e6ff;
-      padding: 10px;
-      border-radius: 6px;
-      margin: 12px 0;
-      font-size: 0.95rem;
+    .primary-btn:disabled {
+      cursor: wait;
+      opacity: 0.72;
     }
 
-    .coords {
-      font-weight: bold;
+    .button-spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.45);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
-    .note {
-      color: #666;
-      font-size: 0.9rem;
-      margin-top: 14px;
+    .primary-btn.is-loading .button-spinner {
+      display: inline-block;
+    }
+
+    .submitting-text {
+      display: none;
+      margin: 11px 0 0;
+      color: var(--brand-green);
+      font-size: 0.92rem;
       line-height: 1.4;
     }
 
-    @media (max-width: 700px) {
-      body {
-        margin: 10px;
+    .submitting-text.visible {
+      display: block;
+    }
+
+    .note {
+      margin: 14px 0 0;
+      color: var(--muted-text);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    #map {
+      width: 100%;
+      height: 410px;
+      min-height: 280px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      z-index: 1;
+      background: #ece9e5;
+    }
+
+    .coordinates {
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--muted-text);
+      line-height: 1.4;
+    }
+
+    .coordinates strong {
+      color: var(--brand-green);
+    }
+
+    .toast-region {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 9999;
+      width: min(390px, calc(100% - 36px));
+      pointer-events: none;
+    }
+
+    .toast {
+      display: none;
+      margin-bottom: 10px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      box-shadow: 0 15px 38px rgba(0, 0, 0, 0.18);
+      line-height: 1.4;
+      font-weight: 700;
+      pointer-events: auto;
+    }
+
+    .toast.visible {
+      display: block;
+      animation: toast-in 0.22s ease-out;
+    }
+
+    .toast-success {
+      background: var(--brand-green);
+      color: #ffffff;
+    }
+
+    .toast-error {
+      background: var(--brand-red);
+      color: #ffffff;
+    }
+
+    .toast-warning {
+      background: #8a5a08;
+      color: #ffffff;
+    }
+
+    .upload-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(26, 26, 26, 0.58);
+      backdrop-filter: blur(2px);
+    }
+
+    .upload-overlay.visible {
+      display: flex;
+    }
+
+    .overlay-card {
+      width: min(390px, 100%);
+      padding: 24px;
+      border-radius: 14px;
+      background: #ffffff;
+      text-align: center;
+      border-top: 5px solid var(--brand-red);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+    }
+
+    .large-spinner {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      border: 5px solid #e8dadd;
+      border-top-color: var(--brand-red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .overlay-card h2 {
+      margin: 0 0 8px;
+      color: var(--brand-red);
+      font-size: 1.2rem;
+    }
+
+    .overlay-card p {
+      margin: 0;
+      color: var(--muted-text);
+      line-height: 1.45;
+    }
+
+    .leaflet-control-zoom a {
+      color: var(--brand-red);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page-shell {
+        width: 100%;
+        margin: 0;
+      }
+
+      .card {
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+      }
+
+      .card-header {
+        padding: 20px 16px 16px;
+      }
+
+      .card-body {
+        padding: 18px 14px 22px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 15px;
+      }
+
+      .primary-btn {
+        width: 100%;
       }
 
       #map {
         height: 300px;
+      }
+
+      .leaflet-control-zoom a {
+        width: 38px;
+        height: 38px;
+        line-height: 38px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .card-header h1 {
+        font-size: 1.4rem;
+      }
+
+      #map {
+        height: 280px;
+      }
+
+      .toast-region {
+        top: 10px;
+        right: 10px;
+        width: calc(100% - 20px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>Tariq.lb — Submit Road Report</h1>
+  <div
+    class="toast-region"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <div
+      id="successToast"
+      class="toast toast-success"
+      role="status"
+    ></div>
 
-      <div class="messages">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="msg {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
+    <div
+      id="warningToast"
+      class="toast toast-warning"
+      role="status"
+    ></div>
 
-      <form
-        method="post"
-        action="{{ url_for('reports.create_report') }}"
-        enctype="multipart/form-data"
-        id="uploadForm"
-      >
-        <div class="row">
-          <div class="col">
-            <label for="image">Select road image</label>
+    <div
+      id="errorToast"
+      class="toast toast-error"
+      role="alert"
+    ></div>
+  </div>
 
-            <input
-              type="file"
-              name="image"
-              id="image"
-              accept="image/jpeg,image/png"
-              required
-            />
+  <div
+    id="uploadOverlay"
+    class="upload-overlay"
+    aria-hidden="true"
+  >
+    <div
+      class="overlay-card"
+      role="status"
+      aria-live="polite"
+    >
+      <div
+        class="large-spinner"
+        aria-hidden="true"
+      ></div>
 
-            <div class="gps-box info" id="gpsStatus">
-              Choose an image. GPS will be checked after upload. If no GPS is found, select the location on the map.
-            </div>
+      <h2>Submitting your report</h2>
 
-            <input type="hidden" name="lat" id="lat" />
-            <input type="hidden" name="lng" id="lng" />
-
-            <button class="btn" type="submit">Submit Report</button>
-
-            <p class="note">
-              Allowed files: JPG, JPEG, PNG. Maximum size: 5MB.
-              If the photo has GPS EXIF data, Tariq.lb will use it automatically.
-              Otherwise, click the map to choose the road location manually.
-            </p>
-          </div>
-
-          <div class="col">
-            <label>Manual location fallback</label>
-            <div id="map"></div>
-
-            <div class="gps-box">
-              Selected coordinates:
-              <span id="selectedCoords" class="coords">None</span>
-            </div>
-          </div>
-        </div>
-      </form>
+      <p>
+        Uploading the image, checking GPS, and waiting for detection.
+        This usually takes about {{ estimated_wait_seconds }} seconds.
+      </p>
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <main class="page-shell">
+    <section class="card">
+      <header class="card-header">
+        <h1>Tariq.lb — Submit Road Report</h1>
+
+        <p>
+          Upload one clear road photo. Tariq.lb will use photo GPS when
+          available and your selected map point as a reliable fallback.
+        </p>
+      </header>
+
+      <div class="card-body">
+        <div class="messages">
+          {% with messages =
+            get_flashed_messages(with_categories=true)
+          %}
+
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="msg {{ category }}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+          {% endwith %}
+        </div>
+
+        <form
+          method="post"
+          action="{{ url_for('reports.create_report') }}"
+          data-api-url="{{ url_for('reports.api_create_report') }}"
+          enctype="multipart/form-data"
+          id="uploadForm"
+          novalidate
+        >
+          <div class="form-grid">
+            <section class="panel">
+              <h2>1. Choose a road photo</h2>
+
+              <label for="image">
+                Road image
+              </label>
+
+              <input
+                type="file"
+                name="image"
+                id="image"
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                required
+              />
+
+              <div
+                class="status-box"
+                id="gpsStatus"
+                role="status"
+              >
+                Select a JPG, JPEG, or PNG image. Then tap the map to set a
+                fallback location in case the photo has no usable GPS.
+              </div>
+
+              <input
+                type="hidden"
+                name="lat"
+                id="lat"
+              />
+
+              <input
+                type="hidden"
+                name="lng"
+                id="lng"
+              />
+
+              <div class="wait-note">
+                <span aria-hidden="true">
+                  ⏱
+                </span>
+
+                <span>
+                  Estimated upload and detection wait: about
+                  <strong>
+                    {{ estimated_wait_seconds }} seconds
+                  </strong>.
+
+                  If detection is unavailable, the report is still saved and
+                  can be retried later.
+                </span>
+              </div>
+
+              <button
+                class="primary-btn"
+                id="submitButton"
+                type="submit"
+              >
+                <span
+                  class="button-spinner"
+                  aria-hidden="true"
+                ></span>
+
+                <span id="submitButtonText">
+                  Submit Report
+                </span>
+              </button>
+
+              <p
+                class="submitting-text"
+                id="submittingText"
+                role="status"
+              >
+                Please keep this page open while the upload is processed.
+              </p>
+
+              <p class="note">
+                Allowed files: JPG, JPEG, PNG. Maximum size: 5MB.
+                A renamed text or corrupted file is rejected even if it
+                ends in .jpg or .png.
+              </p>
+            </section>
+
+            <section class="panel">
+              <h2>2. Set a fallback location</h2>
+
+              <div
+                id="map"
+                aria-label="Map for selecting road location"
+              ></div>
+
+              <div class="coordinates">
+                Selected coordinates:
+
+                <strong id="selectedCoords">
+                  None
+                </strong>
+              </div>
+            </section>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
 
   <script>
-    const defaultLat = {{ config.get('MAP_DEFAULT_LAT', 33.85) }};
-    const defaultLng = {{ config.get('MAP_DEFAULT_LNG', 35.86) }};
-    const defaultZoom = {{ config.get('MAP_DEFAULT_ZOOM', 9) }};
+    (function () {
+      "use strict";
 
-    const map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);
+      const defaultLat =
+        {{ config.get('MAP_DEFAULT_LAT', 33.85) }};
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+      const defaultLng =
+        {{ config.get('MAP_DEFAULT_LNG', 35.86) }};
 
-    let marker = null;
+      const defaultZoom =
+        {{ config.get('MAP_DEFAULT_ZOOM', 9) }};
 
-    function setMarker(lat, lng) {
-      if (marker) {
-        marker.setLatLng([lat, lng]);
-      } else {
-        marker = L.marker([lat, lng]).addTo(map);
+      const form =
+        document.getElementById("uploadForm");
+
+      const imageInput =
+        document.getElementById("image");
+
+      const latInput =
+        document.getElementById("lat");
+
+      const lngInput =
+        document.getElementById("lng");
+
+      const gpsStatus =
+        document.getElementById("gpsStatus");
+
+      const selectedCoords =
+        document.getElementById("selectedCoords");
+
+      const submitButton =
+        document.getElementById("submitButton");
+
+      const submitButtonText =
+        document.getElementById("submitButtonText");
+
+      const submittingText =
+        document.getElementById("submittingText");
+
+      const overlay =
+        document.getElementById("uploadOverlay");
+
+      const successToast =
+        document.getElementById("successToast");
+
+      const warningToast =
+        document.getElementById("warningToast");
+
+      const errorToast =
+        document.getElementById("errorToast");
+
+      const map = L.map(
+        "map",
+        {
+          tap: true,
+          touchZoom: true,
+          dragging: true,
+          scrollWheelZoom: true
+        }
+      ).setView(
+        [defaultLat, defaultLng],
+        defaultZoom
+      );
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          attribution: "&copy; OpenStreetMap contributors"
+        }
+      ).addTo(map);
+
+      let marker = null;
+      let redirectTimer = null;
+
+      function setMarker(lat, lng) {
+        if (marker) {
+          marker.setLatLng(
+            [lat, lng]
+          );
+        } else {
+          marker = L.marker(
+            [lat, lng]
+          ).addTo(map);
+        }
+
+        latInput.value = lat;
+        lngInput.value = lng;
+
+        selectedCoords.textContent =
+          lat.toFixed(6) +
+          ", " +
+          lng.toFixed(6);
       }
 
-      document.getElementById('lat').value = lat;
-      document.getElementById('lng').value = lng;
-      document.getElementById('selectedCoords').textContent =
-        lat.toFixed(6) + ', ' + lng.toFixed(6);
-    }
+      function clearMarker() {
+        if (marker) {
+          map.removeLayer(marker);
+          marker = null;
+        }
 
-    map.on('click', function(e) {
-      setMarker(e.latlng.lat, e.latlng.lng);
-    });
+        latInput.value = "";
+        lngInput.value = "";
+        selectedCoords.textContent = "None";
 
-    const imageInput = document.getElementById('image');
-    const gpsStatus = document.getElementById('gpsStatus');
-
-    imageInput.addEventListener('change', function() {
-      const file = imageInput.files[0];
-
-      if (!file) {
-        gpsStatus.textContent = 'Choose an image.';
-        gpsStatus.className = 'gps-box info';
-        return;
+        map.setView(
+          [defaultLat, defaultLng],
+          defaultZoom
+        );
       }
 
-      const allowedTypes = ['image/jpeg', 'image/png'];
-      const maxSize = 5 * 1024 * 1024;
-
-      if (!allowedTypes.includes(file.type)) {
-        gpsStatus.textContent = 'Invalid file type. Please choose JPG, JPEG, or PNG.';
-        gpsStatus.className = 'gps-box error';
-        return;
+      function hideToasts() {
+        successToast.classList.remove("visible");
+        warningToast.classList.remove("visible");
+        errorToast.classList.remove("visible");
       }
 
-      if (file.size > maxSize) {
-        gpsStatus.textContent = 'File is too large. Maximum size is 5MB.';
-        gpsStatus.className = 'gps-box error';
-        return;
+      function showToast(element, message) {
+        hideToasts();
+
+        element.textContent = message;
+        element.classList.add("visible");
       }
 
-      gpsStatus.textContent =
-        'Image selected. GPS will be checked after upload. If no GPS is found, select location on the map.';
-      gpsStatus.className = 'gps-box info';
-    });
+      function setLoading(isLoading) {
+        submitButton.disabled = isLoading;
+
+        submitButton.classList.toggle(
+          "is-loading",
+          isLoading
+        );
+
+        submitButtonText.textContent =
+          isLoading
+            ? "Submitting…"
+            : "Submit Report";
+
+        submittingText.classList.toggle(
+          "visible",
+          isLoading
+        );
+
+        overlay.classList.toggle(
+          "visible",
+          isLoading
+        );
+
+        overlay.setAttribute(
+          "aria-hidden",
+          isLoading
+            ? "false"
+            : "true"
+        );
+      }
+
+      function resetFormAfterSuccess() {
+        form.reset();
+        clearMarker();
+
+        gpsStatus.textContent =
+          "Report submitted. The form is ready for another road photo.";
+
+        gpsStatus.className =
+          "status-box success";
+      }
+
+      function fileExtension(filename) {
+        const parts =
+          String(filename || "")
+            .toLowerCase()
+            .split(".");
+
+        return parts.length > 1
+          ? parts.pop()
+          : "";
+      }
+
+      function validateSelectedFile(file) {
+        if (!file) {
+          return (
+            "Please choose a JPG, JPEG, or PNG road image."
+          );
+        }
+
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png"
+        ];
+
+        const allowedExtensions = [
+          "jpg",
+          "jpeg",
+          "png"
+        ];
+
+        const extension =
+          fileExtension(file.name);
+
+        const typeIsAcceptable =
+          !file.type ||
+          allowedTypes.indexOf(file.type) >= 0;
+
+        if (
+          !typeIsAcceptable ||
+          allowedExtensions.indexOf(extension) < 0
+        ) {
+          return (
+            "Unsupported file type. " +
+            "Choose a JPG, JPEG, or PNG image."
+          );
+        }
+
+        if (file.size <= 0) {
+          return (
+            "The selected file is empty. " +
+            "Choose another image."
+          );
+        }
+
+        if (
+          file.size >
+          5 * 1024 * 1024
+        ) {
+          return (
+            "The image is larger than 5MB. " +
+            "Compress it or choose a smaller image."
+          );
+        }
+
+        return null;
+      }
+
+      map.on(
+        "click",
+        function (event) {
+          setMarker(
+            event.latlng.lat,
+            event.latlng.lng
+          );
+        }
+      );
+
+      imageInput.addEventListener(
+        "change",
+        function () {
+          const file =
+            imageInput.files[0];
+
+          const validationError =
+            validateSelectedFile(file);
+
+          if (!file) {
+            gpsStatus.textContent =
+              "Select a JPG, JPEG, or PNG image. " +
+              "Then tap the map to set a fallback location.";
+
+            gpsStatus.className =
+              "status-box";
+
+            return;
+          }
+
+          if (validationError) {
+            gpsStatus.textContent =
+              validationError;
+
+            gpsStatus.className =
+              "status-box error";
+
+            return;
+          }
+
+          gpsStatus.textContent =
+            "Image selected. Tap the map to set a fallback " +
+            "location while the server checks GPS.";
+
+          gpsStatus.className =
+            "status-box info";
+        }
+      );
+
+      form.addEventListener(
+        "submit",
+        async function (event) {
+          if (
+            !window.fetch ||
+            !window.FormData
+          ) {
+            return;
+          }
+
+          event.preventDefault();
+          hideToasts();
+
+          const file =
+            imageInput.files[0];
+
+          const validationError =
+            validateSelectedFile(file);
+
+          if (validationError) {
+            showToast(
+              errorToast,
+              validationError
+            );
+
+            gpsStatus.textContent =
+              validationError;
+
+            gpsStatus.className =
+              "status-box error";
+
+            return;
+          }
+
+          setLoading(true);
+
+          try {
+            const response =
+              await fetch(
+                form.dataset.apiUrl,
+                {
+                  method: "POST",
+                  body: new FormData(form),
+                  headers: {
+                    "Accept": "application/json"
+                  }
+                }
+              );
+
+            const data =
+              await response
+                .json()
+                .catch(
+                  function () {
+                    return {
+                      ok: false,
+                      error:
+                        "The server returned an unreadable response."
+                    };
+                  }
+                );
+
+            if (
+              !response.ok ||
+              !data.ok
+            ) {
+              throw new Error(
+                data.error ||
+                "The report could not be submitted."
+              );
+            }
+
+            setLoading(false);
+            resetFormAfterSuccess();
+
+            showToast(
+              successToast,
+              data.message ||
+              "Report submitted successfully."
+            );
+
+            if (data.warning) {
+              window.setTimeout(
+                function () {
+                  showToast(
+                    warningToast,
+                    data.warning
+                  );
+                },
+                700
+              );
+            }
+
+            redirectTimer =
+              window.setTimeout(
+                function () {
+                  window.location.assign(
+                    data.redirect_url
+                  );
+                },
+                data.warning
+                  ? 1800
+                  : 1200
+              );
+
+          } catch (error) {
+            setLoading(false);
+
+            showToast(
+              errorToast,
+              error && error.message
+                ? error.message
+                : (
+                  "The report could not be submitted. " +
+                  "Please try again."
+                )
+            );
+          }
+        }
+      );
+
+      window.addEventListener(
+        "resize",
+        function () {
+          window.setTimeout(
+            function () {
+              map.invalidateSize();
+            },
+            100
+          );
+        }
+      );
+
+      window.addEventListener(
+        "pageshow",
+        function () {
+          if (redirectTimer) {
+            window.clearTimeout(
+              redirectTimer
+            );
+
+            redirectTimer = null;
+          }
+
+          setLoading(false);
+
+          window.setTimeout(
+            function () {
+              map.invalidateSize();
+            },
+            100
+          );
+        }
+      );
+
+      window.setTimeout(
+        function () {
+          map.invalidateSize();
+        },
+        150
+      );
+    }());
   </script>
 </body>
 </html>

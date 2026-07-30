@@ -1,14 +1,37 @@
-{% if detection %}
-  <div class="detection-card">
-    <h3>Detection Result</h3>
+<div class="detection-card">
+  <h3>Detection Result</h3>
 
-    <p><strong>Damage type:</strong> {{ detection.damage_type }}</p>
-    <p><strong>Confidence:</strong> {{ "%.1f"|format(detection.confidence * 100) }}%</p>
-    <p><strong>Severity score:</strong> {{ detection.severity_score }}/100</p>
+  {% if
+    report.detection_status == "completed"
+    and detection
+  %}
+
+    <p>
+      <strong>Status:</strong>
+      Completed
+    </p>
+
+    <p>
+      <strong>Damage type:</strong>
+      {{ detection.damage_type }}
+    </p>
+
+    <p>
+      <strong>Confidence:</strong>
+      {{ "%.1f"|format(detection.confidence * 100) }}%
+    </p>
+
+    <p>
+      <strong>Severity score:</strong>
+      {{ detection.severity_score }}/100
+    </p>
 
     <p>
       <strong>Severity:</strong>
-      <span class="badge badge-{{ detection.severity_label|lower }}">
+
+      <span
+        class="badge badge-{{ detection.severity_label|lower }}"
+      >
         {{ detection.severity_label }}
       </span>
     </p>
@@ -16,14 +39,51 @@
     {% if detection.annotated_image_path %}
       <img
         class="report-image"
-        src="{{ url_for('static', filename=detection.annotated_image_path.replace('static/', '')) }}"
+        src="{{ url_for(
+          'static',
+          filename=detection.annotated_image_path.replace(
+            'static/',
+            ''
+          )
+        ) }}"
         alt="Annotated detection result"
       />
     {% endif %}
-  </div>
-{% else %}
-  <div class="detection-card">
-    <h3>Detection Result</h3>
-    <p>Detection is pending or unavailable.</p>
-  </div>
-{% endif %}
+
+  {% else %}
+
+    <p>
+      <strong>Status:</strong>
+      Pending
+    </p>
+
+    <p>
+      Your upload and location are saved.
+      Detection can be retried without uploading
+      the image again.
+    </p>
+
+    {% if report.detection_error %}
+      <p class="detection-error">
+        <strong>Reason:</strong>
+        {{ report.detection_error }}
+      </p>
+    {% endif %}
+
+    <form
+      method="post"
+      action="{{ url_for(
+        'reports.retry_detection',
+        report_id=report.id
+      ) }}"
+    >
+      <button
+        class="retry-button"
+        type="submit"
+      >
+        Retry Detection
+      </button>
+    </form>
+
+  {% endif %}
+</div>

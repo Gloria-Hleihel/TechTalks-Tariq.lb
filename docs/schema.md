@@ -1,93 +1,60 @@
 # Database Schema — Tariq.lb
 
-Owner: Zahraa · Last updated: Week 1
+Owner: Zahraa  
+Last updated: Week 3 integration
 
-This document covers the full SQLite schema: both tables, every field,
-data types, keys, and constraints. If a change is needed after Week 1,
-open a PR with a short migration note (see Section 7 of the project
-plan) rather than editing the tables directly.
+## Reports table
 
----
+One row is created for each uploaded road report.
 
-## `reports`
+| Field | Type | Required | Description |
+|---|---|---:|---|
+| `id` | Integer | Yes | Primary key |
+| `image_path` | String(255) | Yes | Relative static path such as `uploads/photo.jpg` |
+| `lat` | Float | Yes | Report latitude |
+| `lng` | Float | Yes | Report longitude |
+| `location_source` | String(10) | Yes | `gps` or `manual` |
+| `status` | String(20) | Yes | `pending`, `reviewed`, or `resolved` |
+| `detection_status` | String(20) | Yes | `pending` or `completed` |
+| `detection_error` | String(500) | No | Latest timeout or detection failure |
+| `created_at` | DateTime | Yes | Creation date and time |
 
-One row per user-submitted road-damage report.
+A failed detection does not delete the report. The report remains saved
+with `detection_status="pending"` and can be retried.
 
-| Field            | Type      | Constraints                          | Notes |
-|------------------|-----------|---------------------------------------|-------|
-| `id`             | Integer   | Primary key, autoincrement            | |
-| `image_path`     | String(255) | Not null                            | Relative path under `static/uploads/`, UUID-based filename |
-| `lat`            | Float     | Not null                              | Latitude, either from EXIF GPS or manual pin |
-| `lng`            | Float     | Not null                              | Longitude, either from EXIF GPS or manual pin |
-| `location_source`| String(10)| Not null, default `"manual"`          | One of: `"gps"`, `"manual"` |
-| `status`         | String(20)| Not null, default `"pending"`         | One of: `"pending"`, `"reviewed"`, `"resolved"` |
-| `created_at`     | DateTime  | Not null, default `utcnow()`          | Set at insert time |
+## Detections table
 
-**Relationships:** `reports.id` → `detections.report_id` (one-to-many,
-though in practice each report has at most one detection in this
-project's scope). Cascade: deleting a `Report` deletes its `Detection`
-rows automatically (`cascade="all, delete-orphan"`).
+| Field | Type | Required | Description |
+|---|---|---:|---|
+| `id` | Integer | Yes | Primary key |
+| `report_id` | Integer | Yes | Foreign key to `reports.id` |
+| `damage_type` | String(50) | Yes | `Pothole`, `Road Crack`, `Surface Wear`, `Other`, or `None` |
+| `confidence` | Float | Yes | Detection confidence from 0 to 1 |
+| `severity_score` | Integer | Yes | Score from 0 to 100 |
+| `severity_label` | String(20) | Yes | `Low`, `Medium`, `High`, or `Critical` |
+| `annotated_image_path` | String(255) | No | Relative path to annotated output image |
 
----
+## Relationship
 
-## `detections`
-
-One row per AI detection result, linked to the report it was run on.
-
-| Field                  | Type      | Constraints                              | Notes |
-|------------------------|-----------|--------------------------------------------|-------|
-| `id`                   | Integer   | Primary key, autoincrement                 | |
-| `report_id`            | Integer   | Foreign key → `reports.id`, not null       | |
-| `damage_type`          | String(50)| Not null                                    | One of: `Pothole`, `Road Crack`, `Surface Wear`, `Other` (or `"None"` if no damage found) |
-| `confidence`           | Float     | Not null                                    | YOLOv8 confidence score, 0.0–1.0 |
-| `severity_score`       | Integer   | Not null                                    | 0–100 |
-| `severity_label`       | String(20)| Not null                                    | One of: `Low`, `Medium`, `High`, `Critical` |
-| `annotated_image_path` | String(255)| Nullable                                   | Path to the YOLOv8 output image with bounding boxes drawn |
-
----
-
-## Relationship Diagram (text-based)
-
-```
-reports (1) ──────< (many) detections
-  id                       report_id (FK)
+```text
+Report 1 -------- many Detection rows
 ```
 
-In this project's scope each report produces exactly one detection
-record, but the relationship is modeled as one-to-many for flexibility
-(e.g. re-running detection in the future).
+The current application normally keeps one Detection per Report.
 
----
+## Week 3 migration
 
-## Example rows
+Existing databases created before Week 3 must run:
 
-**reports**
+```powershell
+python scripts/migrate_add_detection_status.py
+```
 
-| id | image_path                     | lat     | lng     | location_source | status   | created_at          |
-|----|----------------------------------|---------|---------|------------------|----------|----------------------|
-| 1  | static/uploads/seed_1.jpg        | 33.8938 | 35.5018 | gps              | pending  | 2026-06-12T10:03:00 |
-| 2  | static/uploads/seed_2.jpg        | 33.8959 | 35.4784 | manual           | reviewed | 2026-06-15T14:21:00 |
+This adds:
 
-**detections**
+```text
+reports.detection_status
+reports.detection_error
+```
 
-| id | report_id | damage_type | confidence | severity_score | severity_label | annotated_image_path                          |
-|----|-----------|-------------|------------|-----------------|------------------|--------------------------------------------------|
-| 1  | 1         | Pothole     | 0.87       | 70              | High             | static/uploads/annotated/seed_1_annotated.jpg   |
-| 2  | 2         | Road Crack  | 0.62       | 45              | Medium           | static/uploads/annotated/seed_2_annotated.jpg   |
-
----
-
-## Shared constants reference
-
-Field value sets (`DAMAGE_TYPES`, `SEVERITY_LEVELS`, `REPORT_STATUSES`,
-`LOCATION_SOURCES`) are defined once in `config.py` — import from
-there rather than hardcoding strings, so a future change only happens
-in one place.
-
-## Possible future migration (flagged, not yet implemented)
-
-Malek's Week 3 task notes a `detection_status` field (e.g. `"pending"`)
-on `reports`, used to retry detection if the internal call to
-`POST /api/detect` fails during upload. This isn't in the Week 1
-schema above — if it's needed, it'll be added as a migration and
-announced to the team before merging, per Section 7.
+Reports that already have a Detection are marked as `completed`.
