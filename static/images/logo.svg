@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="200" height="160">
+  
+  <!-- T letter -->
+  <rect x="15" y="15" width="72" height="14" rx="4" fill="#1a1a1a"/>
+  <rect x="40" y="15" width="22" height="72" rx="4" fill="#1a1a1a"/>
+  
+  <!-- Road dashes on T stem -->
+  <rect x="50" y="32" width="3" height="10" rx="1" fill="white" opacity="0.7"/>
+  <rect x="50" y="48" width="3" height="10" rx="1" fill="white" opacity="0.7"/>
+  <rect x="50" y="64" width="3" height="10" rx="1" fill="white" opacity="0.7"/>
+
+  <!-- B vertical bar -->
+  <rect x="95" y="15" width="11" height="72" rx="3" fill="#1a1a1a"/>
+  
+  <!-- B top bump — red -->
+  <path d="M106 15 Q138 15 138 36 Q138 57 106 57 L106 15Z" fill="#7b0d1e"/>
+  
+  <!-- B bottom bump — green -->
+  <path d="M106 57 Q142 57 142 72 Q142 87 106 87 L106 57Z" fill="#4a7c59"/>
+
+  <!-- Cedar tree in green bump -->
+  <polygon points="124,82 119,68 114,82" fill="white" opacity="0.95"/>
+  <polygon points="124,74 119,62 114,74" fill="white" opacity="0.95"/>
+  <rect x="118" y="82" width="2" height="5" fill="white" opacity="0.8"/>
+
+  <!-- TARIQ text -->
+  <text x="15" y="118" font-family="Arial Black, Arial" font-weight="900" font-size="20" fill="#1a1a1a" letter-spacing="3">TARIQ</text>
+  
+  <!-- LB text in green -->
+  <text x="113" y="118" font-family="Arial Black, Arial" font-weight="900" font-size="20" fill="#4a7c59" letter-spacing="3">LB</text>
+
+  <!-- Tagline -->
+  <line x1="15" y1="129" x2="30" y2="129" stroke="#7b0d1e" stroke-width="1.5"/>
+  <text x="34" y="133" font-family="Arial" font-size="7.5" fill="#888" letter-spacing="1.5">ROADS. SOLUTIONS. PROGRESS.</text>
+  <line x1="164" y1="129" x2="179" y2="129" stroke="#4a7c59" stroke-width="1.5"/>
+
+</svg>

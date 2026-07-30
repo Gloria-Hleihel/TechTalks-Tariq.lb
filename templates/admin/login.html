@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login — Tariq.lb</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f5e6e0 0%, #e8d5c4 100%);
+        }
+
+        .login-wrapper {
+            display: flex;
+            width: 750px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        /* Left side */
+        .login-left {
+            background: linear-gradient(180deg, #7b0d1e 0%, #9b2335 100%);
+            width: 45%;
+            padding: 50px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .login-left .logo-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #4a7c59;
+        }
+
+        .login-left h1 {
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .login-left .tagline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 32px;
+            margin-top: 4px;
+        }
+
+        .login-left .tagline-line-red {
+            height: 1.5px;
+            width: 24px;
+            background: #7b0d1e;
+            border: none;
+            opacity: 0.6;
+        }
+
+        .login-left .tagline-line-green {
+            height: 1.5px;
+            width: 24px;
+            background: #4a7c59;
+            border: none;
+            opacity: 0.8;
+        }
+
+        .login-left .tagline span {
+            font-size: 10px;
+            opacity: 0.8;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .login-left .stats {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 18px 24px;
+            width: 100%;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 13px;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-item i {
+            width: 16px;
+            color: #4a7c59;
+        }
+
+        /* Right side */
+        .login-right {
+            background: #fffaf8;
+            width: 55%;
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-right h2 {
+            font-size: 22px;
+            color: #7b0d1e;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .login-right .subtitle {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .green-divider {
+            height: 3px;
+            width: 40px;
+            background: #4a7c59;
+            border-radius: 2px;
+            margin-bottom: 24px;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 6px;
+            margin-top: 16px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4a7c59;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 40px 12px 38px;
+            border: 1.5px solid #e8e8e8;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a7c59;
+        }
+
+        .password-wrapper input {
+            position: relative;
+
+            padding-right: 40px;
+        }
+
+        .toggle-eye {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #bbb;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .toggle-eye:hover {
+            color: #4a7c59;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #7b0d1e, #9b2335);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 26px;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button[type="submit"]:hover {
+            opacity: 0.9;
+        }
+
+        .error {
+            background-color: #fdecea;
+            color: #c0392b;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer {
+            margin-top: 22px;
+            font-size: 11px;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .footer span {
+            color: #4a7c59;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+
+        <!-- Left branding side -->
+        <div class="login-left">
+            <div class="logo-icon">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <h1>Tariq.lb</h1>
+            <div class="tagline">
+                <div class="tagline-line-red"></div>
+                <span>Roads. Solutions. Progress.</span>
+                <div class="tagline-line-green"></div>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fa-solid fa-map"></i>
+                    <span>Mapping Lebanon's Roads</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>AI-Powered Detection</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <span>Real-time Analytics</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-shield"></i>
+                    <span>Admin Control Panel</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right form side -->
+        <div class="login-right">
+            <h2>Welcome back</h2>
+            <div class="subtitle">Sign in to access the admin panel</div>
+            <div class="green-divider"></div>
+
+            {% if error %}
+                <div class="error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="/admin/login">
+                <label>Username</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" name="username" placeholder="Enter username" required>
+                </div>
+
+                <label>Password</label>
+                <div class="input-wrapper password-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" name="password" id="password" placeholder="Enter password" required>
+                    <i class="fa-solid fa-eye toggle-eye" id="toggleIcon" onclick="togglePassword()"></i>
+                </div>
+
+                <button type="submit">
+                    Sign In
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="footer">Tariq.lb © 2026 — <span>Admin Panel</span></div>
+        </div>
+
+    </div>
+
+    <script>
+    function togglePassword() {
+        const input = document.getElementById("password");
+        const icon = document.getElementById("toggleIcon");
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+    </script>
+</body>
+</html>

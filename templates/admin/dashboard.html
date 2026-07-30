@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard — Tariq.lb</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f0ee;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #7b0d1e, #9b2335);
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .navbar-brand i {
+            font-size: 22px;
+            color: #4a7c59;
+        }
+
+        .navbar-brand .brand-text span {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        .navbar-brand .brand-text small {
+            font-size: 11px;
+            opacity: 0.7;
+            display: block;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .navbar-tagline {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-tagline .line-red {
+            height: 1px;
+            width: 16px;
+            background: rgba(255,255,255,0.4);
+        }
+
+        .navbar-tagline .line-green {
+            height: 1px;
+            width: 16px;
+            background: #4a7c59;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            background: rgba(255,255,255,0.12);
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.22);
+        }
+
+        /* Main content */
+        .content {
+            padding: 28px 32px;
+        }
+
+        /* Page title */
+        .page-title {
+            margin-bottom: 24px;
+        }
+
+        .page-title h1 {
+            font-size: 22px;
+            color: #2c2c2c;
+            font-weight: bold;
+        }
+
+        .page-title .title-underline {
+            height: 3px;
+            width: 48px;
+            background: linear-gradient(to right, #7b0d1e, #4a7c59);
+            border-radius: 2px;
+            margin-top: 6px;
+        }
+
+        /* Analytics cards */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .analytics-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+            border-top: 3px solid #7b0d1e;
+        }
+
+        .analytics-card:nth-child(2) {
+            border-top-color: #4a7c59;
+        }
+
+        .analytics-card:nth-child(3) {
+            border-top-color: #7b0d1e;
+        }
+
+        .analytics-card:nth-child(4) {
+            border-top-color: #4a7c59;
+        }
+
+        .analytics-card .card-icon {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .analytics-card:nth-child(odd) .card-icon {
+            color: #7b0d1e;
+        }
+
+        .analytics-card:nth-child(even) .card-icon {
+            color: #4a7c59;
+        }
+
+        .analytics-card .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .analytics-card .card-label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Breakdown cards */
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .breakdown-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #4a7c59;
+        }
+
+        .breakdown-card:first-child {
+            border-left-color: #7b0d1e;
+        }
+
+        .breakdown-card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breakdown-card h3 i {
+            color: #4a7c59;
+        }
+
+        .breakdown-card:first-child h3 i {
+            color: #7b0d1e;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
+        }
+
+        .breakdown-row:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-count {
+            font-weight: bold;
+            color: #4a7c59;
+        }
+
+        .breakdown-card:first-child .breakdown-count {
+            color: #7b0d1e;
+        }
+
+        /* Table */
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .table-header h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-header h3 i {
+            color: #7b0d1e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead tr {
+            background: #f9f5f4;
+        }
+
+        th {
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            font-weight: bold;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #f9f9f9;
+            color: #444;
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #f5faf7;
+        }
+
+        /* Severity badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-low {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-medium {
+            background: #fff8e1;
+            color: #f59f00;
+        }
+
+        .badge-high {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-critical {
+            background: #fdecea;
+            color: #7b0d1e;
+        }
+
+        /* Status form */
+        .status-form {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        select {
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #444;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4a7c59;
+        }
+
+        .btn-update {
+            background: #4a7c59;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-update:hover {
+            opacity: 0.85;
+        }
+
+        .btn-delete {
+            background: none;
+            color: #c0392b;
+            border: 1px solid #c0392b;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            color: white;
+        }
+
+        .btn-details {
+            color: #4a7c59;
+            text-decoration: none;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: bold;
+        }
+
+        .btn-details:hover {
+            color: #7b0d1e;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <div class="brand-text">
+                <span>Tariq.lb</span>
+                <small>Admin Control Panel</small>
+            </div>
+        </div>
+        <div class="navbar-right">
+            <div class="navbar-tagline">
+                <div class="line-red"></div>
+                Roads. Solutions. Progress.
+                <div class="line-green"></div>
+            </div>
+            <a href="/admin/logout" class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="content">
+
+        <!-- Page title -->
+        <div class="page-title">
+            <h1>Dashboard Overview</h1>
+            <div class="title-underline"></div>
+        </div>
+
+        <!-- Top analytics cards -->
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="card-icon"><i class="fa-solid fa-file-lines"></i></div>
+                <div class="card-value">{{ total_reports }}</div>
+                <div class="card-label">Total Reports</div>
+            </div>
+            <div class="analytics-card">
+                <div class="card-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                <div class="card-value">{{ severity_counts.Critical }}</div>
+                <div class="card-label">Critical</div>
+            </div>
+            <div class="analytics-card">
+                <div class="card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="card-value">{{ severity_counts.High }}</div>
+                <div class="card-label">High Severity</div>
+            </div>
+            <div class="analytics-card">
+                <div class="card-icon"><i class="fa-solid fa-calendar"></i></div>
+                <div class="card-value" style="font-size:18px;">
+                    {{ latest_report.created_at.strftime('%b %d') if latest_report else '—' }}
+                </div>
+                <div class="card-label">Latest Report</div>
+            </div>
+        </div>
+
+        <!-- Breakdown -->
+        <div class="breakdown-grid">
+            <div class="breakdown-card">
+                <h3><i class="fa-solid fa-chart-bar"></i> By Severity</h3>
+                <div class="breakdown-row">
+                    <span><span class="badge badge-low">Low</span></span>
+                    <span class="breakdown-count">{{ severity_counts.Low }}</span>
+                </div>
+                <div class="breakdown-row">
+                    <span><span class="badge badge-medium">Medium</span></span>
+                    <span class="breakdown-count">{{ severity_counts.Medium }}</span>
+                </div>
+                <div class="breakdown-row">
+                    <span><span class="badge badge-high">High</span></span>
+                    <span class="breakdown-count">{{ severity_counts.High }}</span>
+                </div>
+                <div class="breakdown-row">
+                    <span><span class="badge badge-critical">Critical</span></span>
+                    <span class="breakdown-count">{{ severity_counts.Critical }}</span>
+                </div>
+            </div>
+
+            <div class="breakdown-card">
+                <h3><i class="fa-solid fa-road"></i> By Damage Type</h3>
+                <div class="breakdown-row">
+    <span>Longitudinal Crack</span>
+    <span class="breakdown-count">{{ damage_counts['Longitudinal Crack'] }}</span>
+</div>
+<div class="breakdown-row">
+    <span>Transverse Crack</span>
+    <span class="breakdown-count">{{ damage_counts['Transverse Crack'] }}</span>
+</div>
+<div class="breakdown-row">
+    <span>Alligator Crack</span>
+    <span class="breakdown-count">{{ damage_counts['Alligator Crack'] }}</span>
+</div>
+<div class="breakdown-row">
+    <span>Potholes</span>
+    <span class="breakdown-count">{{ damage_counts.Potholes }}</span>
+</div>
+<div class="breakdown-row">
+    <span>None</span>
+    <span class="breakdown-count">{{ damage_counts.None }}</span>
+</div>
+            </div>
+        </div>
+
+        <!-- Reports table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3><i class="fa-solid fa-list"></i> All Reports</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Location</th>
+                        <th>Damage Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Details</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td><strong>#{{ report.id }}</strong></td>
+                        <td>
+                            <i class="fa-solid fa-location-dot" style="color:#4a7c59; margin-right:4px;"></i>
+                            {{ report.lat }}, {{ report.lng }}
+                        </td>
+                        <td>
+                            {% if report.detections %}
+                                {{ report.best_detection.damage_type }}
+                            {% else %}
+                                <span style="color:#bbb;">No detection</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if report.detections %}
+                                {% set sev = report.best_detection.severity_label %}
+                                {% if sev == 'Low' %}
+                                    <span class="badge badge-low">Low</span>
+                                {% elif sev == 'Medium' %}
+                                    <span class="badge badge-medium">Medium</span>
+                                {% elif sev == 'High' %}
+                                    <span class="badge badge-high">High</span>
+                                {% elif sev == 'Critical' %}
+                                    <span class="badge badge-critical">Critical</span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color:#bbb;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form class="status-form" method="POST" action="/admin/update/{{ report.id }}">
+                                <select name="status">
+                                    <option {% if report.status == 'pending' %}selected{% endif %}>pending</option>
+                                    <option {% if report.status == 'reviewed' %}selected{% endif %}>reviewed</option>
+                                    <option {% if report.status == 'resolved' %}selected{% endif %}>resolved</option>
+                                </select>
+                                <button class="btn-update" type="submit">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a class="btn-details" href="/admin/reports/{{ report.id }}">
+                                <i class="fa-solid fa-eye"></i> View
+                            </a>
+                        </td>
+                        <td>
+                            <form method="POST" action="/admin/delete/{{ report.id }}"
+                                  onsubmit="return confirm('Are you sure you want to delete report #{{ report.id }}?')">
+                                <button class="btn-delete" type="submit">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</body>
+</html>
