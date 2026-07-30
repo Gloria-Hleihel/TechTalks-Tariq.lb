@@ -22,8 +22,14 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB, per the Week 3 validation task
 
 # --- Damage classification ----------------------------------------------
-# Matches Majd's YOLOv8 model output (RDD2022 dataset)
-DAMAGE_TYPES = ["Longitudinal Crack", "Transverse Crack", "Alligator Crack", "Potholes", "None"]
+# Matches Section 11 delivery checklist exactly.
+DAMAGE_TYPES = [
+    "Longitudinal Crack",
+    "Transverse Crack",
+    "Alligator Crack",
+    "Potholes",
+    "None",
+]
 
 # --- Severity ------------------------------------------------------------
 SEVERITY_LEVELS = ["Low", "Medium", "High", "Critical"]
@@ -38,7 +44,7 @@ SEVERITY_COLORS = {
 
 # --- Report workflow -----------------------------------------------------
 REPORT_STATUSES = ["pending", "reviewed", "resolved"]
-LOCATION_SOURCES = ["gps", "manual"]
+LOCATION_SOURCES = ["gps", "browser", "manual"]
 
 # --- Admin auth ------------------------------------------------------------
 # Simple Flask session-based auth per project assumptions — no role

@@ -1,0 +1,10 @@
+metric,value
+train_images,1585
+train_labels,1585
+val_images,395
+val_labels,395
+hf_extra_images,1475
+class_0_Longitudinal Crack,1544
+class_1_Transverse Crack,1302
+class_2_Alligator Crack,531
+class_3_Potholes,250

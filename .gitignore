@@ -12,6 +12,23 @@ __pycache__/
 # Uploaded images and generated outputs
 static/uploads/
 static/uploads/annotated/
+runs/
+work/
+.pytest_tmp/
 
 # Editor-specific settings
 .vscode/
+
+# Local model files and test images
+models/
+test_images/
+dataset/images/
+dataset/labels/
+dataset/rdd2022_preparation_summary.json
+dataset/hf_unified_preparation_summary.json
+
+# Generated training/review artifacts
+dataset/manual_review/
+dataset_v3/images/
+dataset_v3/labels/
+detection_test_results*.csv
