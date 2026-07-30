@@ -43,11 +43,12 @@ def create_app(test_config=None):
 
     # Register reports blueprint (Malek)
     from app.reports import bp as reports_bp
-    from app.detection.routes import detection_bp
-    from app.admin.routes import admin_bp
-
     app.register_blueprint(reports_bp)
     app.register_blueprint(detection_bp)
+    app.register_blueprint(admin_bp)
+
+    # Register admin blueprint (Zahraa)
+    from app.admin.routes import admin_bp
     app.register_blueprint(admin_bp)
 
     with app.app_context():
