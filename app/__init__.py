@@ -42,8 +42,10 @@ def create_app(test_config=None):
     db.init_app(app)
 
     from app.reports import bp as reports_bp
+    from app.detection.routes import detection_bp
 
     app.register_blueprint(reports_bp)
+    app.register_blueprint(detection_bp)
 
     with app.app_context():
         db.create_all()

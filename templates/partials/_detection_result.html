@@ -1,0 +1,47 @@
+<div class="detection-result-card">
+    <h3>AI Detection Result</h3>
+
+    {% if detection %}
+        <p>
+            <strong>Damage Type:</strong>
+            {{ detection.damage_type }}
+        </p>
+
+        <p>
+            <strong>Confidence:</strong>
+            {% if detection.confidence is not none %}
+                {{ (detection.confidence * 100)|round(1) }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Severity:</strong>
+            <span class="severity-badge severity-{{ detection.severity_label|lower }}">
+                {{ detection.severity_label }}
+            </span>
+        </p>
+
+        {% if detection.severity_score is not none %}
+            <p>
+                <strong>Severity Score:</strong>
+                {{ detection.severity_score }}/100
+            </p>
+        {% endif %}
+
+        {% if detection.annotated_image_path %}
+            <div class="annotated-image-wrapper">
+                <img
+                    src="{{ url_for('static', filename=detection.annotated_image_path.replace('static/', '').replace('static\\', '')) }}"
+                    alt="Annotated road damage detection result"
+                    class="annotated-image"
+                >
+            </div>
+        {% else %}
+            <p>No annotated image available.</p>
+        {% endif %}
+    {% else %}
+        <p>No detection result available yet.</p>
+    {% endif %}
+</div>

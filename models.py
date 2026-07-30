@@ -23,7 +23,7 @@ class Report(db.Model):
     lat = db.Column(db.Float, nullable=False)
     lng = db.Column(db.Float, nullable=False)
 
-    # "gps" if extracted from EXIF, "manual" if the user pinned it on the map
+    # "gps" from EXIF, "browser" from device location, "manual" from map click
     location_source = db.Column(db.String(10), nullable=False, default="manual")
 
     # pending -> reviewed -> resolved (admin workflow)

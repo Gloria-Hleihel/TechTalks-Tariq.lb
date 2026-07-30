@@ -24,10 +24,10 @@ MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB, per the Week 3 validation task
 # --- Damage classification ----------------------------------------------
 # Matches Section 11 delivery checklist exactly.
 DAMAGE_TYPES = [
-    "Pothole",
-    "Road Crack",
-    "Surface Wear",
-    "Other",
+    "Longitudinal Crack",
+    "Transverse Crack",
+    "Alligator Crack",
+    "Potholes",
     "None",
 ]
 
@@ -44,7 +44,7 @@ SEVERITY_COLORS = {
 
 # --- Report workflow -----------------------------------------------------
 REPORT_STATUSES = ["pending", "reviewed", "resolved"]
-LOCATION_SOURCES = ["gps", "manual"]
+LOCATION_SOURCES = ["gps", "browser", "manual"]
 
 # --- Admin auth ------------------------------------------------------------
 # Simple Flask session-based auth per project assumptions — no role

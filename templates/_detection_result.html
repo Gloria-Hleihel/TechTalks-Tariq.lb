@@ -1,29 +1,71 @@
 {% if detection %}
   <div class="detection-card">
-    <h3>Detection Result</h3>
+    <div class="detection-header">
+      <div>
+        <p class="eyebrow">AI Analysis</p>
+        <h2>Road Damage Detected</h2>
+      </div>
 
-    <p><strong>Damage type:</strong> {{ detection.damage_type }}</p>
-    <p><strong>Confidence:</strong> {{ "%.1f"|format(detection.confidence * 100) }}%</p>
-    <p><strong>Severity score:</strong> {{ detection.severity_score }}/100</p>
-
-    <p>
-      <strong>Severity:</strong>
       <span class="badge badge-{{ detection.severity_label|lower }}">
         {{ detection.severity_label }}
       </span>
-    </p>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-box">
+        <span class="result-label">Damage Type</span>
+        <strong>{{ detection.damage_type }}</strong>
+      </div>
+
+      <div class="result-box">
+        <span class="result-label">Confidence</span>
+        <strong>
+          {{ "%.1f"|format(detection.confidence * 100) }}%
+        </strong>
+      </div>
+
+      <div class="result-box">
+        <span class="result-label">Severity Score</span>
+        <strong>{{ detection.severity_score }}/100</strong>
+      </div>
+    </div>
+
+    <div class="confidence-section">
+      <div class="confidence-text">
+        <span>Model confidence</span>
+        <span>{{ "%.1f"|format(detection.confidence * 100) }}%</span>
+      </div>
+
+      <div class="confidence-track">
+        <div
+          class="confidence-fill"
+          style="width: {{ detection.confidence * 100 }}%;"
+        ></div>
+      </div>
+    </div>
 
     {% if detection.annotated_image_path %}
-      <img
-        class="report-image"
-        src="{{ url_for('static', filename=detection.annotated_image_path.replace('static/', '')) }}"
-        alt="Annotated detection result"
-      />
+      <div class="annotated-section">
+        <h3>Detected Damage</h3>
+        <p class="muted">
+          The highlighted area shows where the AI detected road damage.
+        </p>
+
+        <img
+  class="report-image annotated-image"
+  src="{{ url_for('static', filename=detection.annotated_image_path.replace('static/', '')) }}"
+  alt="Annotated road-damage detection result"
+/>
+      </div>
     {% endif %}
   </div>
 {% else %}
-  <div class="detection-card">
-    <h3>Detection Result</h3>
-    <p>Detection is pending or unavailable.</p>
+  <div class="detection-card empty-state">
+    <div class="empty-icon">⌛</div>
+    <h2>Detection Pending</h2>
+    <p>
+      Your report was saved successfully, but the AI result is not
+      available yet.
+    </p>
   </div>
 {% endif %}

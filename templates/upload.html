@@ -1,158 +1,714 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
+
   <title>Tariq.lb — Submit Road Report</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
 
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     crossorigin=""
-  />
+  >
 
   <style>
+    :root {
+      --red: #7b0d1e;
+      --red-dark: #5f0a17;
+      --red-soft: #f5e7ea;
+
+      --green: #4a7c59;
+      --green-dark: #365c42;
+      --green-soft: #eaf1ec;
+
+      --dark: #1a1a1a;
+      --cream: #f6f1ea;
+      --cream-light: #fbf8f4;
+
+      --white: #ffffff;
+      --muted: #6f7175;
+      --border: #e3ddd5;
+
+      --success: #356a45;
+      --error: #9b2c38;
+      --info: #425f78;
+
+      --shadow:
+        0 18px 50px rgba(44, 28, 24, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      margin: 20px;
-      background: #f7f7f7;
-      color: #222;
+      margin: 0;
+      min-height: 100vh;
+      font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        Helvetica,
+        sans-serif;
+      background:
+        radial-gradient(
+          circle at top right,
+          rgba(123, 13, 30, 0.08),
+          transparent 32%
+        ),
+        var(--cream);
+      color: var(--dark);
     }
 
-    .container {
-      max-width: 1000px;
+    .site-header {
+      background:
+        linear-gradient(
+          110deg,
+          var(--red),
+          var(--red-dark)
+        );
+      color: var(--white);
+      border-bottom: 5px solid var(--green);
+      box-shadow:
+        0 8px 25px rgba(95, 10, 23, 0.2);
+    }
+
+    .header-inner {
+      max-width: 1180px;
       margin: 0 auto;
-    }
-
-    .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    h1 {
-      margin-top: 0;
-      color: #183b68;
-    }
-
-    .row {
+      padding: 14px 24px;
       display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
     }
 
-    .col {
-      flex: 1;
-      min-width: 300px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
 
-    label {
+    .logo-box {
+      width: 76px;
+      height: 58px;
+      padding: 5px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--white);
+      box-shadow:
+        0 6px 15px rgba(0, 0, 0, 0.16);
+    }
+
+    .logo-box img {
       display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
-    input[type="file"] {
+    .brand-text strong {
       display: block;
-      margin-bottom: 12px;
+      font-size: 1.25rem;
+      letter-spacing: 0.01em;
     }
 
-    .btn {
-      background: #1976d2;
-      color: white;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
+    .brand-text span {
+      display: block;
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 0.82rem;
     }
 
-    .btn:hover {
-      background: #1259a0;
+    .map-link {
+      color: var(--white);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease;
     }
 
-    #map {
-      height: 380px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+    .map-link:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .page-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 44px 24px 60px;
+    }
+
+    .hero {
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 10px;
+      color: var(--red);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 3px;
+      border-radius: 99px;
+      background: var(--green);
+    }
+
+    .hero h1 {
+      max-width: 720px;
+      margin: 0;
+      font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.05;
+      color: var(--dark);
+    }
+
+    .hero p {
+      max-width: 690px;
+      margin: 15px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
     }
 
     .messages {
-      margin-bottom: 14px;
+      margin-bottom: 18px;
     }
 
     .msg {
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border: 1px solid;
+      font-size: 0.93rem;
+      line-height: 1.5;
     }
 
     .success {
-      background: #e6ffed;
-      border: 1px solid #b7f0c6;
-      color: #0b5f2b;
+      background: var(--green-soft);
+      border-color: #b9ddc2;
+      color: var(--success);
     }
 
     .info {
-      background: #eef6ff;
-      border: 1px solid #cfe9ff;
-      color: #0b3a66;
+      background: #eef5f8;
+      border-color: #c9dce5;
+      color: var(--info);
     }
 
     .error {
-      background: #ffeaea;
-      border: 1px solid #ffbdbd;
-      color: #5a0b0b;
+      background: #fff0f1;
+      border-color: #edc2c7;
+      color: var(--error);
     }
 
-    .gps-box {
-      background: #f5f8ff;
-      border: 1px solid #d7e6ff;
-      padding: 10px;
-      border-radius: 6px;
-      margin: 12px 0;
-      font-size: 0.95rem;
+    .main-card {
+      overflow: hidden;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-top {
+      padding: 23px 26px;
+      background:
+        linear-gradient(
+          105deg,
+          var(--red),
+          var(--red-dark)
+        );
+      color: var(--white);
+    }
+
+    .card-top h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .card-top p {
+      margin: 7px 0 0;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.9rem;
+    }
+
+    .form-layout {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 0.9fr)
+        minmax(380px, 1.1fr);
+      gap: 0;
+    }
+
+    .form-panel {
+      padding: 30px;
+    }
+
+    .location-panel {
+      padding: 30px;
+      background: var(--cream-light);
+      border-left: 1px solid var(--border);
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: var(--dark);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .step-number {
+      width: 29px;
+      height: 29px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: var(--white);
+      font-size: 0.8rem;
+    }
+
+    .file-drop-zone {
+      position: relative;
+      padding: 26px 20px;
+      text-align: center;
+      border: 2px dashed #cabbb3;
+      border-radius: 18px;
+      background: #fdfbf8;
+      transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .file-drop-zone:hover,
+    .file-drop-zone.dragging {
+      border-color: var(--red);
+      background: var(--red-soft);
+      transform: translateY(-1px);
+    }
+
+    .upload-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 13px;
+      border-radius: 17px;
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 1.55rem;
+    }
+
+    .file-drop-zone h3 {
+      margin: 0;
+      color: var(--dark);
+      font-size: 1rem;
+    }
+
+    .file-drop-zone p {
+      margin: 7px 0 15px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      max-width: 330px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    input[type="file"]::file-selector-button {
+      margin-right: 10px;
+      padding: 10px 13px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--red);
+      color: var(--white);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+      background: var(--red-dark);
+    }
+
+    .image-preview-wrapper {
+      display: none;
+      margin-top: 17px;
+      padding: 12px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+    }
+
+    .image-preview-wrapper.visible {
+      display: block;
+    }
+
+    .preview-label {
+      margin: 0 0 9px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .image-preview {
+      display: block;
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 11px;
+      background: var(--white);
+    }
+
+    .saved-image-box {
+      margin-top: 17px;
+      padding: 16px;
+      background: var(--green-soft);
+      border: 1px solid #cad5c3;
+      border-radius: 16px;
+    }
+
+    .saved-image-heading {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 11px;
+      color: var(--green-dark);
+      font-weight: 800;
+    }
+
+    .saved-image-preview {
+      display: block;
+      width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      background: var(--white);
+      border: 1px solid #d9e0d4;
+      border-radius: 12px;
+    }
+
+    .saved-image-note {
+      margin: 12px 0 0;
+      color: var(--green-dark);
+      font-size: 0.87rem;
+      line-height: 1.55;
+    }
+
+    .status-box {
+      margin-top: 16px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      font-size: 0.87rem;
+      line-height: 1.5;
+    }
+
+    .gps-box.info {
+      background: #f0f4f6;
+      border: 1px solid #cbd8de;
+      color: var(--info);
+    }
+
+    .gps-box.error {
+      background: #fff0f1;
+      border: 1px solid #edc2c7;
+      color: var(--error);
+    }
+
+    .location-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+
+    .location-btn {
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--green);
+      color: var(--white);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 800;
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .location-btn:hover {
+      background: var(--green-dark);
+      transform: translateY(-1px);
+    }
+
+    .location-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+    }
+
+    .location-status {
+      margin: 0 0 14px;
+    }
+
+    #map {
+      height: 415px;
+      overflow: hidden;
+      border: 1px solid #d8d0c5;
+      border-radius: 17px;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+    }
+
+    .coordinates-box {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--white);
+      border: 1px solid var(--border);
+    }
+
+    .coordinates-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .coords {
-      font-weight: bold;
+      color: var(--dark);
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .submit-area {
+      margin-top: 23px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 12px;
+      background:
+        linear-gradient(
+          110deg,
+          var(--red),
+          var(--red-dark)
+        );
+      color: var(--white);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 800;
+      box-shadow:
+        0 10px 22px rgba(123, 13, 30, 0.2);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 13px 28px rgba(123, 13, 30, 0.27);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
     }
 
     .note {
-      color: #666;
-      font-size: 0.9rem;
-      margin-top: 14px;
-      line-height: 1.4;
+      margin: 15px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.55;
     }
 
-    @media (max-width: 700px) {
-      body {
-        margin: 10px;
+    .helper-list {
+      display: grid;
+      gap: 9px;
+      margin: 20px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .helper-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .helper-list li::before {
+      content: "✓";
+      flex: 0 0 auto;
+      width: 19px;
+      height: 19px;
+      display: grid;
+      place-items: center;
+      margin-top: 1px;
+      border-radius: 50%;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 0.7rem;
+      font-weight: 900;
+    }
+
+    .leaflet-control-zoom a {
+      color: var(--red) !important;
+    }
+
+    @media (max-width: 900px) {
+      .form-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .location-panel {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+      }
+    }
+
+    @media (max-width: 650px) {
+      .header-inner {
+        padding: 12px 15px;
+      }
+
+      .logo-box {
+        width: 64px;
+        height: 49px;
+      }
+
+      .brand-text span {
+        display: none;
+      }
+
+      .map-link {
+        display: none;
+      }
+
+      .page-shell {
+        padding: 28px 14px 42px;
+      }
+
+      .form-panel,
+      .location-panel {
+        padding: 20px;
+      }
+
+      .main-card {
+        border-radius: 18px;
+      }
+
+      .card-top {
+        padding: 20px;
       }
 
       #map {
-        height: 300px;
+        height: 330px;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>Tariq.lb — Submit Road Report</h1>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo-box">
+          <img
+            src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}"
+            alt="Tariq.lb logo"
+          >
+        </div>
 
-      <div class="messages">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="msg {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+        <div class="brand-text">
+          <strong>Tariq.lb</strong>
+          <span>Smarter roads for Lebanon</span>
+        </div>
+      </div>
+
+      <a class="map-link" href="/map">
+        View Road Map
+      </a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero">
+      <p class="eyebrow">
+        Road reporting platform
+      </p>
+
+      <h1>
+        Help make Lebanon’s roads safer.
+      </h1>
+
+      <p>
+        Upload a road image and confirm its location. Tariq.lb will
+        analyze the image for visible road damage and add the report
+        to the shared infrastructure map.
+      </p>
+    </section>
+
+    <div class="messages">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="msg {{ category }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <section class="main-card">
+      <div class="card-top">
+        <h2>Submit a Road Report</h2>
+
+        <p>
+          Add an image first, then confirm the road location.
+        </p>
       </div>
 
       <form
@@ -161,65 +717,235 @@
         enctype="multipart/form-data"
         id="uploadForm"
       >
-        <div class="row">
-          <div class="col">
-            <label for="image">Select road image</label>
+        <div class="form-layout">
+          <section class="form-panel">
+            <div class="section-label">
+              <span class="step-number">1</span>
+              Upload the road image
+            </div>
+
+            <div
+              class="file-drop-zone"
+              id="dropZone"
+            >
+              <div class="upload-icon">📷</div>
+
+              <h3>
+                Choose a road image
+              </h3>
+
+              <p>
+                Upload a clear JPG or PNG image showing the road
+                surface.
+              </p>
+
+              <input
+                type="file"
+                name="image"
+                id="image"
+                accept="image/jpeg,image/png"
+                {% if not saved_image_path %}required{% endif %}
+              >
+            </div>
+
+            {% if saved_image_path %}
+              <input
+                type="hidden"
+                name="saved_image_path"
+                value="{{ saved_image_path }}"
+              >
+
+              <div class="saved-image-box">
+                <p class="saved-image-heading">
+                  ✓ Your uploaded image has been kept
+                </p>
+
+                <img
+                  class="saved-image-preview"
+                  src="{{ url_for(
+                    'static',
+                    filename=saved_image_path.replace('static/', '')
+                  ) }}"
+                  alt="Previously uploaded road image"
+                >
+
+                <p class="saved-image-note">
+                  Select the road location on the map and submit again.
+                  You do not need to choose the image a second time.
+                </p>
+              </div>
+            {% endif %}
+
+            <div
+              class="image-preview-wrapper"
+              id="imagePreviewWrapper"
+            >
+              <p class="preview-label">
+                Selected image preview
+              </p>
+
+              <img
+                class="image-preview"
+                id="imagePreview"
+                alt="Selected road image preview"
+              >
+            </div>
+
+            <div
+              class="status-box gps-box info"
+              id="gpsStatus"
+            >
+              Choose an image. GPS will be checked after upload.
+              When GPS is unavailable, select the location manually
+              on the map.
+            </div>
 
             <input
-              type="file"
-              name="image"
-              id="image"
-              accept="image/jpeg,image/png"
-              required
-            />
+              type="hidden"
+              name="lat"
+              id="lat"
+            >
 
-            <div class="gps-box info" id="gpsStatus">
-              Choose an image. GPS will be checked after upload. If no GPS is found, select the location on the map.
+            <input
+              type="hidden"
+              name="lng"
+              id="lng"
+            >
+
+            <input
+              type="hidden"
+              name="location_source"
+              id="locationSource"
+              value="manual"
+            >
+
+            <ul class="helper-list">
+              <li>
+                JPG, JPEG and PNG images are supported.
+              </li>
+
+              <li>
+                Maximum file size is 5 MB.
+              </li>
+
+              <li>
+                GPS data is used automatically when available.
+              </li>
+            </ul>
+
+            <div class="submit-area">
+              <button
+                class="submit-btn"
+                type="submit"
+                id="submitButton"
+              >
+                Submit Road Report
+              </button>
+
+              <p class="note">
+                The image will be analyzed by the road-damage
+                detection model after the report is saved.
+              </p>
+            </div>
+          </section>
+
+          <section class="location-panel">
+            <div class="section-label">
+              <span class="step-number">2</span>
+              Confirm the location
             </div>
 
-            <input type="hidden" name="lat" id="lat" />
-            <input type="hidden" name="lng" id="lng" />
+            <div class="location-actions">
+              <button
+                class="location-btn"
+                type="button"
+                id="useCurrentLocationButton"
+              >
+                Use my current location
+              </button>
+            </div>
 
-            <button class="btn" type="submit">Submit Report</button>
+            <div
+              class="status-box gps-box info location-status"
+              id="locationStatus"
+            >
+              Click the map or use your current location.
+            </div>
 
-            <p class="note">
-              Allowed files: JPG, JPEG, PNG. Maximum size: 5MB.
-              If the photo has GPS EXIF data, Tariq.lb will use it automatically.
-              Otherwise, click the map to choose the road location manually.
-            </p>
-          </div>
-
-          <div class="col">
-            <label>Manual location fallback</label>
             <div id="map"></div>
 
-            <div class="gps-box">
-              Selected coordinates:
-              <span id="selectedCoords" class="coords">None</span>
+            <div class="coordinates-box">
+              <span class="coordinates-label">
+                Selected coordinates
+              </span>
+
+              <span
+                id="selectedCoords"
+                class="coords"
+              >
+                None selected
+              </span>
             </div>
-          </div>
+
+            <p class="note">
+              Click the exact road location on the map. This location
+              is used only when the uploaded photo does not contain
+              valid GPS information.
+            </p>
+          </section>
         </div>
       </form>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
 
   <script>
-    const defaultLat = {{ config.get('MAP_DEFAULT_LAT', 33.85) }};
-    const defaultLng = {{ config.get('MAP_DEFAULT_LNG', 35.86) }};
-    const defaultZoom = {{ config.get('MAP_DEFAULT_ZOOM', 9) }};
+    const defaultLat =
+      {{ config.get('MAP_DEFAULT_LAT', 33.85) }};
 
-    const map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);
+    const defaultLng =
+      {{ config.get('MAP_DEFAULT_LNG', 35.86) }};
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    const defaultZoom =
+      {{ config.get('MAP_DEFAULT_ZOOM', 9) }};
+
+    const map = L.map('map').setView(
+      [defaultLat, defaultLng],
+      defaultZoom
+    );
+
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }
+    ).addTo(map);
 
     let marker = null;
 
-    function setMarker(lat, lng) {
+    const locationSourceInput =
+      document.getElementById('locationSource');
+
+    const locationStatus =
+      document.getElementById('locationStatus');
+
+    const useCurrentLocationButton =
+      document.getElementById('useCurrentLocationButton');
+
+    function setLocationStatus(message, isError) {
+      locationStatus.textContent = message;
+      locationStatus.className =
+        isError
+          ? 'status-box gps-box error location-status'
+          : 'status-box gps-box info location-status';
+    }
+
+    function setMarker(lat, lng, source, shouldZoom) {
       if (marker) {
         marker.setLatLng([lat, lng]);
       } else {
@@ -228,45 +954,248 @@
 
       document.getElementById('lat').value = lat;
       document.getElementById('lng').value = lng;
-      document.getElementById('selectedCoords').textContent =
+      locationSourceInput.value = source || 'manual';
+
+      document.getElementById(
+        'selectedCoords'
+      ).textContent =
         lat.toFixed(6) + ', ' + lng.toFixed(6);
+
+      if (shouldZoom) {
+        map.setView([lat, lng], Math.max(map.getZoom(), 16));
+      }
     }
 
-    map.on('click', function(e) {
-      setMarker(e.latlng.lat, e.latlng.lng);
+    map.on('click', function(event) {
+      setMarker(
+        event.latlng.lat,
+        event.latlng.lng,
+        'manual',
+        false
+      );
+
+      setLocationStatus(
+        'Map location selected.',
+        false
+      );
     });
 
-    const imageInput = document.getElementById('image');
-    const gpsStatus = document.getElementById('gpsStatus');
+    useCurrentLocationButton.addEventListener(
+      'click',
+      function() {
+        if (!navigator.geolocation) {
+          setLocationStatus(
+            'Your browser does not support current-location detection.',
+            true
+          );
+          return;
+        }
 
-    imageInput.addEventListener('change', function() {
-      const file = imageInput.files[0];
+        useCurrentLocationButton.disabled = true;
+        useCurrentLocationButton.textContent =
+          'Finding location...';
 
-      if (!file) {
-        gpsStatus.textContent = 'Choose an image.';
-        gpsStatus.className = 'gps-box info';
-        return;
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            setMarker(
+              position.coords.latitude,
+              position.coords.longitude,
+              'browser',
+              true
+            );
+
+            setLocationStatus(
+              'Current location selected. You can still adjust it on the map.',
+              false
+            );
+
+            useCurrentLocationButton.disabled = false;
+            useCurrentLocationButton.textContent =
+              'Use my current location';
+          },
+          function(error) {
+            let message =
+              'Could not get your current location.';
+
+            if (error.code === error.PERMISSION_DENIED) {
+              message =
+                'Location permission was denied. Select the road on the map.';
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              message =
+                'Current location is unavailable. Select the road on the map.';
+            } else if (error.code === error.TIMEOUT) {
+              message =
+                'Location lookup timed out. Select the road on the map.';
+            }
+
+            setLocationStatus(message, true);
+
+            useCurrentLocationButton.disabled = false;
+            useCurrentLocationButton.textContent =
+              'Use my current location';
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        );
       }
+    );
 
-      const allowedTypes = ['image/jpeg', 'image/png'];
-      const maxSize = 5 * 1024 * 1024;
+    const imageInput =
+      document.getElementById('image');
 
-      if (!allowedTypes.includes(file.type)) {
-        gpsStatus.textContent = 'Invalid file type. Please choose JPG, JPEG, or PNG.';
-        gpsStatus.className = 'gps-box error';
-        return;
+    const gpsStatus =
+      document.getElementById('gpsStatus');
+
+    const previewWrapper =
+      document.getElementById('imagePreviewWrapper');
+
+    const imagePreview =
+      document.getElementById('imagePreview');
+
+    const dropZone =
+      document.getElementById('dropZone');
+
+    const uploadForm =
+      document.getElementById('uploadForm');
+
+    const submitButton =
+      document.getElementById('submitButton');
+
+    function clearPreview() {
+      imagePreview.removeAttribute('src');
+      previewWrapper.classList.remove('visible');
+    }
+
+    imageInput.addEventListener(
+      'change',
+      function() {
+        const file = imageInput.files[0];
+
+        if (!file) {
+          gpsStatus.textContent =
+            'Choose an image.';
+
+          gpsStatus.className =
+            'status-box gps-box info';
+
+          clearPreview();
+          return;
+        }
+
+        const allowedTypes = [
+          'image/jpeg',
+          'image/png'
+        ];
+
+        const maxSize =
+          5 * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+          gpsStatus.textContent =
+            'Invalid file type. Please choose a JPG, JPEG, or PNG image.';
+
+          gpsStatus.className =
+            'status-box gps-box error';
+
+          imageInput.value = '';
+          clearPreview();
+          return;
+        }
+
+        if (file.size > maxSize) {
+          gpsStatus.textContent =
+            'The selected image is larger than 5 MB.';
+
+          gpsStatus.className =
+            'status-box gps-box error';
+
+          imageInput.value = '';
+          clearPreview();
+          return;
+        }
+
+        const previewUrl =
+          URL.createObjectURL(file);
+
+        imagePreview.src = previewUrl;
+
+        previewWrapper.classList.add(
+          'visible'
+        );
+
+        gpsStatus.textContent =
+          'Image selected successfully. GPS will be checked after upload.';
+
+        gpsStatus.className =
+          'status-box gps-box info';
       }
+    );
 
-      if (file.size > maxSize) {
-        gpsStatus.textContent = 'File is too large. Maximum size is 5MB.';
-        gpsStatus.className = 'gps-box error';
-        return;
+    ['dragenter', 'dragover'].forEach(
+      function(eventName) {
+        dropZone.addEventListener(
+          eventName,
+          function(event) {
+            event.preventDefault();
+            dropZone.classList.add('dragging');
+          }
+        );
       }
+    );
 
-      gpsStatus.textContent =
-        'Image selected. GPS will be checked after upload. If no GPS is found, select location on the map.';
-      gpsStatus.className = 'gps-box info';
-    });
+    ['dragleave', 'drop'].forEach(
+      function(eventName) {
+        dropZone.addEventListener(
+          eventName,
+          function(event) {
+            event.preventDefault();
+            dropZone.classList.remove('dragging');
+          }
+        );
+      }
+    );
+
+    dropZone.addEventListener(
+      'drop',
+      function(event) {
+        const files =
+          event.dataTransfer.files;
+
+        if (!files.length) {
+          return;
+        }
+
+        imageInput.files = files;
+
+        imageInput.dispatchEvent(
+          new Event('change')
+        );
+      }
+    );
+
+    uploadForm.addEventListener(
+      'submit',
+      function() {
+        submitButton.disabled = true;
+        submitButton.textContent =
+          'Submitting report...';
+      }
+    );
+
+    window.addEventListener(
+      'load',
+      function() {
+        setTimeout(
+          function() {
+            map.invalidateSize();
+          },
+          150
+        );
+      }
+    );
   </script>
 </body>
 </html>
