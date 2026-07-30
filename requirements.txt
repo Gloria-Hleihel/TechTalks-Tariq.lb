@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # =========================
 # Tariq.lb Requirements
 # Full Road-Condition Web Application
