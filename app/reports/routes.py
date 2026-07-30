@@ -727,6 +727,130 @@ def report_detail(report_id):
     )
 
 
+@bp.route("/map", methods=["GET"])
+def map_page():
+    return render_template("map.html")
+
+
+@bp.route("/api/reports", methods=["GET"])
+def api_reports():
+    severity = (
+        request.args.get("severity")
+        or ""
+    ).strip()
+
+    damage_type = (
+        request.args.get("damage_type")
+        or ""
+    ).strip()
+
+    query = db.session.query(
+        Report,
+        Detection,
+    ).outerjoin(
+        Detection,
+        Detection.report_id == Report.id,
+    )
+
+    if severity:
+        query = query.filter(
+            Detection.severity_label == severity
+        )
+
+    if damage_type:
+        query = query.filter(
+            Detection.damage_type == damage_type
+        )
+
+    results = []
+
+    for report, detection in query.all():
+        results.append(
+            {
+                "id": report.id,
+                "lat": report.lat,
+                "lng": report.lng,
+                "status": report.status,
+                "location_source": report.location_source,
+                "damage_type": (
+                    detection.damage_type
+                    if detection
+                    else None
+                ),
+                "severity_label": (
+                    detection.severity_label
+                    if detection
+                    else None
+                ),
+                "date": (
+                    report.created_at.isoformat()
+                    if report.created_at
+                    else None
+                ),
+            }
+        )
+
+    return jsonify(results)
+
+
+@bp.route(
+    "/api/reports/<int:report_id>",
+    methods=["GET"],
+)
+def api_report_detail(report_id):
+    report = db.get_or_404(
+        Report,
+        report_id,
+    )
+
+    detection = (
+        report.detections[0]
+        if report.detections
+        else None
+    )
+
+    return jsonify(
+        {
+            "id": report.id,
+            "lat": report.lat,
+            "lng": report.lng,
+            "image_path": report.image_path,
+            "location_source": report.location_source,
+            "status": report.status,
+            "date": (
+                report.created_at.isoformat()
+                if report.created_at
+                else None
+            ),
+            "damage_type": (
+                detection.damage_type
+                if detection
+                else None
+            ),
+            "confidence": (
+                detection.confidence
+                if detection
+                else None
+            ),
+            "severity_score": (
+                detection.severity_score
+                if detection
+                else None
+            ),
+            "severity_label": (
+                detection.severity_label
+                if detection
+                else None
+            ),
+            "annotated_image_path": (
+                detection.annotated_image_path
+                if detection
+                else None
+            ),
+        }
+    )
+
+
 @bp.route(
     "/reports/<int:report_id>/retry-detection",
     methods=["POST"],

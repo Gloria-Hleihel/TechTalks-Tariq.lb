@@ -48,7 +48,6 @@ def create_app(test_config=None):
 
     db.init_app(app)
 
-    # Register reports blueprint (Malek)
     # Register blueprints
     from app.reports import bp as reports_bp
     from app.detection.routes import detection_bp
