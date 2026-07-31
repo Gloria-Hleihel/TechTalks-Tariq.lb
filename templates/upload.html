@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
 
-  <title>Tariq.lb — Submit Road Report</title>
+  <title>Tariq.lb - Submit Road Report</title>
 
   <meta
     name="viewport"
@@ -125,6 +125,14 @@
       margin-top: 4px;
       color: rgba(255, 255, 255, 0.74);
       font-size: 0.82rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .map-link {
@@ -579,7 +587,7 @@
     }
 
     .helper-list li::before {
-      content: "✓";
+      content: "\2713";
       flex: 0 0 auto;
       width: 19px;
       height: 19px;
@@ -667,9 +675,14 @@
         </div>
       </div>
 
-      <a class="map-link" href="/map">
-        View Road Map
-      </a>
+      <div class="header-actions">
+        <a class="map-link" href="{{ url_for('reports.index') }}">
+          Home
+        </a>
+        <a class="map-link" href="{{ url_for('reports.map_page') }}">
+          View Road Map
+        </a>
+      </div>
     </div>
   </header>
 
@@ -680,7 +693,7 @@
       </p>
 
       <h1>
-        Help make Lebanon’s roads safer.
+        Help make Lebanon&rsquo;s roads safer.
       </h1>
 
       <p>
@@ -728,7 +741,7 @@
               class="file-drop-zone"
               id="dropZone"
             >
-              <div class="upload-icon">📷</div>
+              <div class="upload-icon" aria-hidden="true">&#128247;</div>
 
               <h3>
                 Choose a road image
@@ -757,7 +770,7 @@
 
               <div class="saved-image-box">
                 <p class="saved-image-heading">
-                  ✓ Your uploaded image has been kept
+                  &#10003; Your uploaded image has been kept
                 </p>
 
                 <img
@@ -1199,3 +1212,4 @@
   </script>
 </body>
 </html>
+

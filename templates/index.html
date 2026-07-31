@@ -1,0 +1,163 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Tariq.lb - Road Damage Reporting Platform{% endblock %}
+{% block body_class %}landing-page{% endblock %}
+
+{% block content %}
+<section
+  class="hero-section"
+  style="--hero-image: url('{{ url_for('static', filename='images/landing-road-hero.png') }}');"
+>
+  <div class="hero-content">
+    <p class="hero-pill">
+      <span></span>
+      AI road reporting platform
+    </p>
+
+    <h1>
+      <span>Report Road Damage.</span>
+      <span class="headline-green">Build Safer Roads.</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      Tariq.lb is an AI-powered community platform that helps citizens report road
+      damage so municipalities can respond faster. Together, we make Lebanon's roads
+      safer.
+    </p>
+
+    <div class="hero-cta-group">
+      <a class="primary-cta" href="{{ url_for('reports.upload') }}">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
+          <circle cx="12" cy="14" r="3.2"></circle>
+        </svg>
+        Report a Road Problem
+      </a>
+
+      <p class="cta-note">
+        Upload a photo &bull; Pin the location &bull; Help improve Lebanon's roads
+      </p>
+
+    </div>
+  </div>
+
+  <div class="feature-grid" aria-label="Platform highlights">
+    <article class="feature-card">
+      <span class="feature-icon icon-red">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"></path>
+          <path d="m9 12 2 2 4-5"></path>
+        </svg>
+      </span>
+      <div>
+        <h2>Safer Roads</h2>
+        <p>Helping reduce accidents by identifying dangerous roads.</p>
+      </div>
+    </article>
+
+    <article class="feature-card">
+      <span class="feature-icon icon-green">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
+          <circle cx="12" cy="14" r="3.2"></circle>
+          <path d="M18.5 4.5v3"></path>
+          <path d="M17 6h3"></path>
+        </svg>
+      </span>
+      <div>
+        <h2>AI Detection</h2>
+        <p>YOLOv8 automatically detects potholes and road cracks.</p>
+      </div>
+    </article>
+
+    <article class="feature-card">
+      <span class="feature-icon icon-red">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path>
+          <path d="M9 3v15"></path>
+          <path d="M15 6v15"></path>
+        </svg>
+      </span>
+      <div>
+        <h2>Live Monitoring</h2>
+        <p>Track reports across Lebanon in real time.</p>
+      </div>
+    </article>
+
+    <article class="feature-card">
+      <span class="feature-icon icon-green">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M16 11a4 4 0 1 0-8 0"></path>
+          <path d="M4 21a8 8 0 0 1 16 0"></path>
+          <path d="M18 8a3 3 0 0 1 3 3"></path>
+          <path d="M3 11a3 3 0 0 1 3-3"></path>
+        </svg>
+      </span>
+      <div>
+        <h2>Community Driven</h2>
+        <p>Citizens helping municipalities improve infrastructure.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<div class="modal-backdrop" data-modal-backdrop hidden></div>
+
+<section
+  class="modal"
+  id="about-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="about-title"
+  hidden
+>
+  <div class="modal-panel">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 6 12 12"></path>
+        <path d="m18 6-12 12"></path>
+      </svg>
+    </button>
+    <p class="modal-kicker">About Tariq</p>
+    <h2 id="about-title">A civic road reporting platform for Lebanon.</h2>
+    <p>
+      Tariq.lb lets citizens upload a road photo, confirm the location, and submit
+      a structured report. The platform uses AI damage detection to identify cracks
+      and potholes, then places reports on a live map for faster review.
+    </p>
+    <div class="modal-list">
+      <span>AI damage detection with YOLOv8</span>
+      <span>Citizen-powered reporting from real locations</span>
+      <span>Municipality-friendly visibility into road priorities</span>
+    </div>
+  </div>
+</section>
+
+<section
+  class="modal"
+  id="contact-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="contact-title"
+  hidden
+>
+  <div class="modal-panel">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 6 12 12"></path>
+        <path d="m18 6-12 12"></path>
+      </svg>
+    </button>
+    <p class="modal-kicker">Contact</p>
+    <h2 id="contact-title">Connect with the Tariq.lb team.</h2>
+    <div class="contact-list">
+      <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
+      <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a>
+      <a href="mailto:contact@tariq.lb">contact@tariq.lb</a>
+      <a href="tel:+96100000000">+961 00 000 000</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+

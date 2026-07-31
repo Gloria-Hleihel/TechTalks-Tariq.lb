@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 from flask import (
     current_app,
@@ -74,7 +74,7 @@ def _saved_image_is_allowed(saved_image_path: str) -> bool:
 
 @bp.route("/")
 def index():
-    return redirect(url_for("reports.upload"))
+    return render_template("index.html")
 
 
 @bp.route("/upload", methods=["GET"])

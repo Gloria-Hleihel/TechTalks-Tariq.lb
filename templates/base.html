@@ -1,0 +1,69 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Tariq.lb{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="landing-header" aria-label="Primary navigation">
+    <div class="nav-shell">
+      <a class="brand-link" href="{{ url_for('reports.index') }}" aria-label="Tariq.lb home">
+        <span class="brand-logo">
+          <img
+            src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}"
+            alt="Tariq.lb logo"
+          >
+        </span>
+        <span class="brand-copy">
+          <strong>Tariq.lb</strong>
+          <span>Better Roads, Together</span>
+        </span>
+      </a>
+
+      <nav class="nav-center" aria-label="Landing page sections">
+        <button class="nav-link" type="button" data-modal-target="about-modal">
+          About Tariq
+        </button>
+        <button class="nav-link" type="button" data-modal-target="contact-modal">
+          Contact
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="nav-button nav-button-outline" href="{{ url_for('reports.map_page') }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path>
+            <path d="M9 3v15"></path>
+            <path d="M15 6v15"></path>
+          </svg>
+          View Live Map
+        </a>
+        <a class="nav-button nav-button-solid" href="{{ url_for('admin.login') }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"></path>
+            <path d="m9 12 2 2 4-5"></path>
+          </svg>
+          Admin Dashboard
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="landing-footer">
+    <span>Tariq.lb</span>
+    <span>AI-powered road reporting for safer roads in Lebanon.</span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
