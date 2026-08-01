@@ -124,6 +124,28 @@ Full schema documentation is available in:
 - API Documentation: `docs/api.md`
 - DB Integrity Check: `docs/db_integrity_check.md`
 
+## Project Structure
+
+```text
+TechTalks-Tariq.lb/
+├── app/
+│   ├── admin/
+│   ├── detection/
+│   ├── reports/
+│   └── utils/
+├── models/
+│   └── road_damage.pt
+├── scripts/
+├── static/
+├── templates/
+├── tests/
+├── docs/
+├── config.py
+├── models.py
+├── requirements.txt
+└── run.py
+
+
 ## Troubleshooting
 
 ### Port 5000 already in use
