@@ -906,9 +906,8 @@ svg {
   font-weight: 950;
 }
 
-.contact-content-grid {
+.contact-section-stack {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
   gap: 16px;
   margin-top: 18px;
 }
@@ -925,6 +924,7 @@ svg {
 
 .faq-list {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -972,6 +972,15 @@ svg {
   color: var(--red);
   border: 1px solid rgba(123, 13, 30, 0.22);
   background: rgba(123, 13, 30, 0.08);
+}
+
+.feedback-help {
+  max-width: 720px;
+  margin: -2px 0 16px;
+  color: rgba(26, 26, 26, 0.62);
+  font-size: 0.92rem;
+  line-height: 1.58;
+  font-weight: 700;
 }
 
 .feedback-form,
@@ -1185,7 +1194,7 @@ svg {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .contact-content-grid {
+  .faq-list {
     grid-template-columns: 1fr;
   }
 }

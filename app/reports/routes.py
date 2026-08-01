@@ -679,7 +679,7 @@ def submit_feedback():
 
     except SubmissionError as exc:
         flash(exc.message, "error")
-        return redirect(url_for("reports.index", _anchor="contact-modal"))
+        return redirect(url_for("reports.index", _anchor="support-modal"))
 
     feedback = FeedbackMessage(
         name=name,
@@ -698,13 +698,13 @@ def submit_feedback():
             "Your message could not be sent right now. Please try again.",
             "error",
         )
-        return redirect(url_for("reports.index", _anchor="contact-modal"))
+        return redirect(url_for("reports.index", _anchor="support-modal"))
 
     flash(
         "Thanks. Your message was sent to the Tariq.lb team.",
         "success",
     )
-    return redirect(url_for("reports.index", _anchor="contact-modal"))
+    return redirect(url_for("reports.index", _anchor="support-modal"))
 
 @bp.route(
     "/upload",

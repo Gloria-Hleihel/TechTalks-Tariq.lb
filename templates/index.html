@@ -309,7 +309,7 @@
     <h2 id="contact-title">Contact the Tariq.lb team.</h2>
     <p class="contact-intro">
       Have questions, suggestions, or feedback? We'd love to hear from you.
-      Reach out directly or send a message through the feedback form.
+      Reach out directly through any of the platforms below.
     </p>
 
     <div class="contact-list">
@@ -370,9 +370,26 @@
         <em>Email</em>
       </a>
     </div>
+  </div>
+</section>
 
-    <div class="contact-content-grid">
-      <section class="contact-faq-card" aria-labelledby="contact-faq-title">
+<section
+  class="modal"
+  id="faq-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="contact-faq-title"
+  hidden
+>
+  <div class="modal-panel modal-panel-wide faq-panel" tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 6 12 12"></path>
+        <path d="m18 6-12 12"></path>
+      </svg>
+    </button>
+
+    <section class="contact-faq-card" aria-labelledby="contact-faq-title">
         <div class="modal-section-heading">
           <span>FAQ</span>
           <h3 id="contact-faq-title">Quick answers</h3>
@@ -393,12 +410,34 @@
           </article>
         </div>
       </section>
+  </div>
+</section>
 
-      <section class="feedback-card" aria-labelledby="feedback-title">
+<section
+  class="modal"
+  id="support-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="feedback-title"
+  hidden
+>
+  <div class="modal-panel contact-panel support-panel" tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 6 12 12"></path>
+        <path d="m18 6-12 12"></path>
+      </svg>
+    </button>
+
+    <section class="feedback-card" aria-labelledby="feedback-title">
         <div class="modal-section-heading">
-          <span>Feedback</span>
-          <h3 id="feedback-title">Send a message</h3>
+          <span>Report a problem</span>
+          <h3 id="feedback-title">Contact and feedback form</h3>
         </div>
+        <p class="feedback-help">
+          Use this form for questions, website issues, suggestions, or a specific
+          road report you want the team to review.
+        </p>
 
         {% if feedback_messages %}
           <div class="feedback-messages" aria-live="polite">
@@ -468,7 +507,6 @@
           </button>
         </form>
       </section>
-    </div>
   </div>
 </section>
 {% endblock %}

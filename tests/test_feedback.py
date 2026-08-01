@@ -43,6 +43,8 @@ def test_contact_modal_has_email_faq_and_feedback_form(client):
     assert response.status_code == 200
     assert b"tariqlb.contact@gmail.com" in response.data
     assert b"Quick answers" in response.data
+    assert b"Report Problem" in response.data
+    assert b"Contact and feedback form" in response.data
     assert b'name="name"' in response.data
     assert b'name="email"' in response.data
     assert b'name="message"' in response.data
@@ -62,7 +64,7 @@ def test_feedback_submission_saves_message(app, client):
     )
 
     assert response.status_code == 302
-    assert response.headers["Location"].endswith("/#contact-modal")
+    assert response.headers["Location"].endswith("/#support-modal")
 
     with app.app_context():
         saved_message = FeedbackMessage.query.one()
