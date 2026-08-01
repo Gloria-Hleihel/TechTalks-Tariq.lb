@@ -872,23 +872,6 @@ body.reference-theme .modal-panel {
   padding: 30px !important;
 }
 
-body.reference-theme.modal-open .landing-header {
-  z-index: 10 !important;
-}
-
-body.reference-theme.modal-open main {
-  position: relative;
-  z-index: 90;
-}
-
-body.reference-theme.modal-open .modal-backdrop {
-  z-index: 100;
-}
-
-body.reference-theme.modal-open .modal {
-  z-index: 101;
-}
-
 body.reference-theme .modal-close {
   color: var(--tariq-dark) !important;
   background: var(--tariq-bg-soft) !important;
@@ -2131,4 +2114,28 @@ body.reference-theme.landing-page .floating-card-map p {
     animation: none !important;
     opacity: 0.20 !important;
   }
+}
+
+/* Keep every modal visually above the navigation shell. */
+body.reference-theme.modal-open .landing-header {
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+body.reference-theme.modal-open main {
+  position: relative !important;
+  z-index: 9990 !important;
+}
+
+body.reference-theme.modal-open .modal-backdrop {
+  z-index: 9991 !important;
+}
+
+body.reference-theme.modal-open .modal {
+  z-index: 9992 !important;
+}
+
+body.reference-theme.modal-open .modal-panel {
+  position: relative !important;
+  z-index: 9993 !important;
 }
