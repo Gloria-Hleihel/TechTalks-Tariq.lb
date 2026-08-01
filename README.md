@@ -1,8 +1,3 @@
-It stopped there because my last README text had **code blocks inside a big code block**, and GitHub/Markdown can cut the copy at the first ``` section. My bad.
-
-Use this safer version instead: it has **no nested code blocks**, so you can copy/paste the whole thing directly.
-
-````markdown
 # Tariq.lb — Smart Road Damage Detection & Mapping Platform
 
 **Roads. Solutions. Progress.**
@@ -164,4 +159,3 @@ The first detection may be slower because the model needs to load into memory.
 ## Notes
 
 This project is designed for local development and university submission. For production deployment, change the default admin credentials, use environment variables, and consider a production database instead of SQLite.
-````
