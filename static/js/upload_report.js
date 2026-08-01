@@ -239,11 +239,31 @@
     minZoom: 8
   }).setView([defaultLat, defaultLng], defaultZoom);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 20,
     maxNativeZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
+
+  const satelliteLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {
+      maxZoom: 20,
+      attribution: 'Tiles &copy; Esri'
+    }
+  );
+
+  L.control.layers(
+    {
+      Streets: streetLayer,
+      Satellite: satelliteLayer
+    },
+    null,
+    {
+      collapsed: false,
+      position: 'topright'
+    }
+  ).addTo(map);
 
   let mapSizeFrame = null;
 

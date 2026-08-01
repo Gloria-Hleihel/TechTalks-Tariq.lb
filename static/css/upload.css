@@ -802,6 +802,32 @@
   border: 0 !important;
 }
 
+.leaflet-control-layers {
+  overflow: hidden;
+  border: 1px solid rgba(26, 26, 26, 0.12) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 12px 28px rgba(26, 26, 26, 0.12) !important;
+  backdrop-filter: blur(14px);
+}
+
+.leaflet-control-layers-expanded {
+  padding: 10px 12px;
+}
+
+.leaflet-control-layers label {
+  margin: 4px 0;
+  color: var(--upload-dark);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.leaflet-control-layers input {
+  width: auto;
+  min-height: 0;
+  accent-color: var(--upload-green);
+}
+
 .map-context-help {
   margin: 10px 4px 0;
   color: var(--upload-muted);
