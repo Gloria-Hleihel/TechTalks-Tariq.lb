@@ -872,6 +872,23 @@ body.reference-theme .modal-panel {
   padding: 30px !important;
 }
 
+body.reference-theme.modal-open .landing-header {
+  z-index: 10 !important;
+}
+
+body.reference-theme.modal-open main {
+  position: relative;
+  z-index: 90;
+}
+
+body.reference-theme.modal-open .modal-backdrop {
+  z-index: 100;
+}
+
+body.reference-theme.modal-open .modal {
+  z-index: 101;
+}
+
 body.reference-theme .modal-close {
   color: var(--tariq-dark) !important;
   background: var(--tariq-bg-soft) !important;
