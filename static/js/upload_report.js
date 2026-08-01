@@ -288,15 +288,16 @@
           return;
         }
 
-        const nextLayer = layerName === 'satellite' ? layers.satellite : layers.streets;
-        const previousLayer = activeLayer === 'satellite' ? layers.satellite : layers.streets;
-
-        if (targetMap.hasLayer(previousLayer)) {
-          targetMap.removeLayer(previousLayer);
+        if (!targetMap.hasLayer(layers.streets)) {
+          layers.streets.addTo(targetMap);
         }
 
-        if (!targetMap.hasLayer(nextLayer)) {
-          nextLayer.addTo(targetMap);
+        if (layerName === 'satellite') {
+          if (!targetMap.hasLayer(layers.satellite)) {
+            layers.satellite.addTo(targetMap);
+          }
+        } else if (targetMap.hasLayer(layers.satellite)) {
+          targetMap.removeLayer(layers.satellite);
         }
 
         activeLayer = layerName;

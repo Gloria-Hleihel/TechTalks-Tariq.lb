@@ -2,6 +2,7 @@ import logging
 import os
 
 from flask import Flask, flash, jsonify, redirect, request, url_for
+from sqlalchemy import inspect, text
 from werkzeug.exceptions import RequestEntityTooLarge
 
 import config
@@ -82,5 +83,51 @@ def create_app(test_config=None):
     if app.config.get("AUTO_CREATE_DATABASE", True):
         with app.app_context():
             db.create_all()
+            _upgrade_sqlite_schema()
 
     return app
+
+
+def _upgrade_sqlite_schema() -> None:
+    """Apply safe SQLite-only schema upgrades for existing local databases."""
+    engine = db.engine
+
+    if engine.dialect.name != "sqlite":
+        return
+
+    inspector = inspect(engine)
+    if "reports" not in inspector.get_table_names():
+        return
+
+    report_columns = {
+        column["name"]
+        for column in inspector.get_columns("reports")
+    }
+
+    with engine.begin() as connection:
+        if "detection_status" not in report_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE reports "
+                    "ADD COLUMN detection_status VARCHAR(20) "
+                    "NOT NULL DEFAULT 'pending'"
+                )
+            )
+            connection.execute(
+                text(
+                    "UPDATE reports "
+                    "SET detection_status = 'completed' "
+                    "WHERE EXISTS ("
+                    "SELECT 1 FROM detections "
+                    "WHERE detections.report_id = reports.id"
+                    ")"
+                )
+            )
+
+        if "detection_error" not in report_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE reports "
+                    "ADD COLUMN detection_error VARCHAR(500)"
+                )
+            )
