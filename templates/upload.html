@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% set page_messages = get_flashed_messages(with_categories=true) %}
 <section class="report-shell" aria-labelledby="report-title">
   <div class="report-hero">
     <p class="report-kicker">
@@ -22,15 +23,13 @@
   </div>
 
   <div class="messages" aria-live="polite">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="msg {{ category }}">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    {% if page_messages %}
+      {% for category, message in page_messages %}
+        <div class="msg {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
   </div>
 
   <form
@@ -339,8 +338,173 @@
       <a class="contact-card" href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram <em>Open</em></a>
       <a class="contact-card" href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn <em>Open</em></a>
       <a class="contact-card" href="https://www.facebook.com/" target="_blank" rel="noreferrer">Facebook <em>Open</em></a>
-      <a class="contact-card" href="mailto:contact@tariq.lb">Email <em>Email</em></a>
+      <a class="contact-card" href="mailto:tariqlb.contact@gmail.com">Email <em>Email</em></a>
     </div>
+  </div>
+</section>
+
+<section
+  class="modal"
+  id="faq-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="contact-faq-title"
+  hidden
+>
+  <div class="modal-panel modal-panel-wide faq-panel" tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 6 12 12"></path>
+        <path d="m18 6-12 12"></path>
+      </svg>
+    </button>
+
+    <section class="contact-faq-card" aria-labelledby="contact-faq-title">
+      <div class="modal-section-heading">
+        <span>FAQ</span>
+        <h3 id="contact-faq-title">Quick answers</h3>
+      </div>
+
+      <div class="faq-list">
+        <article class="faq-item">
+          <h4>How do I report road damage?</h4>
+          <p>Upload a clear road photo, confirm the location, and submit the report.</p>
+        </article>
+        <article class="faq-item">
+          <h4>What kind of photo should I upload?</h4>
+          <p>Use a clear photo of the road surface where the damage is visible and not heavily blurred.</p>
+        </article>
+        <article class="faq-item">
+          <h4>What if GPS is not available?</h4>
+          <p>You can search for a Lebanese city or village, then place the marker manually.</p>
+        </article>
+        <article class="faq-item">
+          <h4>Can I move the marker after searching?</h4>
+          <p>Yes. Search helps you reach the area, then you can drag the marker to the exact road point.</p>
+        </article>
+        <article class="faq-item">
+          <h4>Who reviews submitted reports?</h4>
+          <p>Administrators can review reports, update their status, and keep completed reports for records.</p>
+        </article>
+        <article class="faq-item">
+          <h4>Does the AI make the final decision?</h4>
+          <p>No. AI helps detect visible damage, but admins can still review the report and manage its status.</p>
+        </article>
+        <article class="faq-item">
+          <h4>What happens after a report is completed?</h4>
+          <p>Completed reports are removed from the public live map but remain visible in the admin dashboard.</p>
+        </article>
+        <article class="faq-item">
+          <h4>Can I ask about a specific report?</h4>
+          <p>Yes. Add the report ID in the form so the team knows which report you mean.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section
+  class="modal"
+  id="support-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="feedback-title"
+  hidden
+>
+  <div class="modal-panel support-panel" tabindex="-1">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m6 6 12 12"></path>
+        <path d="m18 6-12 12"></path>
+      </svg>
+    </button>
+
+    <div class="support-hero">
+      <p class="modal-kicker">Report a problem</p>
+      <h2 id="feedback-title">How can we help?</h2>
+      <p class="feedback-help">
+        Send a question, website issue, suggestion, or a specific road report
+        you want the Tariq.lb team to review.
+      </p>
+    </div>
+
+    <section class="feedback-card support-form-card" aria-label="Contact and feedback form">
+      <div class="support-form-title">
+        <span>Contact and feedback form</span>
+      </div>
+
+      {% if page_messages %}
+        <div class="feedback-messages" aria-live="polite">
+          {% for category, message in page_messages %}
+            <p class="feedback-message {{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form
+        class="feedback-form support-form"
+        action="{{ url_for('reports.submit_feedback') }}"
+        method="post"
+      >
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ url_for('reports.upload') }}">
+
+        <div class="feedback-form-grid">
+          <label class="feedback-field">
+            <span>Name</span>
+            <input
+              type="text"
+              name="name"
+              autocomplete="name"
+              maxlength="120"
+              required
+              placeholder="Your name"
+            >
+          </label>
+
+          <label class="feedback-field">
+            <span>Email</span>
+            <input
+              type="email"
+              name="email"
+              autocomplete="email"
+              maxlength="255"
+              required
+              placeholder="you@example.com"
+            >
+          </label>
+        </div>
+
+        <label class="feedback-field feedback-field-wide">
+          <span>Message</span>
+          <textarea
+            name="message"
+            rows="4"
+            maxlength="2000"
+            required
+            placeholder="Tell us what you need help with..."
+          ></textarea>
+        </label>
+
+        <div class="feedback-form-footer">
+          <label class="feedback-field feedback-field-report">
+            <span>Report ID <small>optional</small></span>
+            <input
+              type="number"
+              name="report_id"
+              min="1"
+              inputmode="numeric"
+              placeholder="Example: 42"
+              aria-label="Optional report ID"
+            >
+          </label>
+
+          <button class="feedback-submit" type="submit">
+            Send Feedback
+          </button>
+        </div>
+      </form>
+    </section>
   </div>
 </section>
 {% endblock %}

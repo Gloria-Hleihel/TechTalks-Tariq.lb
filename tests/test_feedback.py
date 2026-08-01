@@ -74,6 +74,26 @@ def test_feedback_submission_saves_message(app, client):
         assert saved_message.report_id is None
 
 
+def test_feedback_submission_can_return_to_upload_page(app, client):
+    response = client.post(
+        "/feedback",
+        data={
+            "name": "Test User",
+            "email": "tester@example.com",
+            "message": "The report page FAQ button was not opening.",
+            "report_id": "",
+            "next": "/upload",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/upload#support-modal")
+
+    with app.app_context():
+        assert FeedbackMessage.query.count() == 1
+
+
 def test_feedback_rejects_unknown_report_id(app, client):
     response = client.post(
         "/feedback",

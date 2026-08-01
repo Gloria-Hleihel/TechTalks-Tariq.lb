@@ -477,6 +477,7 @@
         method="post"
       >
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ url_for('reports.index') }}">
 
         <div class="feedback-form-grid">
           <label class="feedback-field">

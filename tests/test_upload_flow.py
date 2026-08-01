@@ -81,6 +81,19 @@ def completed_detection(_report, _path):
     }
 
 
+def test_upload_page_has_shared_nav_modals(client):
+    """The shared navbar modals should work on the report upload page."""
+    response = client.get("/upload")
+
+    assert response.status_code == 200
+    assert b'id="faq-modal"' in response.data
+    assert b'id="support-modal"' in response.data
+    assert b"Report Problem" in response.data
+    assert b"Contact and feedback form" in response.data
+    assert b"tariqlb.contact@gmail.com" in response.data
+    assert b'name="next" value="/upload"' in response.data
+
+
 def test_valid_exif_upload_creates_report_and_redirects(
     app,
     client,

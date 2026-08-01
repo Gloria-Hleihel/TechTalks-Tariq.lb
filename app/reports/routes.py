@@ -643,6 +643,20 @@ def _optional_feedback_report_id(value: str) -> int | None:
     return report_id
 
 
+def _feedback_redirect_target() -> str:
+    """Return a safe local page anchor for feedback form responses."""
+    target = (request.form.get("next") or "").strip()
+    allowed_targets = {
+        url_for("reports.index"),
+        url_for("reports.upload"),
+    }
+
+    if target not in allowed_targets:
+        target = url_for("reports.index")
+
+    return f"{target}#support-modal"
+
+
 @bp.route("/")
 def index():
     return render_template("index.html")
@@ -656,6 +670,7 @@ def submit_feedback():
     email = (request.form.get("email") or "").strip()
     message = (request.form.get("message") or "").strip()
     report_id_value = (request.form.get("report_id") or "").strip()
+    redirect_target = _feedback_redirect_target()
 
     try:
         if not name:
@@ -679,7 +694,7 @@ def submit_feedback():
 
     except SubmissionError as exc:
         flash(exc.message, "error")
-        return redirect(url_for("reports.index", _anchor="support-modal"))
+        return redirect(redirect_target)
 
     feedback = FeedbackMessage(
         name=name,
@@ -698,13 +713,14 @@ def submit_feedback():
             "Your message could not be sent right now. Please try again.",
             "error",
         )
-        return redirect(url_for("reports.index", _anchor="support-modal"))
+        return redirect(redirect_target)
 
     flash(
         "Thanks. Your message was sent to the Tariq.lb team.",
         "success",
     )
-    return redirect(url_for("reports.index", _anchor="support-modal"))
+    return redirect(redirect_target)
+
 
 @bp.route(
     "/upload",
