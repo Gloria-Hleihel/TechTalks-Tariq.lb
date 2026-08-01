@@ -1,3 +1,4 @@
+from datetime import date
 from functools import wraps
 from hmac import compare_digest
 
@@ -208,6 +209,7 @@ def dashboard():
         latest_report=latest_report,
         feedback_messages=feedback_messages,
         feedback_count=feedback_count,
+        today_date=date.today().isoformat(),
     )
 
 

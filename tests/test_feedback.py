@@ -55,6 +55,16 @@ def test_contact_modal_has_email_faq_and_feedback_form(client):
     assert b'name="report_id"' in response.data
 
 
+def test_homepage_uses_updated_copy_and_single_map_cta(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"potholes, cracks, and other hazards across Lebanon" in response.data
+    assert b"places the report on a live map for faster review" in response.data
+    assert response.data.count(b"View Live Map") == 1
+    assert b'class="secondary-cta" href="/map"' not in response.data
+
+
 def test_feedback_submission_saves_message(app, client):
     response = client.post(
         "/feedback",

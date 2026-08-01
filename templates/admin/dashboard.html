@@ -156,21 +156,37 @@
       text-transform: uppercase;
     }
 
+    .home-btn,
     .logout-btn {
       min-height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 0 16px;
-      color: #ffffff;
-      background: var(--red);
-      border: 1px solid var(--red);
       border-radius: 999px;
       text-decoration: none;
       font-size: 13px;
       font-weight: 900;
-      transition: transform 0.2s ease, filter 0.2s ease;
+      transition: transform 0.2s ease, filter 0.2s ease, background 0.2s ease;
+    }
+
+    .home-btn {
+      padding: 0 15px;
+      color: var(--green);
+      background: #ffffff;
+      border: 1px solid rgba(74, 124, 89, 0.34);
+    }
+
+    .logout-btn {
+      padding: 0 16px;
+      color: #ffffff;
+      background: var(--red);
+      border: 1px solid var(--red);
+    }
+
+    .home-btn:hover {
+      background: rgba(74, 124, 89, 0.08);
+      transform: translateY(-2px);
     }
 
     .logout-btn:hover {
@@ -1299,6 +1315,10 @@
     </a>
     <div class="navbar-right">
       <div class="navbar-tagline">Municipality Management Platform</div>
+      <a href="{{ url_for('reports.index') }}" class="home-btn" aria-label="Go back to Tariq.lb home page">
+        <i class="fa-solid fa-house"></i>
+        Home
+      </a>
       <a href="/admin/logout" class="logout-btn">
         <i class="fa-solid fa-right-from-bracket"></i>
         Logout
@@ -1470,7 +1490,7 @@
 
       <div class="field">
         <label for="filter-date">Date</label>
-        <input id="filter-date" type="date">
+        <input id="filter-date" type="date" max="{{ today_date }}">
       </div>
 
       <button class="reset-btn" id="reset-filters" type="button">Reset</button>
@@ -1665,6 +1685,11 @@
       location: document.getElementById('filter-location'),
       date: document.getElementById('filter-date')
     };
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    if (filterElements.date && !filterElements.date.max) {
+      filterElements.date.max = todayIso;
+    }
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -2167,7 +2192,7 @@
 
     async function deleteReport(reportId) {
       const report = reports.find((item) => item.id === reportId);
-      if (!report || !confirm(`Delete report #${reportId}? This cannot be undone.`)) {
+      if (!report || !confirm(`Are you sure you want to delete report #${reportId}? This cannot be undone.`)) {
         return;
       }
 
@@ -2221,8 +2246,18 @@
     });
 
     Object.values(filterElements).forEach((element) => {
-      element.addEventListener('input', () => applyFiltersAndRender());
-      element.addEventListener('change', () => applyFiltersAndRender());
+      element.addEventListener('input', () => {
+        if (element === filterElements.date && element.max && element.value > element.max) {
+          element.value = element.max;
+        }
+        applyFiltersAndRender();
+      });
+      element.addEventListener('change', () => {
+        if (element === filterElements.date && element.max && element.value > element.max) {
+          element.value = element.max;
+        }
+        applyFiltersAndRender();
+      });
     });
 
     document.getElementById('reset-filters').addEventListener('click', () => {

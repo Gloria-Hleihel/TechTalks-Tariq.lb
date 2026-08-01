@@ -353,6 +353,7 @@ body.reference-theme :where(
   .clear-button,
   .location-button,
   .back-btn,
+  .home-btn,
   .logout-btn,
   .tab-btn,
   .btn-update,
@@ -385,7 +386,7 @@ body.reference-theme :where(.nav-button-solid, .primary-cta, .button-primary, .s
   box-shadow: var(--tariq-button-shadow) !important;
 }
 
-body.reference-theme :where(.nav-button-outline, .secondary-cta, .location-button, .btn-update, .map-popup-button.update) {
+body.reference-theme :where(.nav-button-outline, .secondary-cta, .location-button, .home-btn, .btn-update, .map-popup-button.update) {
   color: var(--tariq-green) !important;
   background: var(--tariq-white) !important;
   border: 1px solid var(--tariq-green) !important;
@@ -416,6 +417,7 @@ body.reference-theme :where(
   .clear-button,
   .location-button,
   .back-btn,
+  .home-btn,
   .logout-btn,
   .tab-btn,
   .btn-update,
@@ -444,6 +446,7 @@ body.reference-theme button[type="submit"]:hover {
 body.reference-theme .nav-button-outline:hover,
 body.reference-theme .secondary-cta:hover,
 body.reference-theme .location-button:hover,
+body.reference-theme .home-btn:hover,
 body.reference-theme .btn-update:hover,
 body.reference-theme .map-popup-button.update:hover {
   color: var(--tariq-white) !important;
@@ -1268,6 +1271,7 @@ body.reference-theme .nav-link,
 body.reference-theme .nav-button,
 body.reference-theme .map-nav-link,
 body.reference-theme .header-link,
+body.reference-theme .home-btn,
 body.reference-theme .logout-btn {
   min-height: 46px !important;
   display: inline-flex !important;
@@ -1289,6 +1293,7 @@ body.reference-theme .logout-btn {
 
 body.reference-theme .nav-button-outline,
 body.reference-theme .map-nav-link,
+body.reference-theme .home-btn,
 body.reference-theme .header-link:first-child {
   color: var(--tariq-green) !important;
   border-color: rgba(74, 124, 89, 0.40) !important;
@@ -1306,11 +1311,13 @@ body.reference-theme .nav-link:hover,
 body.reference-theme .nav-button:hover,
 body.reference-theme .map-nav-link:hover,
 body.reference-theme .header-link:hover,
+body.reference-theme .home-btn:hover,
 body.reference-theme .logout-btn:hover,
 body.reference-theme .nav-link:focus-visible,
 body.reference-theme .nav-button:focus-visible,
 body.reference-theme .map-nav-link:focus-visible,
 body.reference-theme .header-link:focus-visible,
+body.reference-theme .home-btn:focus-visible,
 body.reference-theme .logout-btn:focus-visible {
   color: var(--tariq-dark) !important;
   background: var(--tariq-white) !important;
@@ -1385,6 +1392,7 @@ body.reference-theme.reference-admin-report-detail-page .navbar-tagline .line-gr
   body.reference-theme .nav-button,
   body.reference-theme .map-nav-link,
   body.reference-theme .header-link,
+  body.reference-theme .home-btn,
   body.reference-theme .logout-btn {
     width: 100% !important;
   }
@@ -1407,11 +1415,13 @@ body.reference-theme.reference-admin-report-detail-page .navbar .navbar-brand,
 body.reference-theme.reference-admin-report-detail-page .navbar .brand-text span,
 body.reference-theme.reference-admin-report-detail-page .navbar .brand-text small,
 body.reference-theme.reference-admin-report-detail-page .navbar .navbar-tagline,
+body.reference-theme.reference-admin-report-detail-page .navbar .home-btn,
 body.reference-theme.reference-admin-report-detail-page .navbar .logout-btn,
 body.reference-theme.reference-admin-dashboard-page .navbar .navbar-brand,
 body.reference-theme.reference-admin-dashboard-page .navbar .brand-text span,
 body.reference-theme.reference-admin-dashboard-page .navbar .brand-text small,
 body.reference-theme.reference-admin-dashboard-page .navbar .navbar-tagline,
+body.reference-theme.reference-admin-dashboard-page .navbar .home-btn,
 body.reference-theme.reference-admin-dashboard-page .navbar .logout-btn {
   opacity: 1 !important;
   text-shadow: none !important;
@@ -1436,7 +1446,9 @@ body.reference-theme.reference-admin-dashboard-page .navbar .brand-text small {
 }
 
 body.reference-theme.reference-report-detail-page .site-header .header-link,
-body.reference-theme.reference-map-page .topbar .map-nav-link {
+body.reference-theme.reference-map-page .topbar .map-nav-link,
+body.reference-theme.reference-admin-report-detail-page .navbar .home-btn,
+body.reference-theme.reference-admin-dashboard-page .navbar .home-btn {
   color: var(--tariq-green) !important;
   background: rgba(255, 255, 255, 0.76) !important;
   border-color: rgba(74, 124, 89, 0.40) !important;
@@ -1454,8 +1466,12 @@ body.reference-theme.reference-report-detail-page .site-header .header-link:hove
 body.reference-theme.reference-report-detail-page .site-header .header-link:focus-visible,
 body.reference-theme.reference-map-page .topbar .map-nav-link:hover,
 body.reference-theme.reference-map-page .topbar .map-nav-link:focus-visible,
+body.reference-theme.reference-admin-report-detail-page .navbar .home-btn:hover,
+body.reference-theme.reference-admin-report-detail-page .navbar .home-btn:focus-visible,
 body.reference-theme.reference-admin-report-detail-page .navbar .logout-btn:hover,
 body.reference-theme.reference-admin-report-detail-page .navbar .logout-btn:focus-visible,
+body.reference-theme.reference-admin-dashboard-page .navbar .home-btn:hover,
+body.reference-theme.reference-admin-dashboard-page .navbar .home-btn:focus-visible,
 body.reference-theme.reference-admin-dashboard-page .navbar .logout-btn:hover,
 body.reference-theme.reference-admin-dashboard-page .navbar .logout-btn:focus-visible {
   color: var(--tariq-dark) !important;

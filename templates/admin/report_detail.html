@@ -84,20 +84,31 @@
             background: #4a7c59;
         }
 
+        .home-btn,
         .logout-btn {
             display: flex;
             align-items: center;
             gap: 8px;
-            color: white;
             text-decoration: none;
             font-size: 13px;
-            background: rgba(255,255,255,0.12);
             padding: 8px 16px;
             border-radius: 8px;
             transition: background 0.2s;
+        }
+
+        .home-btn {
+            color: white;
+            background: rgba(74, 124, 89, 0.22);
+            border: 1px solid rgba(255,255,255,0.20);
+        }
+
+        .logout-btn {
+            color: white;
+            background: rgba(255,255,255,0.12);
             border: 1px solid rgba(255,255,255,0.15);
         }
 
+        .home-btn:hover,
         .logout-btn:hover {
             background: rgba(255,255,255,0.22);
         }
@@ -279,6 +290,10 @@
                 Municipality Management Platform
                 <div class="line-green"></div>
             </div>
+            <a href="{{ url_for('reports.index') }}" class="home-btn" aria-label="Go back to Tariq.lb home page">
+                <i class="fa-solid fa-house"></i>
+                Home
+            </a>
             <a href="/admin/logout" class="logout-btn" aria-label="Log out of admin dashboard">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 Logout

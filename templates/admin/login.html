@@ -43,10 +43,25 @@
             color: white;
         }
 
-        .login-left .logo-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            color: #4a7c59;
+        .login-left .login-logo-card {
+            width: 88px;
+            height: 88px;
+            display: grid;
+            place-items: center;
+            padding: 10px;
+            margin-bottom: 18px;
+            background: #ffffff;
+            border: 1px solid rgba(255,255,255,0.42);
+            border-radius: 24px;
+            box-shadow: 0 18px 36px rgba(0,0,0,0.18);
+        }
+
+        .login-left .login-logo-card img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            border-radius: 16px;
         }
 
         .login-left h1 {
@@ -282,8 +297,11 @@
 
         <!-- Left branding side -->
         <div class="login-left">
-            <div class="logo-icon">
-                <i class="fa-solid fa-map-location-dot"></i>
+            <div class="login-logo-card">
+                <img
+                    src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}"
+                    alt="Tariq.lb logo"
+                >
             </div>
             <h1>Tariq.lb</h1>
             <div class="tagline">

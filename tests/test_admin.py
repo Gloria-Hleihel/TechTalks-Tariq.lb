@@ -3,6 +3,7 @@ tests/test_admin.py — Admin module tests
 Owner: Zahraa · Week 5
 """
 import os
+from datetime import date
 
 import pytest
 from app import create_app
@@ -100,6 +101,8 @@ def test_admin_login_has_accessible_fields(client):
     assert b'<label for="password">Password</label>' in response.data
     assert b'autocomplete="current-password"' in response.data
     assert b'aria-label="Show password"' in response.data
+    assert b'alt="Tariq.lb logo"' in response.data
+    assert b'images/tariq-logo.jpeg' in response.data
 
 
 # --- Authentication redirect tests ---
@@ -128,6 +131,9 @@ def test_dashboard_loads_after_login(client):
     assert b'data-section="review"' in response.data
     assert b'data-section="done"' in response.data
     assert b'<option value="search">Search</option>' in response.data
+    assert b'href="/"' in response.data
+    assert b"Home" in response.data
+    assert f'max="{date.today().isoformat()}"'.encode() in response.data
 
 
 def test_dashboard_has_accessible_tabs_rows_and_map(client, seed_report):
@@ -145,6 +151,7 @@ def test_dashboard_has_accessible_tabs_rows_and_map(client, seed_report):
     assert b'Open report 1 on the management map' in response.data
     assert b'aria-label="Update status for report 1"' in response.data
     assert b'aria-label="Delete report 1"' in response.data
+    assert b"Are you sure you want to delete report #" in response.data
 
 
 def test_dashboard_shows_site_feedback_messages(client, app):
