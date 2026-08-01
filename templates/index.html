@@ -1,62 +1,104 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Tariq.lb - Road Damage Reporting Platform{% endblock %}
 {% block body_class %}landing-page{% endblock %}
 
 {% block content %}
-<section
-  class="hero-section"
-  style="--hero-image: url('{{ url_for('static', filename='images/landing-road-hero.png') }}');"
->
-  <div class="hero-content">
-    <p class="hero-pill">
-      <span></span>
-      AI road reporting platform
-    </p>
-
-    <h1>
-      <span>Report Road Damage.</span>
-      <span class="headline-green">Build Safer Roads.</span>
-    </h1>
-
-    <p class="hero-subtitle">
-      Tariq.lb is an AI-powered community platform that helps citizens report road
-      damage so municipalities can respond faster. Together, we make Lebanon's roads
-      safer.
-    </p>
-
-    <div class="hero-cta-group">
-      <a class="primary-cta" href="{{ url_for('reports.upload') }}">
-        <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
-          <circle cx="12" cy="14" r="3.2"></circle>
-        </svg>
-        Report a Road Problem
-      </a>
-
-      <p class="cta-note">
-        Upload a photo &bull; Pin the location &bull; Help improve Lebanon's roads
+<section class="hero-section" aria-labelledby="landing-title">
+  <div class="hero-shell">
+    <div class="hero-copy-block">
+      <p class="hero-pill">
+        <span aria-hidden="true"></span>
+        AI-Powered Road Damage Reporting
       </p>
 
+      <h1 id="landing-title">
+        <span>Report Road Damage.</span>
+        <span class="headline-green">Build Safer Roads.</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Tariq.lb helps citizens report potholes and road damage across Lebanon.
+        Our AI analyzes each image, records its location, and places the report
+        on a live map for faster review.
+      </p>
+
+      <div class="hero-actions" aria-label="Primary actions">
+        <a class="primary-cta" href="{{ url_for('reports.upload') }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
+            <circle cx="12" cy="14" r="3.2"></circle>
+          </svg>
+          Report a Road Problem
+        </a>
+
+        <a class="secondary-cta" href="{{ url_for('reports.map_page') }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path>
+            <path d="M9 3v15"></path>
+            <path d="M15 6v15"></path>
+          </svg>
+          View Live Map
+        </a>
+      </div>
+
+      <button class="learn-link" type="button" data-modal-target="about-modal">
+        Learn how Tariq.lb works
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M5 12h14"></path>
+          <path d="m13 6 6 6-6 6"></path>
+        </svg>
+      </button>
     </div>
+
+    <div class="hero-visual-card" aria-label="Road damage detection preview">
+      <img
+        src="{{ url_for('static', filename='images/landing-road-hero.png') }}"
+        alt="Lebanese mountain road with visible road surface damage"
+      >
+      <div class="hero-visual-overlay" aria-hidden="true"></div>
+
+      <article class="floating-card floating-card-detection">
+        <span class="floating-icon floating-icon-red">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
+            <circle cx="12" cy="14" r="3.2"></circle>
+          </svg>
+        </span>
+        <div>
+          <p>AI Detection</p>
+          <strong>Pothole detected</strong>
+          <span>Confidence: 81%</span>
+        </div>
+      </article>
+
+      <article class="floating-card floating-card-map">
+        <span class="floating-icon floating-icon-green">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path>
+            <path d="M9 3v15"></path>
+            <path d="M15 6v15"></path>
+          </svg>
+        </span>
+        <div>
+          <p>Live Map</p>
+          <strong>24 active reports</strong>
+          <span>Across Lebanon</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="feature-section" aria-labelledby="feature-title">
+  <div class="section-heading">
+    <p class="section-kicker">How Tariq.lb helps</p>
+    <h2 id="feature-title">A faster way to turn road problems into actionable reports.</h2>
   </div>
 
   <div class="feature-grid" aria-label="Platform highlights">
     <article class="feature-card">
       <span class="feature-icon icon-red">
-        <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"></path>
-          <path d="m9 12 2 2 4-5"></path>
-        </svg>
-      </span>
-      <div>
-        <h2>Safer Roads</h2>
-        <p>Helping reduce accidents by identifying dangerous roads.</p>
-      </div>
-    </article>
-
-    <article class="feature-card">
-      <span class="feature-icon icon-green">
         <svg aria-hidden="true" viewBox="0 0 24 24">
           <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
           <circle cx="12" cy="14" r="3.2"></circle>
@@ -64,41 +106,52 @@
           <path d="M17 6h3"></path>
         </svg>
       </span>
-      <div>
-        <h2>AI Detection</h2>
-        <p>YOLOv8 automatically detects potholes and road cracks.</p>
-      </div>
+      <h3>AI Detection</h3>
+      <p>YOLOv8 identifies visible potholes, cracks, and severity signals from each submitted image.</p>
     </article>
 
     <article class="feature-card">
-      <span class="feature-icon icon-red">
+      <span class="feature-icon icon-green">
         <svg aria-hidden="true" viewBox="0 0 24 24">
           <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z"></path>
           <path d="M9 3v15"></path>
           <path d="M15 6v15"></path>
         </svg>
       </span>
-      <div>
-        <h2>Live Monitoring</h2>
-        <p>Track reports across Lebanon in real time.</p>
-      </div>
+      <h3>Live Road Map</h3>
+      <p>Every confirmed report appears on an interactive map with status, severity, and location context.</p>
     </article>
 
     <article class="feature-card">
-      <span class="feature-icon icon-green">
+      <span class="feature-icon icon-red">
         <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="M16 11a4 4 0 1 0-8 0"></path>
-          <path d="M4 21a8 8 0 0 1 16 0"></path>
-          <path d="M18 8a3 3 0 0 1 3 3"></path>
-          <path d="M3 11a3 3 0 0 1 3-3"></path>
+          <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"></path>
+          <path d="m9 12 2 2 4-5"></path>
         </svg>
       </span>
-      <div>
-        <h2>Community Driven</h2>
-        <p>Citizens helping municipalities improve infrastructure.</p>
-      </div>
+      <h3>Municipality Review</h3>
+      <p>Admins can review, prioritize, update, and resolve reports from a focused dashboard.</p>
     </article>
   </div>
+</section>
+
+<section class="impact-section" aria-label="Tariq.lb impact statistics">
+  <article class="impact-card">
+    <span>One platform</span>
+    <strong>Citizen reports, AI insight, and map visibility in one workflow.</strong>
+  </article>
+  <article class="impact-stat">
+    <strong>4</strong>
+    <span>damage classes detected</span>
+  </article>
+  <article class="impact-stat">
+    <strong>640</strong>
+    <span>pixel model image size</span>
+  </article>
+  <article class="impact-stat">
+    <strong>24/7</strong>
+    <span>map access for reviewers</span>
+  </article>
 </section>
 
 <div class="modal-backdrop" data-modal-backdrop hidden></div>
@@ -111,24 +164,116 @@
   aria-labelledby="about-title"
   hidden
 >
-  <div class="modal-panel">
+  <div class="modal-panel modal-panel-wide" tabindex="-1">
     <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <path d="m6 6 12 12"></path>
         <path d="m18 6-12 12"></path>
       </svg>
     </button>
-    <p class="modal-kicker">About Tariq</p>
-    <h2 id="about-title">A civic road reporting platform for Lebanon.</h2>
-    <p>
-      Tariq.lb lets citizens upload a road photo, confirm the location, and submit
-      a structured report. The platform uses AI damage detection to identify cracks
-      and potholes, then places reports on a live map for faster review.
-    </p>
-    <div class="modal-list">
-      <span>AI damage detection with YOLOv8</span>
-      <span>Citizen-powered reporting from real locations</span>
-      <span>Municipality-friendly visibility into road priorities</span>
+
+    <div class="modal-hero-copy">
+      <p class="modal-kicker">About Tariq</p>
+      <h2 id="about-title">A smarter way to report road damage in Lebanon.</h2>
+      <p>
+        <strong>Tariq.lb</strong> is an AI-powered road damage reporting platform
+        created to help make Lebanon's roads safer. Citizens can report potholes,
+        cracks, and other hazards by uploading a photo. The system analyzes the
+        image, records its location, and places it on a live interactive map so
+        municipalities can respond more efficiently.
+      </p>
+    </div>
+
+    <div class="modal-two-column">
+      <article class="modal-info-card">
+        <span class="modal-card-icon icon-green">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"></path>
+            <path d="m9 12 2 2 4-5"></path>
+          </svg>
+        </span>
+        <h3>Our Mission</h3>
+        <p>
+          Improve road safety, encourage community participation, and give
+          municipalities reliable information to prioritize maintenance.
+        </p>
+      </article>
+
+      <article class="modal-info-card">
+        <span class="modal-card-icon icon-red">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M3 12h18"></path>
+            <path d="M12 3v18"></path>
+            <circle cx="12" cy="12" r="8"></circle>
+          </svg>
+        </span>
+        <h3>Our Vision</h3>
+        <p>
+          Build a nationwide collaborative platform where every citizen can use
+          technology and AI to contribute to safer roads and stronger infrastructure.
+        </p>
+      </article>
+    </div>
+
+    <div class="modal-section-block">
+      <div class="modal-section-heading">
+        <span>How It Works</span>
+        <h3>From photo to reviewed report.</h3>
+      </div>
+      <div class="process-grid">
+        <article class="process-step">
+          <span>01</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M14 7h-4l-1.2 2H6a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-5a3 3 0 0 0-3-3h-2.8L14 7Z"></path>
+            <circle cx="12" cy="14" r="3.2"></circle>
+          </svg>
+          <p>Upload a photo of the damaged road.</p>
+        </article>
+        <article class="process-step">
+          <span>02</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 2v4"></path>
+            <path d="M12 18v4"></path>
+            <path d="m4.93 4.93 2.83 2.83"></path>
+            <path d="m16.24 16.24 2.83 2.83"></path>
+            <path d="M2 12h4"></path>
+            <path d="M18 12h4"></path>
+            <circle cx="12" cy="12" r="4"></circle>
+          </svg>
+          <p>AI detects the type and severity of damage.</p>
+        </article>
+        <article class="process-step">
+          <span>03</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 21s7-5.1 7-11a7 7 0 1 0-14 0c0 5.9 7 11 7 11Z"></path>
+            <circle cx="12" cy="10" r="2.4"></circle>
+          </svg>
+          <p>The report is placed on the live map with its location.</p>
+        </article>
+        <article class="process-step">
+          <span>04</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M4 21h16"></path>
+            <path d="M6 21V9l6-4 6 4v12"></path>
+            <path d="M9 21v-6h6v6"></path>
+          </svg>
+          <p>Administrators and municipalities review and manage reports.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="modal-section-block purpose-block">
+      <div class="modal-section-heading">
+        <span>Why Tariq.lb?</span>
+        <h3>Built for safer communities.</h3>
+      </div>
+      <div class="purpose-list">
+        <span>Improve road safety</span>
+        <span>Reduce accidents caused by damaged roads</span>
+        <span>Help municipalities identify problem areas faster</span>
+        <span>Encourage citizen participation</span>
+        <span>Use AI to simplify reporting</span>
+      </div>
     </div>
   </div>
 </section>
@@ -141,23 +286,79 @@
   aria-labelledby="contact-title"
   hidden
 >
-  <div class="modal-panel">
+  <div class="modal-panel contact-panel" tabindex="-1">
     <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <path d="m6 6 12 12"></path>
         <path d="m18 6-12 12"></path>
       </svg>
     </button>
+
     <p class="modal-kicker">Contact</p>
     <h2 id="contact-title">Connect with the Tariq.lb team.</h2>
+    <p class="contact-intro">
+      Have questions, suggestions, or feedback? We'd love to hear from you.
+      Feel free to reach out through any of the platforms below.
+    </p>
+
     <div class="contact-list">
-      <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
-      <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a>
-      <a href="mailto:contact@tariq.lb">contact@tariq.lb</a>
-      <a href="tel:+96100000000">+961 00 000 000</a>
+      <a class="contact-card" href="https://www.instagram.com/" target="_blank" rel="noreferrer">
+        <span class="contact-icon icon-red">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M17.5 6.5h.01"></path>
+          </svg>
+        </span>
+        <span>
+          <strong>Instagram</strong>
+          <small>Follow project updates</small>
+        </span>
+        <em>Open</em>
+      </a>
+
+      <a class="contact-card" href="https://www.linkedin.com/" target="_blank" rel="noreferrer">
+        <span class="contact-icon icon-green">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6Z"></path>
+            <rect x="2" y="9" width="4" height="12"></rect>
+            <circle cx="4" cy="4" r="2"></circle>
+          </svg>
+        </span>
+        <span>
+          <strong>LinkedIn</strong>
+          <small>Connect professionally</small>
+        </span>
+        <em>Open</em>
+      </a>
+
+      <a class="contact-card" href="https://www.facebook.com/" target="_blank" rel="noreferrer">
+        <span class="contact-icon icon-red">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3Z"></path>
+          </svg>
+        </span>
+        <span>
+          <strong>Facebook</strong>
+          <small>Visit the community page</small>
+        </span>
+        <em>Open</em>
+      </a>
+
+      <a class="contact-card" href="mailto:contact@tariq.lb">
+        <span class="contact-icon icon-green">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M4 4h16v16H4Z"></path>
+            <path d="m22 6-10 7L2 6"></path>
+          </svg>
+        </span>
+        <span>
+          <strong>Email</strong>
+          <small>contact@tariq.lb</small>
+        </span>
+        <em>Email</em>
+      </a>
     </div>
   </div>
 </section>
 {% endblock %}
-
-
