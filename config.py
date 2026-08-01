@@ -97,6 +97,7 @@ REPORT_STATUSES = [
     "pending",
     "reviewed",
     "resolved",
+    "rejected",
 ]
 
 LOCATION_SOURCES = [

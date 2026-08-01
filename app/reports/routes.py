@@ -483,7 +483,6 @@ def _create_report_submission():
     )
 
     try:
-        # Save before detection.
         db.session.add(report)
         db.session.commit()
 
