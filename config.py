@@ -43,7 +43,7 @@ SEVERITY_COLORS = {
 }
 
 # --- Report workflow -----------------------------------------------------
-REPORT_STATUSES = ["pending", "reviewed", "resolved"]
+REPORT_STATUSES = ["pending", "reviewed", "resolved", "rejected"]
 LOCATION_SOURCES = ["gps", "browser", "manual"]
 
 # --- Admin auth ------------------------------------------------------------

@@ -1,10 +1,19 @@
-﻿(function () {
+(function () {
   const body = document.body;
+  const header = document.querySelector('.landing-header');
   const backdrop = document.querySelector('[data-modal-backdrop]');
   const openers = document.querySelectorAll('[data-modal-target]');
   const closeButtons = document.querySelectorAll('[data-modal-close]');
   let activeModal = null;
   let previousFocus = null;
+
+  function updateHeaderState() {
+    if (!header) {
+      return;
+    }
+
+    header.classList.toggle('scrolled', window.scrollY > 8);
+  }
 
   function getFocusableElements(modal) {
     return Array.from(
@@ -28,7 +37,8 @@
     body.classList.add('modal-open');
 
     const focusable = getFocusableElements(modal);
-    const firstFocusable = focusable[0] || modal;
+    const panel = modal.querySelector('.modal-panel');
+    const firstFocusable = focusable[0] || panel || modal;
     firstFocusable.focus({ preventScroll: true });
   }
 
@@ -60,6 +70,9 @@
   if (backdrop) {
     backdrop.addEventListener('click', closeModal);
   }
+
+  window.addEventListener('scroll', updateHeaderState, { passive: true });
+  updateHeaderState();
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
