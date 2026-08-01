@@ -421,7 +421,7 @@
   aria-labelledby="feedback-title"
   hidden
 >
-  <div class="modal-panel contact-panel support-panel" tabindex="-1">
+  <div class="modal-panel support-panel" tabindex="-1">
     <button class="modal-close" type="button" data-modal-close aria-label="Close modal">
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <path d="m6 6 12 12"></path>
@@ -429,69 +429,74 @@
       </svg>
     </button>
 
-    <section class="feedback-card" aria-labelledby="feedback-title">
-        <div class="modal-section-heading">
-          <span>Report a problem</span>
-          <h3 id="feedback-title">Contact and feedback form</h3>
+    <div class="support-hero">
+      <p class="modal-kicker">Report a problem</p>
+      <h2 id="feedback-title">How can we help?</h2>
+      <p class="feedback-help">
+        Send a question, website issue, suggestion, or a specific road report
+        you want the Tariq.lb team to review.
+      </p>
+    </div>
+
+    <section class="feedback-card support-form-card" aria-label="Contact and feedback form">
+      <div class="support-form-title">
+        <span>Contact and feedback form</span>
+      </div>
+
+      {% if feedback_messages %}
+        <div class="feedback-messages" aria-live="polite">
+          {% for category, message in feedback_messages %}
+            <p class="feedback-message {{ category }}">{{ message }}</p>
+          {% endfor %}
         </div>
-        <p class="feedback-help">
-          Use this form for questions, website issues, suggestions, or a specific
-          road report you want the team to review.
-        </p>
+      {% endif %}
 
-        {% if feedback_messages %}
-          <div class="feedback-messages" aria-live="polite">
-            {% for category, message in feedback_messages %}
-              <p class="feedback-message {{ category }}">{{ message }}</p>
-            {% endfor %}
-          </div>
-        {% endif %}
+      <form
+        class="feedback-form support-form"
+        action="{{ url_for('reports.submit_feedback') }}"
+        method="post"
+      >
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
-        <form
-          class="feedback-form"
-          action="{{ url_for('reports.submit_feedback') }}"
-          method="post"
-        >
-          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
-          <div class="feedback-form-grid">
-            <label>
-              <span>Name</span>
-              <input
-                type="text"
-                name="name"
-                autocomplete="name"
-                maxlength="120"
-                required
-                placeholder="Your name"
-              >
-            </label>
-
-            <label>
-              <span>Email</span>
-              <input
-                type="email"
-                name="email"
-                autocomplete="email"
-                maxlength="255"
-                required
-                placeholder="you@example.com"
-              >
-            </label>
-          </div>
-
-          <label>
-            <span>Message</span>
-            <textarea
-              name="message"
-              rows="4"
-              maxlength="2000"
+        <div class="feedback-form-grid">
+          <label class="feedback-field">
+            <span>Name</span>
+            <input
+              type="text"
+              name="name"
+              autocomplete="name"
+              maxlength="120"
               required
-              placeholder="Tell us what you need help with..."
-            ></textarea>
+              placeholder="Your name"
+            >
           </label>
 
-          <label>
+          <label class="feedback-field">
+            <span>Email</span>
+            <input
+              type="email"
+              name="email"
+              autocomplete="email"
+              maxlength="255"
+              required
+              placeholder="you@example.com"
+            >
+          </label>
+        </div>
+
+        <label class="feedback-field feedback-field-wide">
+          <span>Message</span>
+          <textarea
+            name="message"
+            rows="4"
+            maxlength="2000"
+            required
+            placeholder="Tell us what you need help with..."
+          ></textarea>
+        </label>
+
+        <div class="feedback-form-footer">
+          <label class="feedback-field feedback-field-report">
             <span>Report ID <small>optional</small></span>
             <input
               type="number"
@@ -499,14 +504,16 @@
               min="1"
               inputmode="numeric"
               placeholder="Example: 42"
+              aria-label="Optional report ID"
             >
           </label>
 
           <button class="feedback-submit" type="submit">
             Send Feedback
           </button>
-        </form>
-      </section>
+        </div>
+      </form>
+    </section>
   </div>
 </section>
 {% endblock %}

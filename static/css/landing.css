@@ -1073,6 +1073,110 @@ svg {
   box-shadow: 0 24px 52px rgba(123, 13, 30, 0.30);
 }
 
+.support-panel {
+  width: min(780px, calc(100vw - 32px));
+  padding: 36px;
+  overflow-x: hidden;
+}
+
+.support-hero {
+  padding-right: 56px;
+  margin-bottom: 20px;
+}
+
+.support-hero h2 {
+  margin: 0;
+  color: var(--dark);
+  font-size: clamp(2.1rem, 4vw, 3.3rem);
+  line-height: 1;
+}
+
+.support-panel .feedback-help {
+  max-width: 620px;
+  margin: 14px 0 0;
+  color: rgba(26, 26, 26, 0.64);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.support-form-card {
+  padding: 24px;
+  border-radius: 26px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 248, 248, 0.90));
+}
+
+.support-form-title {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.08);
+}
+
+.support-form-title span {
+  color: var(--red);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.support-form {
+  gap: 16px;
+}
+
+.support-form .feedback-form-grid {
+  gap: 16px;
+}
+
+.feedback-field {
+  display: grid !important;
+  gap: 8px;
+  min-width: 0;
+  color: var(--dark) !important;
+  font-size: 1rem !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.feedback-field > span {
+  color: var(--red);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.feedback-field > span small {
+  color: rgba(26, 26, 26, 0.50);
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.feedback-field input,
+.feedback-field textarea {
+  min-width: 0;
+  min-height: 56px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+.feedback-field textarea {
+  min-height: 150px;
+}
+
+.feedback-form-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.feedback-form-footer .feedback-submit {
+  min-width: 190px;
+  min-height: 56px;
+}
+
 .landing-footer {
   width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
@@ -1331,6 +1435,27 @@ svg {
 
   .feedback-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .support-panel {
+    width: min(100%, calc(100vw - 28px));
+    padding: 28px 18px 20px;
+  }
+
+  .support-hero {
+    padding-right: 48px;
+  }
+
+  .support-form-card {
+    padding: 18px;
+  }
+
+  .feedback-form-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-form-footer .feedback-submit {
+    width: 100%;
   }
 
   .contact-faq-card,
