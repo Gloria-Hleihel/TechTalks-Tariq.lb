@@ -109,7 +109,7 @@ class FeedbackMessage(db.Model):
     message = db.Column(db.Text, nullable=False)
     report_id = db.Column(
         db.Integer,
-        db.ForeignKey("reports.id"),
+        db.ForeignKey("reports.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

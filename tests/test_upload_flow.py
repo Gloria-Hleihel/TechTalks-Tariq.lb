@@ -92,6 +92,14 @@ def test_upload_page_has_shared_nav_modals(client):
     assert b"Contact and feedback form" in response.data
     assert b"tariqlb.contact@gmail.com" in response.data
     assert b'name="next" value="/upload"' in response.data
+    assert b'aria-haspopup="dialog"' in response.data
+    assert b'aria-controls="support-modal"' in response.data
+    assert b'id="localitySearchStatus"' in response.data
+    assert b'aria-describedby="searchHelp searchError selectedSearchPlace localitySearchStatus"' in response.data
+    assert b'id="mapInstructions"' in response.data
+    assert b'id="map"' in response.data
+    assert b'role="region"' in response.data
+    assert b'aria-current="step"' in response.data
 
 
 def test_valid_exif_upload_creates_report_and_redirects(
@@ -843,8 +851,7 @@ def write_gazetteer(tmp_path, places):
 
 def reset_location_caches(location_module):
     """Clear cached locality data after monkeypatching the source path."""
-    location_module.search_lebanese_localities.cache_clear()
-    location_module._load_gazetteer_payload.cache_clear()
+    location_module.clear_location_caches()
 
 
 def disable_default_gazetteer(location_module, monkeypatch, tmp_path):
@@ -919,6 +926,31 @@ def test_full_local_gazetteer_returns_many_villages_without_remote_geocoder(
     assert results[0]["display_name"].endswith("Chouf District, Mount Lebanon Governorate")
 
 
+def test_locality_search_preload_builds_reusable_index(
+    monkeypatch,
+    tmp_path,
+):
+    """The local gazetteer should be indexed once for faster repeated searches."""
+    from app.reports import location as location_module
+
+    places = [
+        gazetteer_place(1, "Bater"),
+        gazetteer_place(2, "Batroun", governorate="North Lebanon Governorate"),
+    ]
+    monkeypatch.setattr(
+        location_module,
+        "LOCALITIES_DATA_PATH",
+        write_gazetteer(tmp_path, places),
+    )
+    reset_location_caches(location_module)
+
+    assert location_module.preload_locality_search() == 2
+    assert location_module._gazetteer_search_index.cache_info().currsize == 1
+
+    results = location_module.search_lebanese_localities("Bat")
+    assert [result["name"] for result in results] == ["Bater", "Batroun"]
+
+
 def test_full_local_gazetteer_supports_arabic_place_names(
     client,
     monkeypatch,
@@ -955,6 +987,50 @@ def test_full_local_gazetteer_supports_arabic_place_names(
     assert result["lng"] == pytest.approx(35.61731)
 
 
+def test_curated_duplicate_keeps_arabic_aliases(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """Curated cities should still match Arabic names after dedupe."""
+    from app.reports import location as location_module
+
+    arabic_beirut = "\u0628\u064a\u0631\u0648\u062a"
+    places = [
+        gazetteer_place(
+            1,
+            "Beirut",
+            lat=33.89332,
+            lng=35.50157,
+            governorate="Beirut Governorate",
+            aliases=["Beirut", arabic_beirut],
+            name_ar=arabic_beirut,
+        )
+    ]
+    monkeypatch.setattr(
+        location_module,
+        "LOCALITIES_DATA_PATH",
+        write_gazetteer(tmp_path, places),
+    )
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: pytest.fail("Arabic city search should be local"),
+    )
+    reset_location_caches(location_module)
+
+    response = client.get(
+        "/api/lebanon-localities/search",
+        query_string={"q": arabic_beirut},
+    )
+
+    assert response.status_code == 200
+    result = response.get_json()["results"][0]
+
+    assert result["name"] == "Beirut"
+    assert result["name_ar"] == arabic_beirut
+
+
 def test_full_local_gazetteer_supports_alternate_english_spellings(
     client,
     monkeypatch,
@@ -986,12 +1062,13 @@ def test_oversized_pixel_image_is_rejected_without_report(app, client):
     """Images above the configured pixel limit should be rejected after save."""
     app.config["MAX_IMAGE_PIXELS"] = 8
 
-    response = client.post(
-        "/upload",
-        data={"image": (image_bytes(), "road.png")},
-        content_type="multipart/form-data",
-        follow_redirects=False,
-    )
+    with pytest.warns(Image.DecompressionBombWarning):
+        response = client.post(
+            "/upload",
+            data={"image": (image_bytes(), "road.png")},
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
 
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/upload")

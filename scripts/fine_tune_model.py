@@ -9,7 +9,17 @@ from typing import Any, NoReturn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MODEL_PATH = PROJECT_ROOT / "models" / "road_damage.pt"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import config
+
+CONFIGURED_MODEL_PATH = Path(config.DETECTION_MODEL_PATH)
+MODEL_PATH = (
+    CONFIGURED_MODEL_PATH
+    if CONFIGURED_MODEL_PATH.is_absolute()
+    else PROJECT_ROOT / CONFIGURED_MODEL_PATH
+).resolve()
 DATA_YAML_PATH = PROJECT_ROOT / "dataset" / "road_damage.yaml"
 RUNS_PROJECT = PROJECT_ROOT / "runs" / "fine_tune"
 RUN_NAME = "road_damage_v2"

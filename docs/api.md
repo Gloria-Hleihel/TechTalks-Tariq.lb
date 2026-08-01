@@ -13,7 +13,7 @@ Updates the status of a specific report.
 { "status": "reviewed" }
 ```
 
-**Valid status values:** `pending`, `reviewed`, `resolved`
+**Valid status values:** `pending`, `reviewed`, `resolved`, `rejected`
 
 **Responses:**
 - `200 OK` → updated report as JSON
@@ -75,6 +75,7 @@ and detection data
 | 400 | Bad request (invalid input) |
 | 404 | Resource not found |
 | 405 | Method not allowed |
+| 429 | Too many requests; slow down and retry later |
 
 ---
 

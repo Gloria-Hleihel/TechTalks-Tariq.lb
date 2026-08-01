@@ -58,9 +58,13 @@ Activate it on Mac/Linux:
 
 ### 4. Add the YOLO model
 
-Place the model file here:
+The app uses the v3 fine-tuned model by default:
 
-    models/road_damage.pt
+    models/road_damage_v3.pt
+
+This file is included in the repository. To use another model, set:
+
+    set DETECTION_MODEL_PATH=C:\path\to\your\model.pt
 
 ### 5. Seed the database
 
@@ -84,6 +88,26 @@ Default credentials:
 
     Username: admin
     Password: changeme
+
+For production or public deployment, do not use the defaults. Set a strong
+`SECRET_KEY` and either `ADMIN_PASSWORD_HASH` or a non-default
+`ADMIN_PASSWORD`.
+
+## Environment Variables
+
+Useful production settings:
+
+| Variable | Purpose |
+|---|---|
+| `APP_ENV=production` | Enables production safety checks |
+| `SECRET_KEY` | Required strong Flask session secret |
+| `ADMIN_USERNAME` | Admin login username |
+| `ADMIN_PASSWORD_HASH` | Preferred hashed admin password |
+| `ADMIN_PASSWORD` | Plain password fallback for local/demo use |
+| `DETECTION_MODEL_PATH` | Optional custom YOLO weights path |
+| `DETECTION_PRELOAD_MODEL=1` | Warm the YOLO model when Flask starts |
+| `PRELOAD_LOCALITY_SEARCH=0` | Disable startup preloading for locality search debugging |
+| `RATE_LIMIT_ENABLED` | Keeps abuse protection enabled by default |
 
 ## Testing
 
@@ -136,7 +160,18 @@ Make sure your virtual environment is activated, then run:
 
 Make sure this file exists:
 
-    models/road_damage.pt
+    models/road_damage_v3.pt
+
+If you want to run a different model, set `DETECTION_MODEL_PATH` to that
+weights file before starting the server.
+
+### First detection is slow
+
+The first report can take longer because the YOLO model is loaded into memory.
+For a smoother production demo, start the app with:
+
+    set DETECTION_PRELOAD_MODEL=1
+    python run.py
 
 ### Map pins do not appear
 
@@ -152,7 +187,10 @@ The first detection may be slower because the model needs to load into memory.
 
 ## Notes
 
-This project is designed for local development and university submission. For production deployment, change the default admin credentials, use environment variables, and consider a production database instead of SQLite.
+This project is designed for local development and university submission.
+For production deployment, set `APP_ENV=production`, change the default
+admin credentials, use a strong `SECRET_KEY`, keep rate limiting enabled,
+and consider a production database instead of SQLite.
 
 ## Project Structure
 ```text
@@ -163,7 +201,7 @@ TechTalks-Tariq.lb/
 │   ├── reports/
 │   └── utils/
 ├── models/
-│   └── road_damage.pt
+│   └── road_damage_v3.pt
 ├── scripts/
 ├── static/
 ├── templates/

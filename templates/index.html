@@ -452,15 +452,15 @@
     <div class="support-hero">
       <p class="modal-kicker">Report a problem</p>
       <h2 id="feedback-title">How can we help?</h2>
-      <p class="feedback-help">
+      <p class="feedback-help" id="home-feedback-help">
         Send a question, website issue, suggestion, or a specific road report
         you want the Tariq.lb team to review.
       </p>
     </div>
 
-    <section class="feedback-card support-form-card" aria-label="Contact and feedback form">
+    <section class="feedback-card support-form-card" aria-labelledby="home-support-form-title">
       <div class="support-form-title">
-        <span>Contact and feedback form</span>
+        <span id="home-support-form-title">Contact and feedback form</span>
       </div>
 
       {% if feedback_messages %}
@@ -475,6 +475,7 @@
         class="feedback-form support-form"
         action="{{ url_for('reports.submit_feedback') }}"
         method="post"
+        aria-describedby="home-feedback-help"
       >
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="next" value="{{ url_for('reports.index') }}">

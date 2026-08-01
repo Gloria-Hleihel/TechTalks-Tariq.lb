@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Details - Tariq.lb</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -262,7 +263,7 @@
 <body class="reference-theme reference-admin-report-detail-page">
 
     <!-- Navbar -->
-    <nav class="navbar">
+    <nav class="navbar" aria-label="Admin navigation">
         <div class="navbar-brand">
             <span class="brand-logo nav-brand-logo">
                 <img src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}" alt="Tariq.lb logo">
@@ -278,7 +279,7 @@
                 Municipality Management Platform
                 <div class="line-green"></div>
             </div>
-            <a href="/admin/logout" class="logout-btn">
+            <a href="/admin/logout" class="logout-btn" aria-label="Log out of admin dashboard">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 Logout
             </a>
@@ -320,6 +321,8 @@
                         <span class="badge badge-reviewed">Reviewed</span>
                     {% elif report.status == 'resolved' %}
                         <span class="badge badge-resolved">Resolved</span>
+                    {% elif report.status == 'rejected' %}
+                        <span class="badge badge-critical">Rejected</span>
                     {% endif %}
                 </span>
             </div>
@@ -344,6 +347,10 @@
                 <span class="info-value">
                     {% if report.location_source == 'gps' %}
                         <i class="fa-solid fa-satellite" style="color:#4a7c59;"></i> GPS (Auto-detected)
+                    {% elif report.location_source == 'browser' %}
+                        <i class="fa-solid fa-location-crosshairs" style="color:#4a7c59;"></i> Browser location
+                    {% elif report.location_source == 'search' %}
+                        <i class="fa-solid fa-magnifying-glass-location" style="color:#4a7c59;"></i> Search
                     {% else %}
                         <i class="fa-solid fa-hand-pointer" style="color:#7b0d1e;"></i> Manual (Map pin)
                     {% endif %}
@@ -402,7 +409,7 @@
                 <div class="image-box">
                     <p>Original Image</p>
                     {% if report.image_path %}
-                        <img src="/{{ report.image_path }}" alt="Original" loading="lazy" decoding="async">
+                        <img src="/{{ report.image_path }}" alt="Original uploaded road image for report {{ report.id }}" loading="lazy" decoding="async">
                     {% else %}
                         <div class="no-image">
                             <i class="fa-solid fa-image"></i>
@@ -413,7 +420,7 @@
                 <div class="image-box">
                     <p>Annotated Image</p>
                     {% if detection and detection.annotated_image_path %}
-                        <img src="/{{ detection.annotated_image_path }}" alt="Annotated" loading="lazy" decoding="async">
+                        <img src="/{{ detection.annotated_image_path }}" alt="AI annotated road damage image for report {{ report.id }}" loading="lazy" decoding="async">
                     {% else %}
                         <div class="no-image">
                             <i class="fa-solid fa-image"></i>

@@ -58,6 +58,36 @@
       outline-offset: 3px;
     }
 
+    .skip-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      color: #ffffff;
+      background: var(--dark);
+      border-radius: 999px;
+      opacity: 0;
+      transform: translate(-200vw, -200vh);
+    }
+
+    .skip-link:focus-visible {
+      width: auto;
+      height: auto;
+      padding: 10px 14px;
+      overflow: visible;
+      clip: auto;
+      clip-path: none;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .navbar {
       position: sticky;
       top: 0;
@@ -1255,8 +1285,9 @@
 </head>
 <body class="reference-theme reference-admin-dashboard-page">
   {% set status_options = [('pending', 'Live'), ('reviewed', 'Under Review'), ('resolved', 'Done'), ('rejected', 'Rejected')] %}
+  <a class="skip-link" href="#admin-main">Skip to dashboard content</a>
 
-  <nav class="navbar">
+  <nav class="navbar" aria-label="Admin navigation">
     <a class="navbar-brand" href="/admin/dashboard" aria-label="Tariq.lb admin dashboard">
       <span class="brand-logo nav-brand-logo">
         <img src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}" alt="Tariq.lb logo">
@@ -1275,7 +1306,7 @@
     </div>
   </nav>
 
-  <main class="content">
+  <main class="content" id="admin-main">
     <span style="position:absolute; left:-9999px;">Dashboard Overview</span>
 
     <div class="page-title">
@@ -1433,6 +1464,7 @@
           <option value="gps">GPS</option>
           <option value="browser">Browser</option>
           <option value="manual">Manual</option>
+          <option value="search">Search</option>
         </select>
       </div>
 
@@ -1445,15 +1477,38 @@
     </section>
 
     <div class="view-tabs" role="tablist" aria-label="Admin dashboard views">
-      <button class="tab-btn active" type="button" data-view="table-view" role="tab" aria-selected="true">
+      <button
+        class="tab-btn active"
+        id="table-view-tab"
+        type="button"
+        data-view="table-view"
+        role="tab"
+        aria-selected="true"
+        aria-controls="table-view"
+      >
         <i class="fa-solid fa-table-list"></i> Table View
       </button>
-      <button class="tab-btn" type="button" data-view="map-view" role="tab" aria-selected="false">
+      <button
+        class="tab-btn"
+        id="map-view-tab"
+        type="button"
+        data-view="map-view"
+        role="tab"
+        aria-selected="false"
+        aria-controls="map-view"
+        tabindex="-1"
+      >
         <i class="fa-solid fa-map-location-dot"></i> Management Map
       </button>
     </div>
 
-    <section class="view-panel active" id="table-view" role="tabpanel">
+    <section
+      class="view-panel active"
+      id="table-view"
+      role="tabpanel"
+      aria-labelledby="table-view-tab"
+      tabindex="0"
+    >
       <article class="table-card">
         <div class="panel-title">
           <h3><i class="fa-solid fa-list"></i> Reports Table</h3>
@@ -1475,7 +1530,12 @@
             </thead>
             <tbody id="reports-table-body">
               {% for report in reports if report.status == 'pending' %}
-              <tr class="report-row" data-report-id="{{ report.id }}">
+              <tr
+                class="report-row"
+                data-report-id="{{ report.id }}"
+                tabindex="0"
+                aria-label="Open report {{ report.id }} on the management map"
+              >
                 <td><strong>#{{ report.id }}</strong></td>
                 <td><i class="fa-solid fa-location-dot" style="color:#4a7c59; margin-right:4px;"></i>{{ '%.5f'|format(report.lat) }}, {{ '%.5f'|format(report.lng) }}</td>
                 <td>{% if report.best_detection %}{{ report.best_detection.damage_type }}{% else %}<span class="muted">No detection yet</span>{% endif %}</td>
@@ -1495,7 +1555,7 @@
                       <option value="{{ value }}" {% if report.status == value %}selected{% endif %}>{{ label }}</option>
                       {% endfor %}
                     </select>
-                    <button class="btn-update" type="submit"><i class="fa-solid fa-check"></i></button>
+                    <button class="btn-update" type="submit" aria-label="Update status for report {{ report.id }}"><i class="fa-solid fa-check"></i></button>
                   </form>
                 </td>
                 <td>{{ report.created_at.strftime('%Y-%m-%d') }}</td>
@@ -1503,7 +1563,7 @@
                 <td>
                   <form class="js-delete-form" method="POST" action="/admin/delete/{{ report.id }}" data-report-id="{{ report.id }}">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn-delete" type="submit"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn-delete" type="submit" aria-label="Delete report {{ report.id }}"><i class="fa-solid fa-trash"></i></button>
                   </form>
                 </td>
               </tr>
@@ -1514,7 +1574,14 @@
       </article>
     </section>
 
-    <section class="view-panel" id="map-view" role="tabpanel">
+    <section
+      class="view-panel"
+      id="map-view"
+      role="tabpanel"
+      aria-labelledby="map-view-tab"
+      tabindex="0"
+      hidden
+    >
       <section class="management-stats" aria-label="Map statistics">
         <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-file-lines"></i></span><div class="map-stat-value" id="stat-total">0</div><div class="map-stat-label">Visible Reports</div></article>
         <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-hourglass-half"></i></span><div class="map-stat-value" id="stat-pending">0</div><div class="map-stat-label">Live Reports</div></article>
@@ -1535,7 +1602,14 @@
             <span class="legend-chip"><span class="legend-dot" style="color:#7b0d1e"></span>Critical/Rejected</span>
           </div>
         </div>
-        <div class="admin-map-frame"><div id="admin-map"></div></div>
+        <div class="admin-map-frame">
+          <div
+            id="admin-map"
+            role="region"
+            tabindex="0"
+            aria-label="Interactive admin report management map"
+          ></div>
+        </div>
       </article>
     </section>
   </main>
@@ -1582,6 +1656,7 @@
     let selectedReportId = null;
     let activeSection = 'live';
     let toastTimer = null;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const filterElements = {
       search: document.getElementById('admin-search'),
@@ -1754,6 +1829,13 @@
     function animateNumber(element, value) {
       const start = Number(element.dataset.value || 0);
       const end = Number(value || 0);
+
+      if (reduceMotion) {
+        element.dataset.value = String(end);
+        element.textContent = String(end);
+        return;
+      }
+
       const duration = 360;
       const started = performance.now();
       element.dataset.value = String(end);
@@ -1798,7 +1880,7 @@
       tbody.innerHTML = filteredReports.map((report) => {
         const selected = report.id === selectedReportId ? 'is-selected' : '';
         return `
-          <tr class="report-row ${selected}" data-report-id="${report.id}">
+          <tr class="report-row ${selected}" data-report-id="${report.id}" tabindex="0" aria-label="Open report ${report.id} on the management map">
             <td><strong>#${report.id}</strong></td>
             <td><i class="fa-solid fa-location-dot" style="color:#4a7c59; margin-right:4px;"></i>${escapeHtml(report.location)}</td>
             <td>${escapeHtml(report.damage_type || 'No detection yet')}</td>
@@ -1807,7 +1889,7 @@
               <form class="status-form js-status-form" method="POST" action="/admin/update/${report.id}" data-report-id="${report.id}">
                 <input type="hidden" name="_csrf_token" value="${escapeHtml(CSRF_TOKEN)}">
                 <select name="status" aria-label="Status for report ${report.id}">${renderStatusOptions(report.status)}</select>
-                <button class="btn-update" type="submit"><i class="fa-solid fa-check"></i></button>
+                <button class="btn-update" type="submit" aria-label="Update status for report ${report.id}"><i class="fa-solid fa-check"></i></button>
               </form>
             </td>
             <td>${escapeHtml(report.date_label || formatDate(report.created_at))}</td>
@@ -1815,7 +1897,7 @@
             <td>
               <form class="js-delete-form" method="POST" action="/admin/delete/${report.id}" data-report-id="${report.id}">
                 <input type="hidden" name="_csrf_token" value="${escapeHtml(CSRF_TOKEN)}">
-                <button class="btn-delete" type="submit"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-delete" type="submit" aria-label="Delete report ${report.id}"><i class="fa-solid fa-trash"></i></button>
               </form>
             </td>
           </tr>`;
@@ -1846,13 +1928,13 @@
             </div>
             <div class="popup-location"><span>Location</span><strong>${escapeHtml(report.location)}</strong></div>
             <div class="popup-actions">
-              <a class="popup-view-link" href="${escapeHtml(report.detail_url)}"><i class="fa-solid fa-eye"></i> View Report</a>
+              <a class="popup-view-link" href="${escapeHtml(report.detail_url)}" aria-label="View report ${report.id} details"><i class="fa-solid fa-eye"></i> View Report</a>
               <form class="map-status-form" data-report-id="${report.id}">
                 <input type="hidden" name="_csrf_token" value="${escapeHtml(CSRF_TOKEN)}">
                 <select name="status" aria-label="Update status for report ${report.id}">${renderStatusOptions(report.status)}</select>
-                <button class="map-popup-button update" type="submit">Update</button>
+                <button class="map-popup-button update" type="submit" aria-label="Update status for report ${report.id}">Update</button>
               </form>
-              <button class="map-popup-button delete map-delete-button" type="button" data-report-id="${report.id}"><i class="fa-solid fa-trash"></i> Delete Report</button>
+              <button class="map-popup-button delete map-delete-button" type="button" data-report-id="${report.id}" aria-label="Delete report ${report.id}"><i class="fa-solid fa-trash"></i> Delete Report</button>
             </div>
           </div>
         </div>`;
@@ -1907,10 +1989,11 @@
 
       layerControl.onAdd = () => {
         const container = L.DomUtil.create('div', 'map-layer-toggle');
+        container.setAttribute('role', 'group');
         container.setAttribute('aria-label', 'Map style');
         container.innerHTML = `
-          <button class="active" type="button" data-layer="streets" aria-pressed="true">Map</button>
-          <button type="button" data-layer="satellite" aria-pressed="false">Satellite</button>
+          <button class="active" type="button" data-layer="streets" aria-pressed="true" aria-label="Show street map">Map</button>
+          <button type="button" data-layer="satellite" aria-pressed="false" aria-label="Show satellite map">Satellite</button>
         `;
 
         L.DomEvent.disableClickPropagation(container);
@@ -1996,9 +2079,12 @@
         const active = button.dataset.view === viewId;
         button.classList.toggle('active', active);
         button.setAttribute('aria-selected', String(active));
+        button.setAttribute('tabindex', active ? '0' : '-1');
       });
       document.querySelectorAll('.view-panel').forEach((panel) => {
-        panel.classList.toggle('active', panel.id === viewId);
+        const active = panel.id === viewId;
+        panel.classList.toggle('active', active);
+        panel.hidden = !active;
       });
       if (viewId === 'map-view') {
         ensureMap();
@@ -2100,6 +2186,30 @@
 
     document.querySelectorAll('.tab-btn').forEach((button) => {
       button.addEventListener('click', () => switchView(button.dataset.view));
+      button.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+          return;
+        }
+
+        event.preventDefault();
+        const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+        const currentIndex = tabs.indexOf(button);
+        let nextIndex = currentIndex;
+
+        if (event.key === 'ArrowRight') {
+          nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft') {
+          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+
+        const nextTab = tabs[nextIndex];
+        switchView(nextTab.dataset.view);
+        nextTab.focus();
+      });
     });
 
     document.querySelectorAll('.workflow-card').forEach((button) => {
@@ -2164,6 +2274,24 @@
       if (row && !event.target.closest('a, button, select, form')) {
         focusReport(Number(row.dataset.reportId), true);
       }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (!['Enter', ' '].includes(event.key)) {
+        return;
+      }
+
+      if (!event.target.closest) {
+        return;
+      }
+
+      const row = event.target.closest('.report-row');
+      if (!row || event.target.closest('a, button, select, form')) {
+        return;
+      }
+
+      event.preventDefault();
+      focusReport(Number(row.dataset.reportId), true);
     });
 
     applyFiltersAndRender();

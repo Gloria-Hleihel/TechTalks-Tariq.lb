@@ -25,6 +25,7 @@
 
   const localitySearch = document.getElementById('localitySearch');
   const localityResults = document.getElementById('localityResults');
+  const localitySearchStatus = document.getElementById('localitySearchStatus');
   const searchError = document.getElementById('searchError');
   const locationError = document.getElementById('locationError');
   const locationStatus = document.getElementById('locationStatus');
@@ -52,9 +53,11 @@
   };
 
   const savedImageInput = form.querySelector('input[name="saved_image_path"]');
+  const currentLocationButtonHtml = useCurrentLocationButton.innerHTML;
   const searchCache = new Map();
   let searchTimer = null;
   let searchRequestId = 0;
+  let activeSearchController = null;
   let highlightedResultIndex = -1;
   let currentResults = [];
   let marker = null;
@@ -62,6 +65,7 @@
   let highlightCircle = null;
   let locationFocusTimeout = null;
   let currentLocalityLabel = '';
+  let previewObjectUrl = null;
 
   function setMessage(element, message, type) {
     if (!element) {
@@ -73,6 +77,12 @@
     if (element.classList.contains('inline-status')) {
       element.classList.remove('is-info', 'is-error', 'is-success');
       element.classList.add(type === 'error' ? 'is-error' : type === 'success' ? 'is-success' : 'is-info');
+    }
+  }
+
+  function setSearchStatus(message) {
+    if (localitySearchStatus) {
+      localitySearchStatus.textContent = message || '';
     }
   }
 
@@ -198,11 +208,20 @@
     const hasImage = Boolean(savedImageInput) || Boolean(imageInput.files && imageInput.files.length);
     const hasLocation = Boolean(latInput.value && lngInput.value);
 
+    const states = {
+      image: !hasImage,
+      location: hasImage && !hasLocation,
+      submit: hasImage && hasLocation
+    };
+
     progressSteps.image.classList.toggle('is-complete', hasImage);
-    progressSteps.image.classList.toggle('is-active', !hasImage);
+    progressSteps.image.classList.toggle('is-active', states.image);
+    progressSteps.image.setAttribute('aria-current', states.image ? 'step' : 'false');
     progressSteps.location.classList.toggle('is-complete', hasLocation);
-    progressSteps.location.classList.toggle('is-active', hasImage && !hasLocation);
-    progressSteps.submit.classList.toggle('is-active', hasImage && hasLocation);
+    progressSteps.location.classList.toggle('is-active', states.location);
+    progressSteps.location.setAttribute('aria-current', states.location ? 'step' : 'false');
+    progressSteps.submit.classList.toggle('is-active', states.submit);
+    progressSteps.submit.setAttribute('aria-current', states.submit ? 'step' : 'false');
   }
 
   function updateSummary() {
@@ -272,10 +291,11 @@
 
     layerControl.onAdd = () => {
       const container = L.DomUtil.create('div', 'map-layer-toggle');
+      container.setAttribute('role', 'group');
       container.setAttribute('aria-label', 'Map style');
       container.innerHTML = `
-        <button class="active" type="button" data-layer="streets" aria-pressed="true">Map</button>
-        <button type="button" data-layer="satellite" aria-pressed="false">Satellite</button>
+        <button class="active" type="button" data-layer="streets" aria-pressed="true" aria-label="Show street map">Map</button>
+        <button type="button" data-layer="satellite" aria-pressed="false" aria-label="Show satellite map">Satellite</button>
       `;
 
       L.DomEvent.disableClickPropagation(container);
@@ -561,6 +581,10 @@
   });
 
   function clearPreview() {
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = null;
+    }
     imagePreview.removeAttribute('src');
     previewWrapper.hidden = true;
     previewName.textContent = 'No image selected';
@@ -607,7 +631,12 @@
       return;
     }
 
-    imagePreview.src = URL.createObjectURL(file);
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+    }
+    previewObjectUrl = URL.createObjectURL(file);
+    imagePreview.src = previewObjectUrl;
+    imagePreview.decoding = 'async';
     previewName.textContent = file.name;
     previewWrapper.hidden = false;
     summaryImage.textContent = file.name;
@@ -642,17 +671,30 @@
   function hideSearchResults() {
     localityResults.hidden = true;
     localitySearch.setAttribute('aria-expanded', 'false');
+    localitySearch.setAttribute('aria-busy', 'false');
+    localitySearch.removeAttribute('aria-activedescendant');
     highlightedResultIndex = -1;
     requestMapSizeSync();
   }
 
   function updateHighlightedResult() {
     Array.from(localityResults.querySelectorAll('.search-option')).forEach((button, index) => {
-      button.classList.toggle('is-highlighted', index === highlightedResultIndex);
+      const highlighted = index === highlightedResultIndex;
+      button.classList.toggle('is-highlighted', highlighted);
+      button.setAttribute('aria-selected', String(highlighted));
       if (index === highlightedResultIndex) {
         button.scrollIntoView({ block: 'nearest' });
       }
     });
+
+    if (highlightedResultIndex >= 0) {
+      localitySearch.setAttribute(
+        'aria-activedescendant',
+        `locality-option-${highlightedResultIndex}`
+      );
+    } else {
+      localitySearch.removeAttribute('aria-activedescendant');
+    }
   }
 
   function appendResultCopy(parent, titleText, detailText) {
@@ -668,6 +710,9 @@
     currentResults = [];
     highlightedResultIndex = -1;
     localityResults.innerHTML = '';
+    localitySearch.setAttribute('aria-busy', 'true');
+    localitySearch.removeAttribute('aria-activedescendant');
+    setSearchStatus(`Searching Lebanon for ${query}.`);
 
     const loading = document.createElement('div');
     loading.className = 'search-empty is-loading';
@@ -685,6 +730,8 @@
   function renderSearchResults(results, message) {
     currentResults = results || [];
     localityResults.innerHTML = '';
+    localitySearch.setAttribute('aria-busy', 'false');
+    localitySearch.removeAttribute('aria-activedescendant');
 
     if (!currentResults.length) {
       const empty = document.createElement('div');
@@ -697,6 +744,7 @@
       localityResults.appendChild(empty);
       localityResults.hidden = false;
       localitySearch.setAttribute('aria-expanded', 'true');
+      setSearchStatus(message || 'No matching Lebanese locality found.');
       requestMapSizeSync();
       return;
     }
@@ -707,6 +755,7 @@
       button.className = 'search-option';
       button.id = `locality-option-${index}`;
       button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', 'false');
       button.dataset.index = String(index);
       appendResultCopy(
         button,
@@ -719,6 +768,7 @@
 
     localityResults.hidden = false;
     localitySearch.setAttribute('aria-expanded', 'true');
+    setSearchStatus(`${currentResults.length} Lebanese locality suggestions available.`);
     requestMapSizeSync();
   }
 
@@ -728,8 +778,20 @@
     searchError.textContent = '';
 
     if (normalizedQuery.length < 1) {
+      searchRequestId += 1;
+      if (activeSearchController) {
+        activeSearchController.abort();
+        activeSearchController = null;
+      }
+      setSearchStatus('');
       hideSearchResults();
       return;
+    }
+
+    const requestId = ++searchRequestId;
+    if (activeSearchController) {
+      activeSearchController.abort();
+      activeSearchController = null;
     }
 
     if (searchCache.has(normalizedQuery.toLowerCase())) {
@@ -737,11 +799,14 @@
       return;
     }
 
-    const requestId = ++searchRequestId;
+    activeSearchController = new AbortController();
     renderSearchLoading(normalizedQuery);
 
     try {
-      const response = await fetch(`${searchUrl}?q=${encodeURIComponent(normalizedQuery)}`);
+      const response = await fetch(
+        `${searchUrl}?q=${encodeURIComponent(normalizedQuery)}`,
+        { signal: activeSearchController.signal }
+      );
       const data = await response.json();
 
       if (requestId !== searchRequestId) {
@@ -756,8 +821,15 @@
       searchCache.set(normalizedQuery.toLowerCase(), results);
       renderSearchResults(results, data.message);
     } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
       searchError.textContent = 'Could not search Lebanese cities right now. Please click the map manually.';
       renderSearchResults([], 'Search is temporarily unavailable.');
+    } finally {
+      if (requestId === searchRequestId) {
+        activeSearchController = null;
+      }
     }
   }
 
@@ -832,6 +904,7 @@
     }
 
     useCurrentLocationButton.disabled = true;
+    useCurrentLocationButton.setAttribute('aria-busy', 'true');
     useCurrentLocationButton.textContent = 'Finding location...';
 
     navigator.geolocation.getCurrentPosition(
@@ -852,7 +925,8 @@
         }
 
         useCurrentLocationButton.disabled = false;
-        useCurrentLocationButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle></svg>Use my current location';
+        useCurrentLocationButton.setAttribute('aria-busy', 'false');
+        useCurrentLocationButton.innerHTML = currentLocationButtonHtml;
       },
       (error) => {
         let message = 'Could not get your current location. Select the road on the map.';
@@ -867,7 +941,8 @@
 
         setMessage(locationStatus, message, 'error');
         useCurrentLocationButton.disabled = false;
-        useCurrentLocationButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle></svg>Use my current location';
+        useCurrentLocationButton.setAttribute('aria-busy', 'false');
+        useCurrentLocationButton.innerHTML = currentLocationButtonHtml;
       },
       {
         enableHighAccuracy: true,
@@ -908,6 +983,7 @@
     }
 
     submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
     submitButton.textContent = 'Submitting report...';
   });
 

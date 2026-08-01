@@ -47,17 +47,17 @@
     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
     <div class="progress-card" aria-label="Report progress">
-      <div class="progress-step is-active" data-progress-step="image">
+      <div class="progress-step is-active" data-progress-step="image" aria-current="step">
         <span>1</span>
         <strong>Upload image</strong>
       </div>
       <div class="progress-line" aria-hidden="true"></div>
-      <div class="progress-step" data-progress-step="location">
+      <div class="progress-step" data-progress-step="location" aria-current="false">
         <span>2</span>
         <strong>Select location</strong>
       </div>
       <div class="progress-line" aria-hidden="true"></div>
-      <div class="progress-step" data-progress-step="submit">
+      <div class="progress-step" data-progress-step="submit" aria-current="false">
         <span>3</span>
         <strong>Submit report</strong>
       </div>
@@ -183,7 +183,7 @@
                 aria-autocomplete="list"
                 aria-expanded="false"
                 aria-controls="localityResults"
-                aria-describedby="searchHelp searchError selectedSearchPlace"
+                aria-describedby="searchHelp searchError selectedSearchPlace localitySearchStatus"
                 placeholder="Search Beirut, Zahle, Tyre..."
               >
             </div>
@@ -192,6 +192,12 @@
               municipalities, and localities.
             </p>
             <p class="field-error" id="searchError" role="alert"></p>
+            <p
+              class="sr-only"
+              id="localitySearchStatus"
+              role="status"
+              aria-live="polite"
+            ></p>
             <div class="selected-search-place" id="selectedSearchPlace" hidden>
               <span>Selected locality center</span>
               <strong>No locality selected</strong>
@@ -226,9 +232,15 @@
         </div>
 
         <div class="map-wrap">
-          <div id="map" aria-label="Lebanon report location map"></div>
+          <div
+            id="map"
+            role="region"
+            tabindex="0"
+            aria-label="Lebanon report location map"
+            aria-describedby="locationStatus mapInstructions"
+          ></div>
         </div>
-        <p class="map-context-help">
+        <p class="map-context-help" id="mapInstructions">
           Zoom in for nearby roads, shops, and landmarks. Switch to Satellite
           when the street map needs more real-world context.
         </p>
@@ -422,15 +434,15 @@
     <div class="support-hero">
       <p class="modal-kicker">Report a problem</p>
       <h2 id="feedback-title">How can we help?</h2>
-      <p class="feedback-help">
+      <p class="feedback-help" id="upload-feedback-help">
         Send a question, website issue, suggestion, or a specific road report
         you want the Tariq.lb team to review.
       </p>
     </div>
 
-    <section class="feedback-card support-form-card" aria-label="Contact and feedback form">
+    <section class="feedback-card support-form-card" aria-labelledby="upload-support-form-title">
       <div class="support-form-title">
-        <span>Contact and feedback form</span>
+        <span id="upload-support-form-title">Contact and feedback form</span>
       </div>
 
       {% if page_messages %}
@@ -445,6 +457,7 @@
         class="feedback-form support-form"
         action="{{ url_for('reports.submit_feedback') }}"
         method="post"
+        aria-describedby="upload-feedback-help"
       >
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="next" value="{{ url_for('reports.upload') }}">

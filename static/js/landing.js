@@ -4,6 +4,10 @@
   const backdrop = document.querySelector('[data-modal-backdrop]');
   const openers = document.querySelectorAll('[data-modal-target]');
   const closeButtons = document.querySelectorAll('[data-modal-close]');
+  const backgroundElements = [
+    header,
+    document.querySelector('.landing-footer')
+  ].filter(Boolean);
   let activeModal = null;
   let previousFocus = null;
 
@@ -28,6 +32,23 @@
     );
   }
 
+  function setModalButtonState(modalId, expanded) {
+    openers.forEach((opener) => {
+      const isTarget = opener.dataset.modalTarget === modalId;
+      opener.setAttribute('aria-expanded', String(Boolean(expanded && isTarget)));
+    });
+  }
+
+  function setBackgroundAccessibility(hidden) {
+    backgroundElements.forEach((element) => {
+      if (hidden) {
+        element.setAttribute('aria-hidden', 'true');
+      } else {
+        element.removeAttribute('aria-hidden');
+      }
+    });
+  }
+
   function openModal(modalId) {
     const modal = document.getElementById(modalId);
 
@@ -35,11 +56,18 @@
       return;
     }
 
+    if (activeModal && activeModal !== modal) {
+      closeModal(false);
+    }
+
     previousFocus = document.activeElement;
     activeModal = modal;
     modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
     backdrop.hidden = false;
     body.classList.add('modal-open');
+    setBackgroundAccessibility(true);
+    setModalButtonState(modalId, true);
 
     const focusable = getFocusableElements(modal);
     const panel = modal.querySelector('.modal-panel');
@@ -47,17 +75,20 @@
     firstFocusable.focus({ preventScroll: true });
   }
 
-  function closeModal() {
+  function closeModal(restoreFocus = true) {
     if (!activeModal || !backdrop) {
       return;
     }
 
     activeModal.hidden = true;
+    activeModal.setAttribute('aria-hidden', 'true');
     backdrop.hidden = true;
     body.classList.remove('modal-open');
+    setBackgroundAccessibility(false);
+    setModalButtonState(null, false);
     activeModal = null;
 
-    if (previousFocus && typeof previousFocus.focus === 'function') {
+    if (restoreFocus && previousFocus && typeof previousFocus.focus === 'function') {
       previousFocus.focus({ preventScroll: true });
     }
   }

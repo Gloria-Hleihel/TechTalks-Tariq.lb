@@ -1,5 +1,6 @@
 import os
 import uuid
+from pathlib import Path
 
 from flask import current_app
 from PIL import Image, UnidentifiedImageError
@@ -66,17 +67,35 @@ def delete_image(relative_path: str) -> None:
     if not relative_path:
         return
 
-    upload_folder = _setting(
+    normalized_path = str(relative_path).replace("\\", "/").lstrip("/")
+    if normalized_path.startswith("static/"):
+        normalized_path = normalized_path[len("static/"):]
+
+    if not normalized_path.startswith("uploads/"):
+        return
+
+    upload_folder = Path(_setting(
         "UPLOAD_FOLDER",
         os.path.join("static", "uploads"),
-    )
+    )).resolve()
+    annotated_folder = Path(_setting(
+        "ANNOTATED_FOLDER",
+        os.path.join(str(upload_folder), "annotated"),
+    )).resolve()
 
-    absolute_path = os.path.join(
-        upload_folder,
-        os.path.basename(relative_path),
-    )
+    if normalized_path.startswith("uploads/annotated/"):
+        base_folder = annotated_folder
+    else:
+        base_folder = upload_folder
 
-    _remove_silently(absolute_path)
+    absolute_path = (base_folder / os.path.basename(normalized_path)).resolve()
+
+    try:
+        absolute_path.relative_to(base_folder)
+    except ValueError:
+        return
+
+    _remove_silently(str(absolute_path))
 
 
 def _validate_saved_image(absolute_path: str) -> bool:

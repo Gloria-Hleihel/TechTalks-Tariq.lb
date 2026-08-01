@@ -14,7 +14,12 @@ from app.detection.severity import severity_score
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-MODEL_PATH = PROJECT_ROOT / "models" / "road_damage_v3.pt"
+CONFIGURED_MODEL_PATH = Path(config.DETECTION_MODEL_PATH)
+MODEL_PATH = (
+    CONFIGURED_MODEL_PATH
+    if CONFIGURED_MODEL_PATH.is_absolute()
+    else PROJECT_ROOT / CONFIGURED_MODEL_PATH
+).resolve()
 ANNOTATED_DIR = PROJECT_ROOT / "static" / "uploads" / "annotated"
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
@@ -98,6 +103,12 @@ def get_model():
     return _model
 
 
+def preload_model() -> bool:
+    """Warm the YOLO model cache before the first user submits a report."""
+    get_model()
+    return True
+
+
 def validate_image(image_path: str) -> Path:
     """Validate the image path and check that the image is readable."""
     if not isinstance(image_path, str) or not image_path.strip():
@@ -150,6 +161,7 @@ def detect_damage(
             str(validated_path),
             conf=confidence_threshold,
             imgsz=640,
+            verbose=False,
         )
     except Exception as error:
         raise InferenceError(

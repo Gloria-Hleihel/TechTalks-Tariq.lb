@@ -11,9 +11,20 @@ from typing import Any, NoReturn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import config
+
 TEST_IMAGES_DIR = PROJECT_ROOT / "test_images"
+CONFIGURED_MODEL_PATH = Path(config.DETECTION_MODEL_PATH)
+ACTIVE_MODEL_PATH = (
+    CONFIGURED_MODEL_PATH
+    if CONFIGURED_MODEL_PATH.is_absolute()
+    else PROJECT_ROOT / CONFIGURED_MODEL_PATH
+).resolve()
 MODELS = {
-    "production": PROJECT_ROOT / "models" / "road_damage.pt",
+    "active_app_model": ACTIVE_MODEL_PATH,
     "v2": PROJECT_ROOT / "runs" / "fine_tune" / "road_damage_v2" / "weights" / "best.pt",
     "v3": PROJECT_ROOT / "runs" / "fine_tune" / "road_damage_v3" / "weights" / "best.pt",
 }
@@ -113,7 +124,7 @@ def main() -> None:
             writer.writerows(all_rows)
 
         print(f"Comparison saved to: {output_dir}")
-        print("Production model was not modified.")
+        print(f"Active app model was not modified: {ACTIVE_MODEL_PATH}")
     except Exception as error:
         fail(f"{type(error).__name__}: {error}")
 

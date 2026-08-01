@@ -11,8 +11,18 @@ from typing import Any, NoReturn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import config
+
 TEST_IMAGES_DIR = PROJECT_ROOT / "test_images"
-PRODUCTION_MODEL_PATH = PROJECT_ROOT / "models" / "road_damage.pt"
+CONFIGURED_MODEL_PATH = Path(config.DETECTION_MODEL_PATH)
+PRODUCTION_MODEL_PATH = (
+    CONFIGURED_MODEL_PATH
+    if CONFIGURED_MODEL_PATH.is_absolute()
+    else PROJECT_ROOT / CONFIGURED_MODEL_PATH
+).resolve()
 FINE_TUNED_MODEL_PATH = (
     PROJECT_ROOT / "runs" / "fine_tune" / "road_damage_v2" / "weights" / "best.pt"
 )

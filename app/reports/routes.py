@@ -28,7 +28,7 @@ from app.reports.location import (
     search_lebanese_localities,
     validate_lebanon_coordinates,
 )
-from app.security import require_csrf
+from app.security import rate_limit, require_csrf
 from app.utils.detection_client import trigger_detection
 from app.utils.exif import GPSExtractionError, extract_gps
 from app.utils.storage import (
@@ -663,6 +663,12 @@ def index():
 
 
 @bp.route("/feedback", methods=["POST"])
+@rate_limit(
+    "FEEDBACK_RATE_LIMIT",
+    "FEEDBACK_RATE_WINDOW_SECONDS",
+    "feedback",
+    methods={"POST"},
+)
 @require_csrf
 def submit_feedback():
     """Store a public contact or feedback message."""
@@ -741,6 +747,12 @@ def upload():
 @bp.route(
     "/upload",
     methods=["POST"],
+)
+@rate_limit(
+    "UPLOAD_RATE_LIMIT",
+    "UPLOAD_RATE_WINDOW_SECONDS",
+    "upload",
+    methods={"POST"},
 )
 @require_csrf
 def create_report():
@@ -864,6 +876,11 @@ def api_create_report():
 
 
 @bp.route("/api/lebanon-localities/search", methods=["GET"])
+@rate_limit(
+    "SEARCH_RATE_LIMIT",
+    "SEARCH_RATE_WINDOW_SECONDS",
+    "locality-search",
+)
 def api_search_lebanon_localities():
     query = (request.args.get("q") or "").strip()
     max_query_length = int(current_app.config.get("SEARCH_QUERY_MAX_LENGTH", 80))

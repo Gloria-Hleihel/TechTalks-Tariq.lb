@@ -36,6 +36,13 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
+# --- Runtime mode ------------------------------------------------------
+APP_ENV = os.environ.get(
+    "APP_ENV",
+    os.environ.get("FLASK_ENV", "development"),
+).strip().lower()
+IS_PRODUCTION = APP_ENV in {"production", "prod"}
+
 # --- Flask / Database -------------------------------------------------
 SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'tariq.db')}"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -50,6 +57,11 @@ MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 MAX_IMAGE_PIXELS = _env_int("MAX_IMAGE_PIXELS", 24_000_000)
 
 # --- Detection API ------------------------------------------------------
+DETECTION_MODEL_PATH = os.environ.get(
+    "DETECTION_MODEL_PATH",
+    os.path.join(BASE_DIR, "models", "road_damage_v3.pt"),
+)
+DETECTION_PRELOAD_MODEL = _env_bool("DETECTION_PRELOAD_MODEL", IS_PRODUCTION)
 DETECTION_API_URL = os.environ.get(
     "DETECTION_API_URL",
     "http://127.0.0.1:5000/api/detect",
@@ -93,11 +105,38 @@ ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH")
 CSRF_ENABLED = _env_bool("CSRF_ENABLED", True)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", False)
+SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", IS_PRODUCTION)
 PERMANENT_SESSION_LIFETIME = timedelta(
     hours=_env_int("SESSION_LIFETIME_HOURS", 2)
 )
 SECURITY_HEADERS_ENABLED = _env_bool("SECURITY_HEADERS_ENABLED", True)
+REQUIRE_PRODUCTION_SECRETS = _env_bool(
+    "REQUIRE_PRODUCTION_SECRETS",
+    IS_PRODUCTION,
+)
+RATE_LIMIT_ENABLED = _env_bool("RATE_LIMIT_ENABLED", True)
+ADMIN_LOGIN_RATE_LIMIT = _env_int("ADMIN_LOGIN_RATE_LIMIT", 8)
+ADMIN_LOGIN_RATE_WINDOW_SECONDS = _env_int(
+    "ADMIN_LOGIN_RATE_WINDOW_SECONDS",
+    15 * 60,
+)
+UPLOAD_RATE_LIMIT = _env_int("UPLOAD_RATE_LIMIT", 20)
+UPLOAD_RATE_WINDOW_SECONDS = _env_int(
+    "UPLOAD_RATE_WINDOW_SECONDS",
+    15 * 60,
+)
+FEEDBACK_RATE_LIMIT = _env_int("FEEDBACK_RATE_LIMIT", 6)
+FEEDBACK_RATE_WINDOW_SECONDS = _env_int(
+    "FEEDBACK_RATE_WINDOW_SECONDS",
+    10 * 60,
+)
+DETECTION_RATE_LIMIT = _env_int("DETECTION_RATE_LIMIT", 30)
+DETECTION_RATE_WINDOW_SECONDS = _env_int(
+    "DETECTION_RATE_WINDOW_SECONDS",
+    10 * 60,
+)
+SEARCH_RATE_LIMIT = _env_int("SEARCH_RATE_LIMIT", 120)
+SEARCH_RATE_WINDOW_SECONDS = _env_int("SEARCH_RATE_WINDOW_SECONDS", 60)
 
 # --- Static files / compression -----------------------------------------
 STATIC_CACHE_SECONDS = _env_int("STATIC_CACHE_SECONDS", 86_400)
@@ -111,6 +150,9 @@ COMPRESS_MIMETYPES = [
     "application/json",
     "image/svg+xml",
 ]
+
+# --- Runtime preloading --------------------------------------------------
+PRELOAD_LOCALITY_SEARCH = _env_bool("PRELOAD_LOCALITY_SEARCH", True)
 
 # --- Map defaults (centered on Lebanon) ---------------------------------
 MAP_DEFAULT_LAT = 33.85

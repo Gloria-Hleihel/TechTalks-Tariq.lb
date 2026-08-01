@@ -1,10 +1,23 @@
 from pathlib import Path
+import sys
+
 from ultralytics import YOLO
 
-MODEL_PATH = "models/road_damage.pt"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import config
+
+CONFIGURED_MODEL_PATH = Path(config.DETECTION_MODEL_PATH)
+MODEL_PATH = (
+    CONFIGURED_MODEL_PATH
+    if CONFIGURED_MODEL_PATH.is_absolute()
+    else PROJECT_ROOT / CONFIGURED_MODEL_PATH
+).resolve()
 TEST_IMAGES_DIR = Path("test_images")
 
-model = YOLO(MODEL_PATH)
+model = YOLO(str(MODEL_PATH))
 
 for image_path in TEST_IMAGES_DIR.glob("*"):
     if image_path.suffix.lower() not in [".jpg", ".jpeg", ".png"]:

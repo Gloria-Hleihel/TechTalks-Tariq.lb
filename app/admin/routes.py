@@ -7,7 +7,8 @@ from sqlalchemy.orm import selectinload
 from werkzeug.security import check_password_hash
 
 import config
-from app.security import require_csrf, validate_csrf_token
+from app.security import rate_limit, require_csrf, validate_csrf_token
+from app.utils.storage import delete_image
 from models import Detection, FeedbackMessage, Report, db
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -128,6 +129,12 @@ def admin_root():
 
 
 @admin_bp.route("/login", methods=["GET", "POST"])
+@rate_limit(
+    "ADMIN_LOGIN_RATE_LIMIT",
+    "ADMIN_LOGIN_RATE_WINDOW_SECONDS",
+    "admin-login",
+    methods={"POST"},
+)
 def login():
     error = None
     if request.method == "POST":
@@ -262,9 +269,22 @@ def update_status(report_id):
 @login_required
 @require_csrf
 def delete_report(report_id):
-    report = _get_report_or_404(report_id)
+    report = _get_report_or_404(report_id, with_detections=True)
+    image_paths = [report.image_path]
+    image_paths.extend(
+        detection.annotated_image_path
+        for detection in report.detections
+        if detection.annotated_image_path
+    )
+    FeedbackMessage.query.filter_by(report_id=report.id).update(
+        {"report_id": None}
+    )
     db.session.delete(report)
     db.session.commit()
+
+    for image_path in image_paths:
+        delete_image(image_path)
+
     return redirect(url_for("admin.dashboard"))
 
 

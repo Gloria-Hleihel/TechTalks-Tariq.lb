@@ -45,6 +45,10 @@ def test_contact_modal_has_email_faq_and_feedback_form(client):
     assert b"Quick answers" in response.data
     assert b"Report Problem" in response.data
     assert b"Contact and feedback form" in response.data
+    assert b'aria-haspopup="dialog"' in response.data
+    assert b'aria-controls="about-modal"' in response.data
+    assert b'aria-expanded="false"' in response.data
+    assert b'aria-describedby="home-feedback-help"' in response.data
     assert b'name="name"' in response.data
     assert b'name="email"' in response.data
     assert b'name="message"' in response.data

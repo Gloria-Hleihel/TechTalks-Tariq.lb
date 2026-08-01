@@ -311,6 +311,7 @@ def _gazetteer_available() -> bool:
     return available
 
 
+@lru_cache(maxsize=1)
 def _gazetteer_places() -> tuple[dict[str, Any], ...]:
     available, places = _load_gazetteer_payload()
 
@@ -318,6 +319,20 @@ def _gazetteer_places() -> tuple[dict[str, Any], ...]:
         return tuple(_dedupe_results(places))
 
     return tuple(_dedupe_results((*_fallback_localities(), *places)))
+
+
+@lru_cache(maxsize=1)
+def _gazetteer_search_index() -> tuple[tuple[dict[str, Any], tuple[str, ...]], ...]:
+    """Cache normalized names once so every keystroke does less work."""
+    return tuple(
+        (locality, _candidate_values(locality))
+        for locality in _gazetteer_places()
+    )
+
+
+def preload_locality_search() -> int:
+    """Warm the local locality search cache and return the indexed count."""
+    return len(_gazetteer_search_index())
 
 
 def _display_part(raw_place: dict[str, Any], keys: list[str]) -> str | None:
@@ -512,9 +527,7 @@ def _local_search(query: str) -> list[dict[str, Any]]:
         return []
 
     matches = []
-    for index, locality in enumerate(_gazetteer_places()):
-        values = _candidate_values(locality)
-
+    for index, (locality, values) in enumerate(_gazetteer_search_index()):
         if any(value == normalized for value in values):
             rank = 0
         elif any(value.startswith(normalized) for value in values):
@@ -564,7 +577,9 @@ def _result_names(result: dict[str, Any]) -> tuple[str, ...]:
     values = [
         result.get("name"),
         result.get("name_en"),
+        result.get("name_ar"),
         result.get("ascii_name"),
+        result.get("display_name"),
     ]
 
     values.extend(result.get("alternate_names") or [])
@@ -603,6 +618,57 @@ def _names_look_like_same_place(
                 return True
 
     return False
+
+
+def _merge_duplicate_result(
+    existing: dict[str, Any],
+    duplicate: dict[str, Any],
+) -> None:
+    """Keep one visible result while preserving richer search aliases."""
+    for key in (
+        "name_ar",
+        "name_en",
+        "ascii_name",
+        "district",
+        "governorate",
+        "bounding_box",
+        "geoname_id",
+        "feature_code",
+    ):
+        if not existing.get(key) and duplicate.get(key):
+            existing[key] = duplicate[key]
+
+    if not existing.get("population") and duplicate.get("population"):
+        existing["population"] = duplicate["population"]
+
+    def alias_values(raw_value: Any) -> tuple[Any, ...]:
+        if isinstance(raw_value, str):
+            return (raw_value,)
+        if isinstance(raw_value, (list, tuple, set)):
+            return tuple(raw_value)
+        return tuple()
+
+    aliases = []
+    seen_aliases = set()
+    for value in (
+        alias_values(existing.get("alternate_names")),
+        alias_values(duplicate.get("alternate_names")),
+        [
+            duplicate.get("name"),
+            duplicate.get("name_en"),
+            duplicate.get("name_ar"),
+            duplicate.get("ascii_name"),
+        ],
+    ):
+        for alias in value:
+            cleaned_alias = _clean_text(alias)
+            normalized_alias = _normalize_for_search(cleaned_alias)
+            if not cleaned_alias or normalized_alias in seen_aliases:
+                continue
+            seen_aliases.add(normalized_alias)
+            aliases.append(cleaned_alias)
+
+    existing["alternate_names"] = aliases
 
 
 def _coordinates_are_near(
@@ -656,18 +722,22 @@ def _dedupe_results(
     results: tuple[dict[str, Any], ...] | list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     unique_results = []
-    seen_exact_keys = set()
-    seen_display_names = set()
+    seen_exact_keys: dict[tuple[str, str, str, float, float], dict[str, Any]] = {}
+    seen_display_names: dict[str, dict[str, Any]] = {}
     coordinate_buckets: dict[tuple[int, int], list[dict[str, Any]]] = {}
 
     for result in results:
         exact_key = _result_key(result)
         display_name = _normalize_for_search(result.get("display_name"))
 
-        if exact_key in seen_exact_keys:
+        exact_match = seen_exact_keys.get(exact_key)
+        if exact_match is not None:
+            _merge_duplicate_result(exact_match, result)
             continue
 
-        if display_name and display_name in seen_display_names:
+        display_match = seen_display_names.get(display_name)
+        if display_match is not None:
+            _merge_duplicate_result(display_match, result)
             continue
 
         bucket = _coordinate_bucket(result)
@@ -684,12 +754,22 @@ def _dedupe_results(
                         )
                     )
 
-        if any(_same_visible_result(result, existing) for existing in nearby_results):
+        duplicate_match = next(
+            (
+                existing
+                for existing in nearby_results
+                if _same_visible_result(result, existing)
+            ),
+            None,
+        )
+
+        if duplicate_match is not None:
+            _merge_duplicate_result(duplicate_match, result)
             continue
 
-        seen_exact_keys.add(exact_key)
+        seen_exact_keys[exact_key] = result
         if display_name:
-            seen_display_names.add(display_name)
+            seen_display_names[display_name] = result
         unique_results.append(result)
 
         if bucket is not None:
@@ -740,5 +820,13 @@ def search_lebanese_localities(query: str) -> tuple[dict[str, Any], ...]:
         results.append(result)
 
     return tuple(results[:SEARCH_RESULT_LIMIT])
+
+
+def clear_location_caches() -> None:
+    """Clear locality caches after changing the gazetteer data source."""
+    search_lebanese_localities.cache_clear()
+    _gazetteer_search_index.cache_clear()
+    _gazetteer_places.cache_clear()
+    _load_gazetteer_payload.cache_clear()
 
 

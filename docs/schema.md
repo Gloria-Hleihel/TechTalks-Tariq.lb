@@ -12,8 +12,8 @@ One row is created for each uploaded road report.
 | `image_path` | String(255) | Yes | Relative static path such as `uploads/photo.jpg` |
 | `lat` | Float | Yes | Report latitude |
 | `lng` | Float | Yes | Report longitude |
-| `location_source` | String(10) | Yes | `gps`, `browser`, or `manual` |
-| `status` | String(20) | Yes | `pending`, `reviewed`, or `resolved` |
+| `location_source` | String(10) | Yes | `gps`, `browser`, `manual`, or `search` |
+| `status` | String(20) | Yes | `pending`, `reviewed`, `resolved`, or `rejected` |
 | `detection_status` | String(20) | Yes | `pending` or `completed` |
 | `detection_error` | String(500) | No | Latest timeout or detection failure |
 | `created_at` | DateTime | Yes | Creation date and time |

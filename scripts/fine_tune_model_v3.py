@@ -9,7 +9,17 @@ from typing import Any, NoReturn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PRODUCTION_MODEL_PATH = PROJECT_ROOT / "models" / "road_damage.pt"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import config
+
+CONFIGURED_MODEL_PATH = Path(config.DETECTION_MODEL_PATH)
+ACTIVE_MODEL_PATH = (
+    CONFIGURED_MODEL_PATH
+    if CONFIGURED_MODEL_PATH.is_absolute()
+    else PROJECT_ROOT / CONFIGURED_MODEL_PATH
+).resolve()
 V2_BEST_PATH = PROJECT_ROOT / "runs" / "fine_tune" / "road_damage_v2" / "weights" / "best.pt"
 DATA_YAML_PATH = PROJECT_ROOT / "dataset_v3" / "road_damage.yaml"
 RUNS_PROJECT = PROJECT_ROOT / "runs" / "fine_tune"
@@ -76,7 +86,7 @@ def main() -> None:
             model = load_model(weights_path)
             model.train(resume=True, batch=4, device=device, plots=False)
         else:
-            weights_path = V2_BEST_PATH if V2_BEST_PATH.is_file() else PRODUCTION_MODEL_PATH
+            weights_path = V2_BEST_PATH if V2_BEST_PATH.is_file() else ACTIVE_MODEL_PATH
             print(f"Starting v3 training from: {weights_path}")
             model = load_model(weights_path)
             model.train(
@@ -96,7 +106,7 @@ def main() -> None:
 
         print("v3 fine-tuning complete.")
         print(f"Best weights: {RUNS_PROJECT / RUN_NAME / 'weights' / 'best.pt'}")
-        print(f"Production model was not modified: {PRODUCTION_MODEL_PATH}")
+        print(f"Active app model was not modified: {ACTIVE_MODEL_PATH}")
     except KeyboardInterrupt:
         fail("Training interrupted by user.")
     except Exception as error:

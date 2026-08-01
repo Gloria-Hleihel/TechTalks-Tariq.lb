@@ -17,12 +17,14 @@ Tariq.lb is a solid MVP Flask application with clear blueprints for reports, det
 - Uploaded images were extension-checked and Pillow-verified, but not checked for browser MIME type, true format, or pixel bomb size. The patch adds MIME/type checks and `MAX_IMAGE_PIXELS` validation.
 - Security headers were missing. The patch adds CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HTTPS-only HSTS.
 - Admin pages could be browser-cached. The patch sets `Cache-Control: no-store` for `/admin` responses.
+- Basic in-memory rate limiting now protects admin login, upload, feedback, detection, and locality search endpoints.
+- Production mode now fails fast if the default Flask secret or demo admin password is still active.
 
 ### Remaining Security Recommendations
 
-- Replace the fallback `ADMIN_PASSWORD=changeme` before any demo or deployment.
+- Replace the fallback `ADMIN_PASSWORD=changeme` before any public demo or deployment.
 - Prefer `ADMIN_PASSWORD_HASH` generated with Werkzeug instead of a plaintext environment password.
-- Add login rate limiting before public deployment.
+- Use a shared external rate limiter, such as Redis-backed Flask-Limiter, when deploying with multiple workers.
 - Move from SQLite to PostgreSQL for multi-user deployment.
 - Consider nonce-based CSP after inline CSS/JS is moved into static files.
 
@@ -38,6 +40,8 @@ Tariq.lb is a solid MVP Flask application with clear blueprints for reports, det
 - The landing hero PNG was about 2.8 MB. The patch adds a WebP version around 301 KB and uses it through a `<picture>` fallback.
 - Static cache headers were missing. The patch adds browser cache headers for `/static` responses.
 - Compression was not configured. The patch adds optional Flask-Compress support and requirements for gzip/Brotli.
+- Locality search rebuilt normalized village/city names repeatedly while users typed. The patch caches a reusable search index and preloads it at startup.
+- YOLO inference now supports configurable production warmup through `DETECTION_PRELOAD_MODEL=1` and suppresses verbose inference logging during web requests.
 
 ### Remaining Performance Recommendations
 
@@ -46,6 +50,24 @@ Tariq.lb is a solid MVP Flask application with clear blueprints for reports, det
 - Store uploaded images outside the repository folder for production and serve through a static/media service.
 - Add pagination/server-side filtering to the admin table if reports grow into the thousands.
 - Move asynchronous detection jobs from in-memory storage to Redis/Celery for production.
+
+## Accessibility Review
+
+Fixed items:
+
+- Shared navigation modal buttons now expose dialog controls with `aria-haspopup`, `aria-controls`, and `aria-expanded`.
+- Modal JavaScript updates opener state, restores focus, and keeps the page header/footer hidden from assistive tech while a modal is active.
+- The upload locality search now announces loading/results, supports `aria-activedescendant`, marks selected options, and aborts stale searches while typing.
+- The report-location map is keyboard-focusable and described as a map region with concise instructions.
+- The admin dashboard tabs now use `aria-controls`, `aria-labelledby`, hidden inactive panels, arrow-key navigation, and reduced-motion-safe statistics.
+- Admin table rows are keyboard-focusable, and update/delete actions have specific labels.
+- Admin login fields now have explicit labels, autocomplete hints, and alert semantics for errors.
+
+Remaining accessibility recommendations:
+
+- Run Lighthouse and a screen-reader pass after the final UI freeze.
+- Move inline CSS/JS into static files so a stricter CSP can be used without `unsafe-inline`.
+- Add automated browser accessibility checks, such as axe-core through Playwright, if the project adds end-to-end tests.
 
 ## Database Review
 
@@ -61,11 +83,12 @@ Fixed items:
 - `/api/reports` now validates bounds and limit parameters.
 - `/api/lebanon-localities/search` now rejects overly long queries.
 - `/api/detect` is safer because detector path validation now blocks paths outside allowed folders.
+- Public abuse-sensitive endpoints now return `429 Too Many Requests` when local rate limits are exceeded.
+- Repeated detection calls for the same report now update the existing detection result instead of creating duplicates.
 
 Recommended next items:
 
 - Add authentication or a signed internal token for detection APIs if they are exposed beyond local development.
-- Add rate limiting for search and detection endpoints.
 - Add consistent JSON errors for every API route.
 
 ## Frontend Review
@@ -87,6 +110,15 @@ The patch avoids redesigning the UI. It only adds:
 - Public map API supports bounds plus limit.
 - Public map API rejects malformed bounds.
 - Oversized-pixel uploads are rejected without creating reports.
+- Duplicate detection API calls update one stored detection row.
+- Admin delete removes uploaded and annotated images.
+- Arabic locality aliases survive deduplication for curated places.
+- Admin login rate limiting blocks repeated attempts.
+- Production mode rejects unsafe default secrets.
+- Locality search preloading builds a reusable cache.
+- Runtime preloading respects the configured performance flags.
+- Admin dashboard accessibility landmarks, tabs, rows, and map labels are present.
+- Upload page locality search and map accessibility markup is present.
 
 ## Files Modified or Added
 
@@ -97,6 +129,8 @@ The patch avoids redesigning the UI. It only adds:
 - `app/reports/location.py`
 - `app/utils/storage.py`
 - `app/detection/detector.py`
+- `app/detection/jobs.py`
+- `app/detection/routes.py`
 - `config.py`
 - `models.py`
 - `run.py`

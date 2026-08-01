@@ -11,8 +11,8 @@ from datetime import datetime, timedelta
 # Allow importing app/models from the repo root when running from scripts/
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app, db          # adjust if db lives in models.py
-from models import Report, Detection
+from app import create_app
+from models import Report, Detection, db
 
 # (name, lat, lng) — spread across Lebanon
 LOCATIONS = [
@@ -44,14 +44,20 @@ LOCATIONS = [
     ("Tripoli South", 34.4200, 35.8500),
 ]
 
-DAMAGE_TYPES = ["Pothole", "Road Crack", "Surface Wear", "Other", "None"]
+DAMAGE_TYPES = [
+    "Longitudinal Crack",
+    "Transverse Crack",
+    "Alligator Crack",
+    "Potholes",
+    "None",
+]
 
 SEVERITIES = [
     # (label, score range)
-    ("Low",      (0.10, 0.30)),
-    ("Medium",   (0.30, 0.55)),
-    ("High",     (0.55, 0.80)),
-    ("Critical", (0.80, 0.98)),
+    ("Low",      (10, 30)),
+    ("Medium",   (31, 55)),
+    ("High",     (56, 80)),
+    ("Critical", (81, 98)),
 ]
 
 
@@ -60,7 +66,7 @@ def seed():
     for i, (name, lat, lng) in enumerate(LOCATIONS):
         damage_type = DAMAGE_TYPES[i % len(DAMAGE_TYPES)]
         sev_label, (lo, hi) = SEVERITIES[i % len(SEVERITIES)]
-        sev_score = round(random.uniform(lo, hi), 2)
+        sev_score = random.randint(lo, hi)
 
         # small jitter so pins don't overlap exactly on repeated runs
         jitter = lambda: random.uniform(-0.004, 0.004)
@@ -93,5 +99,6 @@ def seed():
 
 
 if __name__ == "__main__":
+    app = create_app()
     with app.app_context():
         seed()

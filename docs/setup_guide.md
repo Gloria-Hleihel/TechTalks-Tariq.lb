@@ -59,14 +59,16 @@ other required packages.
 
 ---
 
-## Step 4 — Download the YOLOv8 model weights
+## Step 4 — Confirm the YOLOv8 model weights
 
-Download `roaddamage.pt` from:
-oracl4/RoadDamageDetection (trained on RDD2022)
-Place the file at:
-models/road_damage.pt
-This file is not included in the repository due to its size.
-The app will not run detection without it.
+The app uses the v3 fine-tuned model by default:
+
+```bash
+models/road_damage_v3.pt
+```
+
+This file is included in the repository. To use a different model, set
+`DETECTION_MODEL_PATH` before starting the app.
 
 ---
 
@@ -124,6 +126,10 @@ Go to `http://127.0.0.1:5000/admin/login` and enter:
 
 You will see the dashboard with all seeded reports and analytics.
 
+For production or public deployment, set `APP_ENV=production`, configure a
+strong `SECRET_KEY`, and replace the default admin password. The app refuses
+to start in production mode if these defaults are still active.
+
 ---
 
 ## Running the tests
@@ -145,7 +151,17 @@ any commands.
 Run `pip install Pillow`
 
 **"Model not found" or detection errors**
-Confirm `models/road_damage.pt` exists in the correct location.
+Confirm `models/road_damage_v3.pt` exists in the correct location, or set
+`DETECTION_MODEL_PATH` to a valid YOLO weights file.
+
+**First detection is slow**
+The first request loads the YOLO model into memory. For a production demo, set
+`DETECTION_PRELOAD_MODEL=1` before starting Flask so the model warms up during
+startup instead of during the first report.
+
+**Location search feels slow on first use**
+The local Lebanon locality index is preloaded by default. If you need to disable
+that for debugging, set `PRELOAD_LOCALITY_SEARCH=0`.
 
 **"Database already has reports"**
 Delete `tariq.db` and re-run `python scripts/seed.py`

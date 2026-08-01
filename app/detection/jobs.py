@@ -180,18 +180,41 @@ def _run_detection_job(
             }
 
             if report_id is not None:
-                detection = Detection(
-                    report_id=report_id,
-                    damage_type=response["damage_type"],
-                    confidence=response["confidence"],
-                    severity_score=response["severity_score"],
-                    severity_label=response["severity_label"],
-                    annotated_image_path=response[
-                        "annotated_image_path"
-                    ],
+                report = db.session.get(Report, report_id)
+                if report is None:
+                    raise SQLAlchemyError(
+                        "The specified report does not exist."
+                    )
+
+                detection = (
+                    Detection.query.filter_by(report_id=report_id)
+                    .order_by(Detection.id.asc())
+                    .first()
                 )
 
-                db.session.add(detection)
+                if detection is None:
+                    detection = Detection(report_id=report_id)
+                    db.session.add(detection)
+
+                detection.damage_type = response["damage_type"]
+                detection.confidence = response["confidence"]
+                detection.severity_score = response["severity_score"]
+                detection.severity_label = response["severity_label"]
+                detection.annotated_image_path = response[
+                    "annotated_image_path"
+                ]
+                report.detection_status = "completed"
+                report.detection_error = None
+                db.session.flush()
+
+                duplicate_detections = Detection.query.filter(
+                    Detection.report_id == report_id,
+                    Detection.id != detection.id,
+                ).all()
+
+                for duplicate in duplicate_detections:
+                    db.session.delete(duplicate)
+
                 db.session.commit()
 
                 response["detection_id"] = detection.id

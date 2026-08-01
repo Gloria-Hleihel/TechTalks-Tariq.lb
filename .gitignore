@@ -19,6 +19,11 @@ work/
 # Editor-specific settings
 .vscode/
 
+# Local backup/debug artifacts
+*.bak*
+backups/
+.tmp_debug_static/
+
 # Local model files and test images
 models/
 test_images/

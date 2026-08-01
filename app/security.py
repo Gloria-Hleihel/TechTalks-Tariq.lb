@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+from collections import defaultdict, deque
 from functools import wraps
 from hmac import compare_digest
 from secrets import token_urlsafe
+from time import monotonic
 from typing import Callable
 
-from flask import abort, current_app, request, session
+from flask import abort, current_app, jsonify, request, session
 
 
 CSRF_SESSION_KEY = "_csrf_token"
+RATE_LIMIT_STATE: dict[str, deque[float]] = defaultdict(deque)
 
 
 def csrf_protection_enabled() -> bool:
@@ -67,6 +70,89 @@ def require_csrf(view: Callable) -> Callable:
         return view(*args, **kwargs)
 
     return wrapped
+
+
+def _client_ip() -> str:
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    if forwarded_for:
+        return forwarded_for.split(",", 1)[0].strip()
+
+    return request.remote_addr or "unknown"
+
+
+def _rate_limit_response(retry_after: int):
+    message = "Too many requests. Please try again shortly."
+
+    wants_json = request.accept_mimetypes.best == "application/json"
+    if request.path.startswith("/api/") or wants_json:
+        response = jsonify({"error": message})
+    else:
+        response = current_app.response_class(
+            message,
+            status=429,
+            mimetype="text/plain",
+        )
+
+    response.status_code = 429
+    response.headers["Retry-After"] = str(retry_after)
+    return response
+
+
+def rate_limit(
+    limit_config: str,
+    window_config: str,
+    key_prefix: str,
+    methods: set[str] | None = None,
+) -> Callable:
+    """Protect a route with a small per-client in-memory rate limit."""
+
+    limited_methods = (
+        {method.upper() for method in methods}
+        if methods
+        else None
+    )
+
+    def decorator(view: Callable) -> Callable:
+        @wraps(view)
+        def wrapped(*args, **kwargs):
+            if (
+                current_app.config.get("TESTING")
+                or not current_app.config.get("RATE_LIMIT_ENABLED", True)
+                or (
+                    limited_methods is not None
+                    and request.method.upper() not in limited_methods
+                )
+            ):
+                return view(*args, **kwargs)
+
+            limit = int(current_app.config.get(limit_config, 60))
+            window_seconds = int(current_app.config.get(window_config, 60))
+
+            if limit <= 0 or window_seconds <= 0:
+                return view(*args, **kwargs)
+
+            now = monotonic()
+            bucket_key = f"{key_prefix}:{_client_ip()}"
+            bucket = RATE_LIMIT_STATE[bucket_key]
+
+            while bucket and now - bucket[0] >= window_seconds:
+                bucket.popleft()
+
+            if len(bucket) >= limit:
+                retry_after = max(1, int(window_seconds - (now - bucket[0])))
+                return _rate_limit_response(retry_after)
+
+            bucket.append(now)
+            return view(*args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+def reset_rate_limits() -> None:
+    """Clear in-memory rate limit counters, mainly for tests."""
+    RATE_LIMIT_STATE.clear()
 
 
 def _security_header_policy() -> str:

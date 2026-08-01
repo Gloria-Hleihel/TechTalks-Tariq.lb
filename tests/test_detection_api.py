@@ -80,6 +80,21 @@ def test_detect_rejects_invalid_report_id(client):
     )
 
 
+def test_detection_model_preload_uses_cached_loader(monkeypatch):
+    from app.detection import detector
+
+    calls = []
+
+    def fake_get_model():
+        calls.append("loaded")
+        return object()
+
+    monkeypatch.setattr(detector, "get_model", fake_get_model)
+
+    assert detector.preload_model() is True
+    assert calls == ["loaded"]
+
+
 def test_detect_returns_successful_result(
     client,
     monkeypatch,
@@ -201,6 +216,74 @@ def test_detect_saves_result_when_report_id_is_given(
         )
         assert detection.severity_score == 34
         assert detection.severity_label == "Medium"
+
+
+def test_detect_updates_existing_result_for_same_report(
+    app,
+    client,
+    monkeypatch,
+):
+    with app.app_context():
+        report = Report(
+            image_path="uploads/test-road.png",
+            lat=33.8938,
+            lng=35.5018,
+            location_source="manual",
+            status="pending",
+        )
+        db.session.add(report)
+        db.session.flush()
+
+        detection = Detection(
+            report_id=report.id,
+            damage_type="Longitudinal Crack",
+            confidence=0.31,
+            severity_score=22,
+            severity_label="Low",
+            annotated_image_path="uploads/annotated/old.jpg",
+        )
+        db.session.add(detection)
+        db.session.commit()
+
+        report_id = report.id
+        detection_id = detection.id
+
+    fake_result = {
+        "damage_type": "Potholes",
+        "confidence": 0.91,
+        "severity_score": 82,
+        "severity_label": "Critical",
+        "bounding_boxes": [],
+        "annotated_image_path": "uploads/annotated/new.jpg",
+        "message": "Road damage detected.",
+    }
+
+    monkeypatch.setattr(
+        "app.detection.routes.detect_damage",
+        lambda _image_path: fake_result,
+    )
+
+    response = client.post(
+        "/api/detect",
+        json={
+            "image_path": "uploads/test-road.png",
+            "report_id": report_id,
+        },
+    )
+
+    assert response.status_code == 200
+    result = response.get_json()
+    assert result["detection_id"] == detection_id
+
+    with app.app_context():
+        detections = Detection.query.filter_by(report_id=report_id).all()
+        report = db.session.get(Report, report_id)
+
+        assert len(detections) == 1
+        assert detections[0].damage_type == "Potholes"
+        assert detections[0].confidence == pytest.approx(0.91)
+        assert report.detection_status == "completed"
+        assert report.detection_error is None
 
 
 def test_detect_rejects_missing_report(
