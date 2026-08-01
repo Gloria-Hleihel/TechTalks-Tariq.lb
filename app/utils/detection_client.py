@@ -1,4 +1,3 @@
-import mimetypes
 import os
 from typing import Any, Dict
 
@@ -188,7 +187,7 @@ def trigger_detection(
     image_path: str,
 ) -> Dict[str, Any]:
     """
-    Send the saved image to POST /api/detect.
+    Send the saved image path to POST /api/detect.
 
     Any API or network failure returns pending so the Report
     remains saved and detection can be retried.
@@ -214,30 +213,15 @@ def trigger_detection(
             ),
         )
 
-    mime_type = (
-        mimetypes.guess_type(image_path)[0]
-        or "application/octet-stream"
-    )
-
     try:
-        with open(
-            image_path,
-            "rb",
-        ) as image_file:
-            response = requests.post(
-                api_url,
-                files={
-                    "image": (
-                        os.path.basename(image_path),
-                        image_file,
-                        mime_type,
-                    )
-                },
-                data={
-                    "report_id": str(report.id),
-                },
-                timeout=timeout,
-            )
+        response = requests.post(
+            api_url,
+            json={
+                "report_id": report.id,
+                "image_path": image_path,
+            },
+            timeout=timeout,
+        )
 
     except requests.Timeout:
         return _pending(
@@ -268,18 +252,6 @@ def trigger_detection(
                 "Your report was saved, but detection "
                 "could not be started. "
                 "Please retry detection later."
-            ),
-        )
-
-    except OSError as exc:
-        return _pending(
-            (
-                "Could not open the saved upload "
-                f"for detection: {exc}"
-            ),
-            (
-                "Your report was saved, but its image "
-                "could not be read for detection."
             ),
         )
 
