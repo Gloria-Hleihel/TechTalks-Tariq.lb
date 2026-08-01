@@ -548,10 +548,7 @@ def _report_api_payload(
 
 @bp.route("/")
 def index():
-    return redirect(
-        url_for("reports.upload")
-    )
-
+    return render_template("index.html")
 
 @bp.route(
     "/upload",
