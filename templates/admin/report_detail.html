@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Report Details — Tariq.lb</title>
+    <title>Report Details - Tariq.lb</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         * {
@@ -214,7 +214,7 @@
         .badge-high { background: #fff3e0; color: #e65100; }
         .badge-critical { background: #fdecea; color: #7b0d1e; }
         .badge-pending { background: #f5f5f5; color: #888; }
-        .badge-reviewed { background: #e3f2fd; color: #1565c0; }
+        .badge-reviewed { background: #eaf1ec; color: #4a7c59; }
         .badge-resolved { background: #e8f5e9; color: #2e7d32; }
 
         /* Images grid */
@@ -257,13 +257,16 @@
             margin-bottom: 8px;
         }
     </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reference-theme.css') }}">
 </head>
-<body>
+<body class="reference-theme reference-admin-report-detail-page">
 
     <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-brand">
-            <i class="fa-solid fa-map-location-dot"></i>
+            <span class="brand-logo nav-brand-logo">
+                <img src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}" alt="Tariq.lb logo">
+            </span>
             <div class="brand-text">
                 <span>Tariq.lb</span>
                 <small>Admin Control Panel</small>
@@ -272,7 +275,7 @@
         <div class="navbar-right">
             <div class="navbar-tagline">
                 <div class="line-red"></div>
-                Roads. Solutions. Progress.
+                Municipality Management Platform
                 <div class="line-green"></div>
             </div>
             <a href="/admin/logout" class="logout-btn">
@@ -399,7 +402,7 @@
                 <div class="image-box">
                     <p>Original Image</p>
                     {% if report.image_path %}
-                        <img src="/{{ report.image_path }}" alt="Original">
+                        <img src="/{{ report.image_path }}" alt="Original" loading="lazy" decoding="async">
                     {% else %}
                         <div class="no-image">
                             <i class="fa-solid fa-image"></i>
@@ -410,7 +413,7 @@
                 <div class="image-box">
                     <p>Annotated Image</p>
                     {% if detection and detection.annotated_image_path %}
-                        <img src="/{{ detection.annotated_image_path }}" alt="Annotated">
+                        <img src="/{{ detection.annotated_image_path }}" alt="Annotated" loading="lazy" decoding="async">
                     {% else %}
                         <div class="no-image">
                             <i class="fa-solid fa-image"></i>

@@ -8,12 +8,23 @@ from werkzeug.utils import secure_filename
 import config
 
 
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png"}
+ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG"}
+
+
 def _setting(name, default):
     """Read from Flask config when available, otherwise from config.py."""
     try:
         return current_app.config.get(name, default)
     except RuntimeError:
         return getattr(config, name, default)
+
+
+def _remove_silently(path: str) -> None:
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
 
 
 def allowed_file(filename: str) -> bool:
@@ -27,6 +38,12 @@ def allowed_file(filename: str) -> bool:
         "ALLOWED_EXTENSIONS",
         {"jpg", "jpeg", "png"},
     )
+
+
+def allowed_mimetype(file) -> bool:
+    """Return True when the browser-declared MIME type is image-safe."""
+    mimetype = str(getattr(file, "mimetype", "") or "").lower()
+    return not mimetype or mimetype in ALLOWED_MIME_TYPES
 
 
 def get_file_size(file) -> int:
@@ -59,10 +76,38 @@ def delete_image(relative_path: str) -> None:
         os.path.basename(relative_path),
     )
 
+    _remove_silently(absolute_path)
+
+
+def _validate_saved_image(absolute_path: str) -> bool:
+    """Verify the saved image's real content, format, and pixel count."""
+    max_pixels = int(_setting("MAX_IMAGE_PIXELS", 24_000_000))
+    Image.MAX_IMAGE_PIXELS = max_pixels
+
     try:
-        os.remove(absolute_path)
-    except FileNotFoundError:
-        pass
+        with Image.open(absolute_path) as image:
+            image.verify()
+
+        with Image.open(absolute_path) as image:
+            width, height = image.size
+            pixel_count = width * height
+
+            if image.format not in ALLOWED_IMAGE_FORMATS:
+                return False
+
+            if width <= 0 or height <= 0 or pixel_count > max_pixels:
+                return False
+
+    except (
+        Image.DecompressionBombError,
+        UnidentifiedImageError,
+        OSError,
+        SyntaxError,
+        ValueError,
+    ):
+        return False
+
+    return True
 
 
 def save_image(file) -> str:
@@ -76,7 +121,7 @@ def save_image(file) -> str:
         getattr(file, "filename", "") or ""
     )
 
-    if not allowed_file(original_filename):
+    if not allowed_file(original_filename) or not allowed_mimetype(file):
         return ""
 
     upload_folder = _setting(
@@ -96,16 +141,8 @@ def save_image(file) -> str:
 
     file.save(absolute_path)
 
-    # Check the real contents, not only the filename extension.
-    try:
-        with Image.open(absolute_path) as image:
-            image.verify()
-    except (UnidentifiedImageError, OSError, SyntaxError):
-        try:
-            os.remove(absolute_path)
-        except FileNotFoundError:
-            pass
-
+    if not _validate_saved_image(absolute_path):
+        _remove_silently(absolute_path)
         return ""
 
     return f"uploads/{new_filename}"

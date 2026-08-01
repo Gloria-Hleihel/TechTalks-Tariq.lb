@@ -1,77 +1,57 @@
-"""
-models.py — SQLAlchemy models for Tariq.lb
-"""
+"""SQLAlchemy models for Tariq.lb."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
-
 
 db = SQLAlchemy()
 
 
+def utc_now() -> datetime:
+    """Return naive UTC timestamps for SQLite compatibility."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class Report(db.Model):
-    """A road-damage report submitted by a user."""
+    """A single road-damage report submitted by a user."""
 
     __tablename__ = "reports"
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True,
-    )
-
-    image_path = db.Column(
-        db.String(255),
-        nullable=False,
-    )
-
-    lat = db.Column(
-        db.Float,
-        nullable=False,
-    )
-
-    lng = db.Column(
-        db.Float,
-        nullable=False,
-    )
-
-    # "gps" from EXIF, "browser" from device location, "manual" from map click
+    id = db.Column(db.Integer, primary_key=True)
+    image_path = db.Column(db.String(255), nullable=False)
+    lat = db.Column(db.Float, nullable=False, index=True)
+    lng = db.Column(db.Float, nullable=False, index=True)
     location_source = db.Column(
         db.String(10),
         nullable=False,
         default="manual",
+        index=True,
     )
-
     status = db.Column(
         db.String(20),
         nullable=False,
         default="pending",
+        index=True,
     )
-
-    # Detection remains pending if the API fails or times out.
     detection_status = db.Column(
         db.String(20),
         nullable=False,
         default="pending",
+        index=True,
     )
-
-    # Stores the most recent detection failure reason.
-    detection_error = db.Column(
-        db.String(500),
-        nullable=True,
-    )
-
+    detection_error = db.Column(db.String(500), nullable=True)
     created_at = db.Column(
         db.DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=utc_now,
+        index=True,
     )
 
     detections = db.relationship(
         "Detection",
         backref="report",
         cascade="all, delete-orphan",
-        lazy=True,
+        lazy="selectin",
     )
 
     def to_dict(self):
@@ -89,45 +69,22 @@ class Report(db.Model):
 
 
 class Detection(db.Model):
-    """AI detection result linked to a Report."""
+    """The AI detection result linked to a single Report."""
 
     __tablename__ = "detections"
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True,
-    )
-
+    id = db.Column(db.Integer, primary_key=True)
     report_id = db.Column(
         db.Integer,
         db.ForeignKey("reports.id"),
         nullable=False,
+        index=True,
     )
-
-    damage_type = db.Column(
-        db.String(50),
-        nullable=False,
-    )
-
-    confidence = db.Column(
-        db.Float,
-        nullable=False,
-    )
-
-    severity_score = db.Column(
-        db.Integer,
-        nullable=False,
-    )
-
-    severity_label = db.Column(
-        db.String(20),
-        nullable=False,
-    )
-
-    annotated_image_path = db.Column(
-        db.String(255),
-        nullable=True,
-    )
+    damage_type = db.Column(db.String(50), nullable=False, index=True)
+    confidence = db.Column(db.Float, nullable=False)
+    severity_score = db.Column(db.Integer, nullable=False)
+    severity_label = db.Column(db.String(20), nullable=False, index=True)
+    annotated_image_path = db.Column(db.String(255), nullable=True)
 
     def to_dict(self):
         return {

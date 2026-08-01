@@ -104,7 +104,10 @@ def test_dashboard_loads_after_login(client):
     login(client)
     response = client.get("/admin/dashboard")
     assert response.status_code == 200
-    assert b"Dashboard Overview" in response.data
+    assert b"Road Damage Control Center" in response.data
+    assert b'data-section="live"' in response.data
+    assert b'data-section="review"' in response.data
+    assert b'data-section="done"' in response.data
 
 
 # --- Status update tests ---

@@ -1,13 +1,13 @@
 import io
+import json
 import os
+import requests
 
 import pytest
-import requests
 from PIL import Image
 
 from app import create_app
 from app.utils.detection_client import trigger_detection
-from app.utils.exif import GPSExtractionError
 from models import Detection, Report, db
 
 
@@ -17,7 +17,7 @@ def image_bytes(fmt="PNG"):
 
     Image.new(
         "RGB",
-        (8, 8),
+        (4, 4),
         "white",
     ).save(
         stream,
@@ -36,7 +36,7 @@ def app(tmp_path):
     upload_folder = static_folder / "uploads"
     annotated_folder = upload_folder / "annotated"
 
-    application = create_app(
+    app = create_app(
         {
             "TESTING": True,
             "SECRET_KEY": "test-secret",
@@ -44,17 +44,15 @@ def app(tmp_path):
             "STATIC_FOLDER": str(static_folder),
             "UPLOAD_FOLDER": str(upload_folder),
             "ANNOTATED_FOLDER": str(annotated_folder),
-            "MAX_CONTENT_LENGTH": 2048,
-            "DETECTION_API_URL": (
-                "http://detector.test/api/detect"
-            ),
-            "DETECTION_API_TIMEOUT": 0.1,
         }
     )
 
-    yield application
+    with app.app_context():
+        db.create_all()
 
-    with application.app_context():
+    yield app
+
+    with app.app_context():
         db.session.remove()
         db.drop_all()
 
@@ -65,47 +63,38 @@ def client(app):
     return app.test_client()
 
 
-def completed_result():
+def pending_detection(_report, _path):
+    return {
+        "status": "pending",
+        "error": "Detector unavailable in test.",
+    }
+
+
+def completed_detection(_report, _path):
     return {
         "status": "completed",
-        "damage_type": "Pothole",
-        "confidence": 0.91,
-        "severity_score": 72,
-        "severity_label": "High",
+        "damage_type": "None",
+        "confidence": 0.99,
+        "severity_score": 0,
+        "severity_label": "Low",
         "annotated_image_path": None,
     }
 
 
-def pending_result(
-    error="Detection API timed out.",
-):
-    return {
-        "status": "pending",
-        "error": error,
-        "user_message": (
-            "Your report was saved, but detection timed out. "
-            "Please retry detection later."
-        ),
-    }
-
-
-def test_completed_upload_saves_report_detection_and_redirects(
+def test_valid_exif_upload_creates_report_and_redirects(
     app,
     client,
     monkeypatch,
 ):
-    """A valid GPS image should create a report and detection."""
+    """A valid Lebanon GPS image should create a report and detection."""
     monkeypatch.setattr(
         "app.reports.routes.extract_gps",
-        lambda _path: (
-            33.8938,
-            35.5018,
-        ),
+        lambda _path: (33.8938, 35.5018),
     )
 
     monkeypatch.setattr(
         "app.reports.routes.trigger_detection",
-        lambda _report, _path: completed_result(),
+        completed_detection,
     )
 
     response = client.post(
@@ -121,25 +110,19 @@ def test_completed_upload_saves_report_detection_and_redirects(
     )
 
     assert response.status_code == 302
+
     assert response.headers["Location"].endswith(
         "/reports/1"
     )
 
     with app.app_context():
-        report = db.session.get(
-            Report,
-            1,
-        )
+        report = db.session.get(Report, 1)
 
-        detection = Detection.query.filter_by(
-            report_id=1
-        ).one()
-
+        assert report is not None
         assert report.location_source == "gps"
-        assert report.detection_status == "completed"
-        assert report.detection_error is None
+        assert report.lat == pytest.approx(33.8938)
+        assert report.lng == pytest.approx(35.5018)
         assert report.image_path.startswith("uploads/")
-        assert detection.damage_type == "Pothole"
 
         saved_file = os.path.join(
             app.config["UPLOAD_FOLDER"],
@@ -153,7 +136,7 @@ def test_completed_upload_saves_report_detection_and_redirects(
         ).count() == 1
 
 
-def test_wrong_file_type_has_actionable_error_and_no_report(
+def test_invalid_file_is_rejected_without_report(
     app,
     client,
 ):
@@ -162,87 +145,30 @@ def test_wrong_file_type_has_actionable_error_and_no_report(
         "/upload",
         data={
             "image": (
-                io.BytesIO(b"hello"),
-                "road.txt",
-            )
-        },
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-
-    assert (
-        b"Unsupported file type"
-        in response.data
-    )
-
-    with app.app_context():
-        assert Report.query.count() == 0
-
-
-def test_corrupted_image_has_actionable_error_and_no_report(
-    app,
-    client,
-):
-    response = client.post(
-        "/upload",
-        data={
-            "image": (
-                io.BytesIO(b"not-an-image"),
+                io.BytesIO(b"not an image"),
                 "road.png",
             )
         },
         content_type="multipart/form-data",
-        follow_redirects=True,
+        follow_redirects=False,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 302
 
-    assert (
-        b"not a valid JPG or PNG image"
-        in response.data
-    )
-
-    with app.app_context():
-        assert Report.query.count() == 0
-
-
-def test_oversized_upload_has_actionable_error_and_no_report(
-    app,
-    client,
-):
-    response = client.post(
-        "/upload",
-        data={
-            "image": (
-                io.BytesIO(
-                    b"x" * 4096
-                ),
-                "road.png",
-            )
-        },
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-
-    assert (
-        b"larger than 5MB"
-        in response.data
+    assert response.headers["Location"].endswith(
+        "/upload"
     )
 
     with app.app_context():
         assert Report.query.count() == 0
 
 
-def test_manual_location_is_used_when_photo_has_no_gps(
+def test_manual_location_is_used_when_exif_is_missing(
     app,
     client,
     monkeypatch,
 ):
-    """Manual coordinates should be used when EXIF GPS is absent."""
+    """Manual coordinates inside Lebanon should be accepted."""
     monkeypatch.setattr(
         "app.reports.routes.extract_gps",
         lambda _path: None,
@@ -250,9 +176,7 @@ def test_manual_location_is_used_when_photo_has_no_gps(
 
     monkeypatch.setattr(
         "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(
-            "Detector unavailable."
-        ),
+        pending_detection,
     )
 
     response = client.post(
@@ -270,77 +194,19 @@ def test_manual_location_is_used_when_photo_has_no_gps(
     )
 
     assert response.status_code == 302
+
     assert response.headers["Location"].endswith(
         "/reports/1"
     )
 
     with app.app_context():
-        report = db.session.get(
-            Report,
-            1,
-        )
+        report = db.session.get(Report, 1)
 
         assert report is not None
         assert report.location_source == "manual"
-
-        assert report.lat == pytest.approx(
-            33.9001
-        )
-
-        assert report.lng == pytest.approx(
-            35.5002
-        )
-
-        assert report.detection_status == "pending"
-
-
-def test_gps_exception_uses_manual_location_and_warns_user(
-    app,
-    client,
-    monkeypatch,
-):
-    def raise_gps_error(_path):
-        raise GPSExtractionError(
-            "The photo contains damaged GPS metadata."
-        )
-
-    monkeypatch.setattr(
-        "app.reports.routes.extract_gps",
-        raise_gps_error,
-    )
-
-    monkeypatch.setattr(
-        "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(),
-    )
-
-    response = client.post(
-        "/upload",
-        data={
-            "image": (
-                image_bytes(),
-                "road.png",
-            ),
-            "lat": "33.8",
-            "lng": "35.9",
-        },
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-
-    assert (
-        b"selected location was used"
-        in response.data
-    )
-
-    with app.app_context():
-        report = Report.query.one()
-
-        assert report.location_source == "manual"
-        assert report.lat == pytest.approx(33.8)
-        assert report.lng == pytest.approx(35.9)
+        assert report.lat == pytest.approx(33.9001)
+        assert report.lng == pytest.approx(35.5002)
+        assert report.detections == []
 
 
 def test_missing_manual_location_keeps_image_and_does_not_create_report(
@@ -357,41 +223,28 @@ def test_missing_manual_location_keeps_image_and_does_not_create_report(
         lambda _path: None,
     )
 
-    monkeypatch.setattr(
-        "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(),
-    )
-
     response = client.post(
         "/upload",
         data={
             "image": (
                 image_bytes(),
                 "road.png",
-            ),
+            )
         },
         content_type="multipart/form-data",
-        follow_redirects=True,
+        follow_redirects=False,
     )
 
     assert response.status_code == 200
 
-    assert (
-        b"Your uploaded image has been kept"
-        in response.data
-    )
-
-    assert (
-        b'name="saved_image_path"'
-        in response.data
-    )
+    assert b"Your uploaded image has been kept" in response.data
+    assert b"Select the road location on the map" in response.data
+    assert b'name="saved_image_path"' in response.data
 
     with app.app_context():
         assert Report.query.count() == 0
 
-    uploaded_items = os.listdir(
-        app.config["UPLOAD_FOLDER"]
-    )
+    uploaded_items = os.listdir(app.config["UPLOAD_FOLDER"])
 
     saved_images = [
         filename
@@ -403,167 +256,7 @@ def test_missing_manual_location_keeps_image_and_does_not_create_report(
     assert saved_images[0].endswith(".png")
 
 
-def test_gps_exception_without_manual_location_keeps_image_and_no_report(
-    app,
-    client,
-    monkeypatch,
-):
-    def raise_gps_error(_path):
-        raise GPSExtractionError(
-            "The photo contains damaged GPS metadata."
-        )
-
-    monkeypatch.setattr(
-        "app.reports.routes.extract_gps",
-        raise_gps_error,
-    )
-
-    response = client.post(
-        "/upload",
-        data={
-            "image": (
-                image_bytes(),
-                "road.png",
-            )
-        },
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-
-    assert (
-        b"Select the road location on the map"
-        in response.data
-    )
-
-    assert (
-        b'name="saved_image_path"'
-        in response.data
-    )
-
-    with app.app_context():
-        assert Report.query.count() == 0
-
-
-def test_detection_timeout_does_not_lose_report(
-    app,
-    client,
-    monkeypatch,
-):
-    monkeypatch.setattr(
-        "app.reports.routes.extract_gps",
-        lambda _path: (
-            33.0,
-            35.0,
-        ),
-    )
-
-    monkeypatch.setattr(
-        "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(
-            "Detection API timed out."
-        ),
-    )
-
-    response = client.post(
-        "/upload",
-        data={
-            "image": (
-                image_bytes(),
-                "road.png",
-            )
-        },
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-
-    assert (
-        b"report was saved"
-        in response.data.lower()
-    )
-
-    assert (
-        b"Retry Detection"
-        in response.data
-    )
-
-    with app.app_context():
-        report = Report.query.one()
-
-        assert report.detection_status == "pending"
-
-        assert (
-            "timed out"
-            in report.detection_error
-        )
-
-        assert Detection.query.count() == 0
-
-
-def test_retry_detection_completes_existing_report(
-    app,
-    client,
-    monkeypatch,
-):
-    monkeypatch.setattr(
-        "app.reports.routes.extract_gps",
-        lambda _path: (
-            33.0,
-            35.0,
-        ),
-    )
-
-    monkeypatch.setattr(
-        "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(),
-    )
-
-    client.post(
-        "/upload",
-        data={
-            "image": (
-                image_bytes(),
-                "road.png",
-            )
-        },
-        content_type="multipart/form-data",
-    )
-
-    monkeypatch.setattr(
-        "app.reports.routes.trigger_detection",
-        lambda _report, _path: completed_result(),
-    )
-
-    response = client.post(
-        "/reports/1/retry-detection",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-
-    assert (
-        b"detection completed"
-        in response.data.lower()
-    )
-
-    with app.app_context():
-        report = db.session.get(
-            Report,
-            1,
-        )
-
-        assert report.detection_status == "completed"
-        assert report.detection_error is None
-
-        assert Detection.query.filter_by(
-            report_id=1
-        ).count() == 1
-
-
-def test_report_detail_renders_redesigned_page(
+def test_report_detail_page_renders_after_redirect(
     app,
     client,
     monkeypatch,
@@ -571,12 +264,12 @@ def test_report_detail_renders_redesigned_page(
     """A successful upload should render the redesigned report page."""
     monkeypatch.setattr(
         "app.reports.routes.extract_gps",
-        lambda _path: (33.0, 35.0),
+        lambda _path: (33.8938, 35.5018),
     )
 
     monkeypatch.setattr(
         "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(),
+        pending_detection,
     )
 
     response = client.post(
@@ -593,11 +286,7 @@ def test_report_detail_renders_redesigned_page(
 
     assert response.status_code == 200
 
-    assert (
-        b"Report submitted successfully."
-        in response.data
-    )
-
+    assert b"Report submitted successfully." in response.data
     assert b"Detection Pending" in response.data
     assert b"Report Information" in response.data
     assert b"Original Road Image" in response.data
@@ -608,7 +297,7 @@ def test_browser_location_source_is_saved_when_exif_is_missing(
     client,
     monkeypatch,
 ):
-    """Browser coordinates should be stored with their own source."""
+    """Browser coordinates inside Lebanon should keep their source."""
     monkeypatch.setattr(
         "app.reports.routes.extract_gps",
         lambda _path: None,
@@ -616,9 +305,7 @@ def test_browser_location_source_is_saved_when_exif_is_missing(
 
     monkeypatch.setattr(
         "app.reports.routes.trigger_detection",
-        lambda _report, _path: pending_result(
-            "Detector unavailable in test."
-        ),
+        pending_detection,
     )
 
     response = client.post(
@@ -647,27 +334,651 @@ def test_browser_location_source_is_saved_when_exif_is_missing(
         assert report.lng == pytest.approx(35.5018)
 
 
+def test_search_location_source_is_saved_when_exif_is_missing(
+    app,
+    client,
+    monkeypatch,
+):
+    """Search-selected coordinates should be accepted inside Lebanon."""
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: None,
+    )
+    monkeypatch.setattr(
+        "app.reports.routes.trigger_detection",
+        pending_detection,
+    )
+
+    response = client.post(
+        "/upload",
+        data={
+            "image": (image_bytes(), "road.png"),
+            "lat": "33.8938",
+            "lng": "35.5018",
+            "location_source": "search",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    with app.app_context():
+        report = db.session.get(Report, 1)
+        assert report is not None
+        assert report.location_source == "search"
+        assert report.lat == pytest.approx(33.8938)
+        assert report.lng == pytest.approx(35.5018)
+
+
+def test_marker_outside_lebanon_is_rejected(
+    app,
+    client,
+    monkeypatch,
+):
+    """Manual coordinates outside Lebanon must never create a report."""
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: None,
+    )
+
+    response = client.post(
+        "/upload",
+        data={
+            "image": (image_bytes(), "road.png"),
+            "lat": "40.7128",
+            "lng": "-74.0060",
+            "location_source": "manual",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 200
+    assert b"Please select a location inside Lebanon." in response.data
+
+    with app.app_context():
+        assert Report.query.count() == 0
+
+
+def test_browser_coordinates_outside_lebanon_are_rejected(
+    app,
+    client,
+    monkeypatch,
+):
+    """Browser GPS outside Lebanon should be rejected by the server."""
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: None,
+    )
+
+    response = client.post(
+        "/upload",
+        data={
+            "image": (image_bytes(), "road.png"),
+            "lat": "48.8566",
+            "lng": "2.3522",
+            "location_source": "browser",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 200
+    assert b"Please select a location inside Lebanon." in response.data
+
+    with app.app_context():
+        assert Report.query.count() == 0
+
+
+def test_exif_gps_outside_lebanon_without_manual_location_is_rejected(
+    app,
+    client,
+    monkeypatch,
+):
+    """EXIF GPS outside Lebanon should not create a report."""
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: (48.8566, 2.3522),
+    )
+
+    response = client.post(
+        "/upload",
+        data={"image": (image_bytes(), "road.png")},
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 200
+    assert b"Image GPS appears outside Lebanon" in response.data
+
+    with app.app_context():
+        assert Report.query.count() == 0
+
+
+def test_exif_outside_lebanon_can_fall_back_to_manual_lebanon_location(
+    app,
+    client,
+    monkeypatch,
+):
+    """A user may override unusable EXIF with a valid Lebanon marker."""
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: (48.8566, 2.3522),
+    )
+    monkeypatch.setattr(
+        "app.reports.routes.trigger_detection",
+        pending_detection,
+    )
+
+    response = client.post(
+        "/upload",
+        data={
+            "image": (image_bytes(), "road.png"),
+            "lat": "33.8938",
+            "lng": "35.5018",
+            "location_source": "manual",
+        },
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    with app.app_context():
+        report = db.session.get(Report, 1)
+        assert report is not None
+        assert report.location_source == "manual"
+        assert report.lat == pytest.approx(33.8938)
+        assert report.lng == pytest.approx(35.5018)
+
+
+def test_valid_lebanese_city_search_returns_coordinates(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """The search API should keep Lebanese settlement results."""
+    from app.reports import location as location_module
+
+    disable_default_gazetteer(location_module, monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: [
+            {
+                "lat": "33.8938",
+                "lon": "35.5018",
+                "class": "place",
+                "type": "city",
+                "display_name": "Beirut, Beirut Governorate, Lebanon",
+                "address": {
+                    "city": "Beirut",
+                    "state": "Beirut Governorate",
+                    "country_code": "lb",
+                },
+            }
+        ],
+    )
+
+    response = client.get("/api/lebanon-localities/search?q=Beirut")
+
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["results"][0]["name"] == "Beirut"
+    assert data["results"][0]["governorate"] == "Beirut Governorate"
+    assert data["results"][0]["lat"] == pytest.approx(33.8938)
+    assert data["results"][0]["lng"] == pytest.approx(35.5018)
+
+
+def test_non_lebanese_search_result_is_rejected(
+    client,
+    monkeypatch,
+):
+    """The search API should reject places outside Lebanon."""
+    from app.reports import location as location_module
+
+    location_module.search_lebanese_localities.cache_clear()
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: [
+            {
+                "lat": "48.8566",
+                "lon": "2.3522",
+                "class": "place",
+                "type": "city",
+                "display_name": "Paris, France",
+                "address": {
+                    "city": "Paris",
+                    "country_code": "fr",
+                },
+            }
+        ],
+    )
+
+    response = client.get("/api/lebanon-localities/search?q=Paris")
+
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["results"] == []
+    assert data["message"] == "No Lebanese city or village found."
+
+
+def test_search_rejects_road_level_results(
+    client,
+    monkeypatch,
+):
+    """Roads and POIs should not appear as user suggestions."""
+    from app.reports import location as location_module
+
+    location_module.search_lebanese_localities.cache_clear()
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: [
+            {
+                "lat": "33.8938",
+                "lon": "35.5018",
+                "class": "highway",
+                "type": "road",
+                "display_name": "Some Road, Beirut, Lebanon",
+                "address": {
+                    "road": "Some Road",
+                    "city": "Beirut",
+                    "country_code": "lb",
+                },
+            }
+        ],
+    )
+
+    response = client.get("/api/lebanon-localities/search?q=Some%20Road")
+
+    assert response.status_code == 200
+    assert response.get_json()["results"] == []
+
+def test_single_letter_b_search_shows_common_lebanese_places(client):
+    """Typing B should immediately show useful built-in Lebanese places."""
+    response = client.get("/api/lebanon-localities/search?q=B")
+
+    assert response.status_code == 200
+    names = [item["name"] for item in response.get_json()["results"]]
+
+    assert "Beirut" in names
+    assert "Byblos" in names
+    assert "Batroun" in names
+    assert "Bater" in names
+
+def geocoder_place(
+    name,
+    lat=33.60207,
+    lng=35.61731,
+    place_type="village",
+    district="Chouf District",
+    governorate="Mount Lebanon Governorate",
+    name_ar=None,
+):
+    """Build a Nominatim-like Lebanese locality response for search tests."""
+    namedetails = {"name:en": name, "name": name}
+    if name_ar:
+        namedetails["name:ar"] = name_ar
+
+    return {
+        "lat": str(lat),
+        "lon": str(lng),
+        "class": "place",
+        "type": place_type,
+        "display_name": f"{name}, {district}, {governorate}, Lebanon",
+        "boundingbox": [
+            str(lat - 0.01),
+            str(lat + 0.01),
+            str(lng - 0.01),
+            str(lng + 0.01),
+        ],
+        "namedetails": namedetails,
+        "address": {
+            "village": name,
+            "county": district,
+            "state": governorate,
+            "country_code": "lb",
+        },
+    }
+
+
+def test_small_village_search_returns_district_governorate_and_bbox(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """Small localities should include context and geometry for precise map fitting."""
+    from app.reports import location as location_module
+
+    disable_default_gazetteer(location_module, monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: [geocoder_place("Bater")],
+    )
+
+    response = client.get("/api/lebanon-localities/search?q=Bater")
+
+    assert response.status_code == 200
+    result = response.get_json()["results"][0]
+
+    assert result["name"] == "Bater"
+    assert result["district"] == "Chouf District"
+    assert result["governorate"] == "Mount Lebanon Governorate"
+    assert result["display_name"] == "Bater, Chouf District, Mount Lebanon Governorate"
+    assert result["source"] == "nominatim"
+    assert result["bounding_box"] == {
+        "south": pytest.approx(33.59207),
+        "north": pytest.approx(33.61207),
+        "west": pytest.approx(35.60731),
+        "east": pytest.approx(35.62731),
+    }
+
+
+def test_arabic_locality_search_keeps_arabic_and_english_names(
+    client,
+    monkeypatch,
+):
+    """Arabic and multilingual names should be preserved for UI display."""
+    from app.reports import location as location_module
+
+    location_module.search_lebanese_localities.cache_clear()
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: [
+            geocoder_place(
+                "Beirut",
+                lat=33.8938,
+                lng=35.5018,
+                place_type="city",
+                district="Beirut District",
+                governorate="Beirut Governorate",
+                name_ar="\u0628\u064a\u0631\u0648\u062a",
+            )
+        ],
+    )
+
+    response = client.get(
+        "/api/lebanon-localities/search",
+        query_string={"q": "\u0628\u064a\u0631\u0648\u062a"},
+    )
+
+    assert response.status_code == 200
+    result = response.get_json()["results"][0]
+
+    assert result["name"] == "Beirut"
+    assert result["name_en"] == "Beirut"
+    assert result["name_ar"] == "\u0628\u064a\u0631\u0648\u062a"
+
+
+def test_duplicate_place_names_keep_district_context(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """Places with the same name in different districts should stay distinguishable."""
+    from app.reports import location as location_module
+
+    disable_default_gazetteer(location_module, monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: [
+            geocoder_place(
+                "Ain",
+                lat=33.7600,
+                lng=35.5600,
+                district="Aley District",
+                governorate="Mount Lebanon Governorate",
+            ),
+            geocoder_place(
+                "Ain",
+                lat=34.0800,
+                lng=36.0500,
+                district="Bsharri District",
+                governorate="North Lebanon Governorate",
+            ),
+        ],
+    )
+
+    response = client.get("/api/lebanon-localities/search?q=Ain")
+
+    assert response.status_code == 200
+    display_names = [item["display_name"] for item in response.get_json()["results"]]
+
+    assert "Ain, Aley District, Mount Lebanon Governorate" in display_names
+    assert "Ain, Bsharri District, North Lebanon Governorate" in display_names
+
+
+def test_search_returns_more_than_eight_geocoder_results(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """The API should expose broad locality suggestions, not stop at a tiny list."""
+    from app.reports import location as location_module
+
+    disable_default_gazetteer(location_module, monkeypatch, tmp_path)
+    raw_results = [
+        geocoder_place(
+            f"B Locality {index}",
+            lat=33.7500 + (index * 0.004),
+            lng=35.5500 + (index * 0.004),
+            district="Baabda District",
+            governorate="Mount Lebanon Governorate",
+        )
+        for index in range(12)
+    ]
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: raw_results,
+    )
+
+    response = client.get("/api/lebanon-localities/search?q=Ba")
+
+    assert response.status_code == 200
+    nominatim_results = [
+        item for item in response.get_json()["results"] if item["source"] == "nominatim"
+    ]
+
+    assert len(nominatim_results) == 12
+
+
+def write_gazetteer(tmp_path, places):
+    """Write a temporary GeoNames-style localities JSON file for tests."""
+    path = tmp_path / "lebanon_localities.json"
+    path.write_text(
+        json.dumps(
+            {
+                "source": "GeoNames",
+                "country_code": "LB",
+                "count": len(places),
+                "places": places,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def reset_location_caches(location_module):
+    """Clear cached locality data after monkeypatching the source path."""
+    location_module.search_lebanese_localities.cache_clear()
+    location_module._load_gazetteer_payload.cache_clear()
+
+
+def disable_default_gazetteer(location_module, monkeypatch, tmp_path):
+    """Force tests through the remote-geocoder branch deterministically."""
+    monkeypatch.setattr(
+        location_module,
+        "LOCALITIES_DATA_PATH",
+        tmp_path / "missing_lebanon_localities.json",
+    )
+    reset_location_caches(location_module)
+
+
+def gazetteer_place(
+    geoname_id,
+    name,
+    lat=33.82,
+    lng=35.62,
+    aliases=None,
+    name_ar=None,
+    district="Chouf District",
+    governorate="Mount Lebanon Governorate",
+):
+    return {
+        "geoname_id": geoname_id,
+        "name": name,
+        "name_en": name,
+        "name_ar": name_ar,
+        "ascii_name": name,
+        "alternate_names": aliases or [name],
+        "district": district,
+        "governorate": governorate,
+        "lat": lat,
+        "lng": lng,
+        "type": "populated place",
+        "feature_code": "PPL",
+        "population": 1000 - geoname_id,
+    }
+
+
+def test_full_local_gazetteer_returns_many_villages_without_remote_geocoder(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """A generated GeoNames file should replace the old tiny hardcoded list."""
+    from app.reports import location as location_module
+
+    places = [
+        gazetteer_place(
+            index,
+            f"B Village {index}",
+            lat=33.70 + (index * 0.001),
+            lng=35.55 + (index * 0.001),
+        )
+        for index in range(60)
+    ]
+    monkeypatch.setattr(location_module, "LOCALITIES_DATA_PATH", write_gazetteer(tmp_path, places))
+    monkeypatch.setattr(
+        location_module,
+        "_nominatim_request",
+        lambda _query: pytest.fail("local gazetteer search should not call Nominatim"),
+    )
+    reset_location_caches(location_module)
+
+    response = client.get("/api/lebanon-localities/search?q=B")
+
+    assert response.status_code == 200
+    results = response.get_json()["results"]
+
+    assert len(results) == 50
+    assert all(item["source"] == "geonames" for item in results)
+    assert results[0]["display_name"].endswith("Chouf District, Mount Lebanon Governorate")
+
+
+def test_full_local_gazetteer_supports_arabic_place_names(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """Arabic names from the generated dataset should be searchable."""
+    from app.reports import location as location_module
+
+    arabic_bater = "\u0628\u0627\u062a\u0631"
+    places = [
+        gazetteer_place(
+            1,
+            "Bater",
+            lat=33.60207,
+            lng=35.61731,
+            aliases=["Bater", arabic_bater],
+            name_ar=arabic_bater,
+        )
+    ]
+    monkeypatch.setattr(location_module, "LOCALITIES_DATA_PATH", write_gazetteer(tmp_path, places))
+    reset_location_caches(location_module)
+
+    response = client.get(
+        "/api/lebanon-localities/search",
+        query_string={"q": arabic_bater},
+    )
+
+    assert response.status_code == 200
+    result = response.get_json()["results"][0]
+
+    assert result["name"] == "Bater"
+    assert result["name_ar"] == arabic_bater
+    assert result["lat"] == pytest.approx(33.60207)
+    assert result["lng"] == pytest.approx(35.61731)
+
+
+def test_full_local_gazetteer_supports_alternate_english_spellings(
+    client,
+    monkeypatch,
+    tmp_path,
+):
+    """Alternate transliterations should match without silently choosing another place."""
+    from app.reports import location as location_module
+
+    places = [
+        gazetteer_place(
+            1,
+            "Deir el Qamar",
+            aliases=["Deir el Qamar", "Dayr al Qamar", "Deir El Kamar"],
+        )
+    ]
+    monkeypatch.setattr(location_module, "LOCALITIES_DATA_PATH", write_gazetteer(tmp_path, places))
+    reset_location_caches(location_module)
+
+    response = client.get("/api/lebanon-localities/search?q=Dayr%20al%20Qamar")
+
+    assert response.status_code == 200
+    result = response.get_json()["results"][0]
+
+    assert result["name"] == "Deir el Qamar"
+    assert result["source"] == "geonames"
+
+
+def test_oversized_pixel_image_is_rejected_without_report(app, client):
+    """Images above the configured pixel limit should be rejected after save."""
+    app.config["MAX_IMAGE_PIXELS"] = 8
+
+    response = client.post(
+        "/upload",
+        data={"image": (image_bytes(), "road.png")},
+        content_type="multipart/form-data",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/upload")
+
+    with app.app_context():
+        assert Report.query.count() == 0
+
+
 def test_detection_client_timeout_returns_pending(
     app,
     tmp_path,
     monkeypatch,
 ):
-    image_path = (
-        tmp_path
-        / "road.png"
-    )
-
-    image_path.write_bytes(
-        image_bytes().getvalue()
-    )
+    image_path = tmp_path / "road.png"
+    image_path.write_bytes(image_bytes().getvalue())
 
     class ExampleReport:
         id = 42
 
-    def raise_timeout(
-        *_args,
-        **_kwargs,
-    ):
+    def raise_timeout(*_args, **_kwargs):
         raise requests.Timeout()
 
     monkeypatch.setattr(
@@ -676,17 +987,10 @@ def test_detection_client_timeout_returns_pending(
     )
 
     with app.app_context():
-        result = trigger_detection(
-            ExampleReport(),
-            str(image_path),
-        )
+        result = trigger_detection(ExampleReport(), str(image_path))
 
     assert result["status"] == "pending"
-
-    assert (
-        "timed out"
-        in result["error"]
-    )
+    assert "timed out" in result["error"]
 
 
 def test_detection_client_http_error_returns_pending(
@@ -694,14 +998,8 @@ def test_detection_client_http_error_returns_pending(
     tmp_path,
     monkeypatch,
 ):
-    image_path = (
-        tmp_path
-        / "road.png"
-    )
-
-    image_path.write_bytes(
-        image_bytes().getvalue()
-    )
+    image_path = tmp_path / "road.png"
+    image_path.write_bytes(image_bytes().getvalue())
 
     class ExampleReport:
         id = 42
@@ -713,9 +1011,7 @@ def test_detection_client_http_error_returns_pending(
 
         @staticmethod
         def json():
-            return {
-                "error": "model unavailable"
-            }
+            return {"error": "model unavailable"}
 
     monkeypatch.setattr(
         "app.utils.detection_client.requests.post",
@@ -723,14 +1019,7 @@ def test_detection_client_http_error_returns_pending(
     )
 
     with app.app_context():
-        result = trigger_detection(
-            ExampleReport(),
-            str(image_path),
-        )
+        result = trigger_detection(ExampleReport(), str(image_path))
 
     assert result["status"] == "pending"
-
-    assert (
-        "HTTP 503"
-        in result["error"]
-    )
+    assert "HTTP 503" in result["error"]

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Tariq.lb</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
@@ -340,9 +341,98 @@
       margin-bottom: 18px;
       padding: 16px;
       display: grid;
-      grid-template-columns: minmax(220px, 1.35fr) repeat(5, minmax(140px, 0.8fr)) auto;
+      grid-template-columns: minmax(220px, 1.35fr) repeat(4, minmax(140px, 0.8fr)) auto;
       gap: 12px;
       align-items: end;
+    }
+
+    .workflow-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .workflow-card {
+      min-height: 112px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 14px;
+      padding: 18px;
+      color: var(--dark);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 16px 42px rgba(26, 26, 26, 0.08);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .workflow-card:hover,
+    .workflow-card.active {
+      transform: translateY(-2px);
+      border-color: rgba(123, 13, 30, 0.30);
+      box-shadow: 0 22px 56px rgba(26, 26, 26, 0.12);
+    }
+
+    .workflow-card.active {
+      background: linear-gradient(135deg, rgba(123, 13, 30, 0.08), #ffffff 54%, rgba(74, 124, 89, 0.08));
+    }
+
+    .workflow-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      border-radius: 16px;
+    }
+
+    .workflow-live {
+      background: var(--green);
+      box-shadow: 0 14px 28px rgba(74, 124, 89, 0.20);
+    }
+
+    .workflow-review {
+      background: var(--orange);
+      box-shadow: 0 14px 28px rgba(217, 119, 6, 0.18);
+    }
+
+    .workflow-done {
+      background: var(--red);
+      box-shadow: 0 14px 28px rgba(123, 13, 30, 0.20);
+    }
+
+    .workflow-copy {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .workflow-copy strong {
+      color: var(--dark);
+      font-size: 1.05rem;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .workflow-copy small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .workflow-count {
+      min-width: 42px;
+      min-height: 42px;
+      display: grid;
+      place-items: center;
+      color: var(--green);
+      background: rgba(74, 124, 89, 0.10);
+      border-radius: 999px;
+      font-weight: 950;
     }
 
     .field {
@@ -638,7 +728,11 @@
     }
 
     .map-card {
-      box-shadow: var(--shadow-strong);
+      overflow: hidden;
+      border: 1px solid #e3ddd5;
+      border-radius: 20px;
+      background: #ffffff;
+      box-shadow: 0 18px 50px rgba(44, 28, 24, 0.09);
     }
 
     .map-toolbar {
@@ -648,8 +742,10 @@
       gap: 16px;
       padding: 16px 18px;
       color: #ffffff;
-      background: var(--red);
-      border-bottom: 5px solid var(--green);
+      background: #7b0d1e;
+      border: 0;
+      border-bottom: 5px solid #4a7c59;
+      border-radius: 20px 20px 0 0;
     }
 
     .map-toolbar h3,
@@ -695,33 +791,78 @@
       background: currentColor;
     }
 
+    .admin-map-frame {
+      overflow: hidden;
+      border-radius: 0 0 20px 20px;
+      background: #ffffff;
+    }
+
     #admin-map {
       width: 100%;
       min-height: clamp(520px, 62vh, 760px);
-      background: #f3efe9;
+      background: #ffffff;
     }
 
     .leaflet-container {
-      font-family: Arial, sans-serif;
+      font-family: Inter, "Segoe UI", Arial, Helvetica, sans-serif;
     }
 
     .leaflet-control-zoom {
       overflow: hidden;
-      border: 1px solid rgba(26, 26, 26, 0.12) !important;
+      border: 1px solid rgba(0, 0, 0, 0.12) !important;
       border-radius: 14px !important;
-      box-shadow: 0 12px 28px rgba(26, 26, 26, 0.14) !important;
+      box-shadow: 0 8px 18px rgba(44, 28, 24, 0.14) !important;
     }
 
     .leaflet-control-zoom a {
       border: 0 !important;
-      color: var(--red) !important;
+      color: #7b0d1e !important;
       background: #ffffff !important;
+      transition: background 0.2s ease;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: #f5e7ea !important;
+    }
+
+    .leaflet-control-attribution {
+      border-radius: 999px 0 0 0;
+      background: rgba(255, 255, 255, 0.88) !important;
+      color: #1a1a1a !important;
+      backdrop-filter: blur(14px);
+    }
+
+    .leaflet-control-attribution a {
+      color: #7b0d1e !important;
+    }
+
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
+      background: rgba(123, 13, 30, 0.28);
+    }
+
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      color: #ffffff;
+      background: linear-gradient(135deg, #7b0d1e, #4a7c59);
+      box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      font-weight: 900;
     }
 
     .leaflet-popup-content-wrapper {
       overflow: hidden;
+      border: 1px solid #e3ddd5;
       border-radius: 22px;
-      box-shadow: 0 22px 60px rgba(26, 26, 26, 0.24);
+      background: #ffffff;
+      box-shadow: 0 14px 34px rgba(44, 28, 24, 0.14);
+    }
+
+    .leaflet-popup-tip {
+      background: #ffffff;
     }
 
     .leaflet-popup-content {
@@ -891,6 +1032,7 @@
     @media (max-width: 1200px) {
       .analytics-grid,
       .management-stats,
+      .workflow-board,
       .breakdown-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -914,6 +1056,7 @@
 
       .analytics-grid,
       .management-stats,
+      .workflow-board,
       .breakdown-grid,
       .filters-card {
         grid-template-columns: 1fr;
@@ -935,13 +1078,16 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reference-theme.css') }}">
 </head>
-<body>
-  {% set status_options = [('pending', 'Pending'), ('reviewed', 'In Review'), ('resolved', 'Resolved'), ('rejected', 'Rejected')] %}
+<body class="reference-theme reference-admin-dashboard-page">
+  {% set status_options = [('pending', 'Live'), ('reviewed', 'Under Review'), ('resolved', 'Done'), ('rejected', 'Rejected')] %}
 
   <nav class="navbar">
     <a class="navbar-brand" href="/admin/dashboard" aria-label="Tariq.lb admin dashboard">
-      <i class="fa-solid fa-map-location-dot"></i>
+      <span class="brand-logo nav-brand-logo">
+        <img src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}" alt="Tariq.lb logo">
+      </span>
       <div class="brand-text">
         <span>Tariq.lb</span>
         <small>Admin Control Panel</small>
@@ -962,9 +1108,9 @@
     <div class="page-title">
       <div>
         <h1>Road Damage Control Center</h1>
-        <p>Review, filter, map, update, and resolve road damage reports from one synchronized admin dashboard.</p>
+        <p>Manage live, under-review, and done road damage reports from one synchronized admin dashboard.</p>
       </div>
-      <span class="live-pill" id="visible-live-pill">{{ total_reports }} total reports</span>
+      <span class="live-pill" id="visible-live-pill">{{ status_counts.get('pending', 0) }} live reports</span>
     </div>
 
     <section class="analytics-grid" aria-label="Dashboard analytics">
@@ -976,12 +1122,12 @@
       <article class="analytics-card">
         <span class="card-icon"><i class="fa-solid fa-clock"></i></span>
         <div class="card-value">{{ status_counts.get('pending', 0) }}</div>
-        <div class="card-label">Pending</div>
+        <div class="card-label">Live Reports</div>
       </article>
       <article class="analytics-card">
         <span class="card-icon"><i class="fa-solid fa-circle-check"></i></span>
         <div class="card-value">{{ status_counts.get('resolved', 0) }}</div>
-        <div class="card-label">Resolved</div>
+        <div class="card-label">Completed</div>
       </article>
       <article class="analytics-card">
         <span class="card-icon"><i class="fa-solid fa-calendar"></i></span>
@@ -1011,23 +1157,31 @@
       </article>
     </section>
 
+    <section class="workflow-board" aria-label="Report workflow sections">
+      <button class="workflow-card active" type="button" data-section="live" aria-pressed="true">
+        <span class="workflow-icon workflow-live"><i class="fa-solid fa-signal"></i></span>
+        <span class="workflow-copy"><strong>Live</strong><small>New reports waiting for action</small></span>
+        <span class="workflow-count" id="workflow-live-count">{{ status_counts.get('pending', 0) }}</span>
+      </button>
+      <button class="workflow-card" type="button" data-section="review" aria-pressed="false">
+        <span class="workflow-icon workflow-review"><i class="fa-solid fa-magnifying-glass-location"></i></span>
+        <span class="workflow-copy"><strong>Under Review</strong><small>Reports being checked by admins</small></span>
+        <span class="workflow-count" id="workflow-review-count">{{ status_counts.get('reviewed', 0) }}</span>
+      </button>
+      <button class="workflow-card" type="button" data-section="done" aria-pressed="false">
+        <span class="workflow-icon workflow-done"><i class="fa-solid fa-circle-check"></i></span>
+        <span class="workflow-copy"><strong>Done</strong><small>Completed reports kept for records</small></span>
+        <span class="workflow-count" id="workflow-done-count">{{ status_counts.get('resolved', 0) + status_counts.get('rejected', 0) }}</span>
+      </button>
+    </section>
+
     <section class="filters-card" aria-label="Dashboard filters">
       <div class="field">
         <label for="admin-search">Search</label>
         <div class="search-field">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input id="admin-search" type="search" placeholder="Report ID, damage, location, status">
+          <input id="admin-search" type="search" placeholder="Report ID, damage, section, location">
         </div>
-      </div>
-
-      <div class="field">
-        <label for="filter-status">Status</label>
-        <select id="filter-status">
-          <option value="">All statuses</option>
-          {% for value, label in status_options %}
-          <option value="{{ value }}">{{ label }}</option>
-          {% endfor %}
-        </select>
       </div>
 
       <div class="field">
@@ -1086,7 +1240,7 @@
       <article class="table-card">
         <div class="panel-title">
           <h3><i class="fa-solid fa-list"></i> Reports Table</h3>
-          <span class="result-count" id="table-result-count">{{ total_reports }} reports shown</span>
+          <span class="result-count" id="table-result-count">{{ status_counts.get('pending', 0) }} live reports shown</span>
         </div>
         <div class="table-wrap">
           <table>
@@ -1103,7 +1257,7 @@
               </tr>
             </thead>
             <tbody id="reports-table-body">
-              {% for report in reports %}
+              {% for report in reports if report.status == 'pending' %}
               <tr class="report-row" data-report-id="{{ report.id }}">
                 <td><strong>#{{ report.id }}</strong></td>
                 <td><i class="fa-solid fa-location-dot" style="color:#4a7c59; margin-right:4px;"></i>{{ '%.5f'|format(report.lat) }}, {{ '%.5f'|format(report.lng) }}</td>
@@ -1118,6 +1272,7 @@
                 </td>
                 <td>
                   <form class="status-form js-status-form" method="POST" action="/admin/update/{{ report.id }}" data-report-id="{{ report.id }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <select name="status" aria-label="Status for report {{ report.id }}">
                       {% for value, label in status_options %}
                       <option value="{{ value }}" {% if report.status == value %}selected{% endif %}>{{ label }}</option>
@@ -1130,6 +1285,7 @@
                 <td><a class="btn-details" href="/admin/reports/{{ report.id }}"><i class="fa-solid fa-eye"></i> View</a></td>
                 <td>
                   <form class="js-delete-form" method="POST" action="/admin/delete/{{ report.id }}" data-report-id="{{ report.id }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button class="btn-delete" type="submit"><i class="fa-solid fa-trash"></i></button>
                   </form>
                 </td>
@@ -1144,8 +1300,8 @@
     <section class="view-panel" id="map-view" role="tabpanel">
       <section class="management-stats" aria-label="Map statistics">
         <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-file-lines"></i></span><div class="map-stat-value" id="stat-total">0</div><div class="map-stat-label">Visible Reports</div></article>
-        <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-hourglass-half"></i></span><div class="map-stat-value" id="stat-pending">0</div><div class="map-stat-label">Pending Reports</div></article>
-        <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-check"></i></span><div class="map-stat-value" id="stat-resolved">0</div><div class="map-stat-label">Resolved Reports</div></article>
+        <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-hourglass-half"></i></span><div class="map-stat-value" id="stat-pending">0</div><div class="map-stat-label">Live Reports</div></article>
+        <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-check"></i></span><div class="map-stat-value" id="stat-resolved">0</div><div class="map-stat-label">Done Reports</div></article>
         <article class="map-stat-card"><span class="card-icon"><i class="fa-solid fa-triangle-exclamation"></i></span><div class="map-stat-value" id="stat-critical">0</div><div class="map-stat-label">Critical Reports</div></article>
       </section>
 
@@ -1156,13 +1312,13 @@
             <p>Click a marker to view, update, or delete a report without leaving the dashboard.</p>
           </div>
           <div class="map-legend" aria-label="Marker color legend">
-            <span class="legend-chip"><span class="legend-dot" style="color:#8c8c8c"></span>Pending</span>
-            <span class="legend-chip"><span class="legend-dot" style="color:#d97706"></span>In Review</span>
-            <span class="legend-chip"><span class="legend-dot" style="color:#4a7c59"></span>Resolved</span>
+            <span class="legend-chip"><span class="legend-dot" style="color:#8c8c8c"></span>Live</span>
+            <span class="legend-chip"><span class="legend-dot" style="color:#d97706"></span>Under Review</span>
+            <span class="legend-chip"><span class="legend-dot" style="color:#4a7c59"></span>Done</span>
             <span class="legend-chip"><span class="legend-dot" style="color:#7b0d1e"></span>Critical/Rejected</span>
           </div>
         </div>
-        <div id="admin-map"></div>
+        <div class="admin-map-frame"><div id="admin-map"></div></div>
       </article>
     </section>
   </main>
@@ -1173,14 +1329,33 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
+    const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
     const STATUS_OPTIONS = [
-      { value: 'pending', label: 'Pending' },
-      { value: 'reviewed', label: 'In Review' },
-      { value: 'resolved', label: 'Resolved' },
+      { value: 'pending', label: 'Live' },
+      { value: 'reviewed', label: 'Under Review' },
+      { value: 'resolved', label: 'Done' },
       { value: 'rejected', label: 'Rejected' }
     ];
 
     const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS.map((item) => [item.value, item.label]));
+    const SECTION_DEFINITIONS = {
+      live: {
+        label: 'Live',
+        statuses: ['pending'],
+        empty: 'No live reports match the current filters.'
+      },
+      review: {
+        label: 'Under Review',
+        statuses: ['reviewed'],
+        empty: 'No under-review reports match the current filters.'
+      },
+      done: {
+        label: 'Done',
+        statuses: ['resolved', 'rejected'],
+        empty: 'No done reports match the current filters.'
+      }
+    };
     const reportsDataElement = document.getElementById('admin-reports-data');
     let reports = JSON.parse(reportsDataElement.textContent || '[]');
     let filteredReports = [];
@@ -1188,11 +1363,11 @@
     let markersLayer = null;
     let markersById = new Map();
     let selectedReportId = null;
+    let activeSection = 'live';
     let toastTimer = null;
 
     const filterElements = {
       search: document.getElementById('admin-search'),
-      status: document.getElementById('filter-status'),
       severity: document.getElementById('filter-severity'),
       damage: document.getElementById('filter-damage'),
       location: document.getElementById('filter-location'),
@@ -1209,7 +1384,7 @@
     }
 
     function statusLabel(status) {
-      return STATUS_LABELS[status] || status || 'Pending';
+      return STATUS_LABELS[status] || status || 'Live';
     }
 
     function severityClass(severity) {
@@ -1218,6 +1393,56 @@
 
     function statusClass(status) {
       return 'status-' + String(status || 'pending').toLowerCase().replace(/\s+/g, '-');
+    }
+
+    function sectionForStatus(status) {
+      if (status === 'reviewed') {
+        return 'review';
+      }
+      if (status === 'resolved' || status === 'rejected') {
+        return 'done';
+      }
+      return 'live';
+    }
+
+    function reportMatchesSection(report) {
+      const section = SECTION_DEFINITIONS[activeSection] || SECTION_DEFINITIONS.live;
+      return section.statuses.includes(report.status || 'pending');
+    }
+
+    function countReportsForSection(sectionName) {
+      const section = SECTION_DEFINITIONS[sectionName] || SECTION_DEFINITIONS.live;
+      return reports.filter((report) => section.statuses.includes(report.status || 'pending')).length;
+    }
+
+    function reportCoordinates(report) {
+      const lat = Number(report.lat);
+      const lng = Number(report.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+      return [lat, lng];
+    }
+
+    function renderWorkflowSections() {
+      document.querySelectorAll('.workflow-card').forEach((button) => {
+        const active = button.dataset.section === activeSection;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+
+      const liveCount = document.getElementById('workflow-live-count');
+      const reviewCount = document.getElementById('workflow-review-count');
+      const doneCount = document.getElementById('workflow-done-count');
+      if (liveCount) {
+        liveCount.textContent = String(countReportsForSection('live'));
+      }
+      if (reviewCount) {
+        reviewCount.textContent = String(countReportsForSection('review'));
+      }
+      if (doneCount) {
+        doneCount.textContent = String(countReportsForSection('done'));
+      }
     }
 
     function formatConfidence(confidence) {
@@ -1264,7 +1489,7 @@
     function markerStyle(report, highlighted = false) {
       return {
         radius: highlighted ? 12 : 8,
-        color: highlighted ? '#1a1a1a' : '#ffffff',
+        color: highlighted ? '#7b0d1e' : '#ffffff',
         weight: highlighted ? 4 : 2,
         fillColor: markerColor(report),
         fillOpacity: 0.95
@@ -1273,13 +1498,12 @@
 
     function reportMatchesFilters(report) {
       const search = filterElements.search.value.trim().toLowerCase();
-      const status = filterElements.status.value;
       const severity = filterElements.severity.value;
       const damage = filterElements.damage.value;
       const location = filterElements.location.value;
       const date = filterElements.date.value;
 
-      if (status && report.status !== status) {
+      if (!reportMatchesSection(report)) {
         return false;
       }
       if (severity && report.severity_label !== severity) {
@@ -1300,6 +1524,7 @@
           report.damage_type,
           report.severity_label,
           statusLabel(report.status),
+          SECTION_DEFINITIONS[sectionForStatus(report.status)]?.label,
           report.status,
           report.location,
           report.location_source
@@ -1329,21 +1554,27 @@
     }
 
     function renderStats() {
-      const pending = filteredReports.filter((report) => report.status === 'pending').length;
-      const resolved = filteredReports.filter((report) => report.status === 'resolved').length;
+      const live = countReportsForSection('live');
+      const done = countReportsForSection('done');
       const critical = filteredReports.filter((report) => report.severity_label === 'Critical').length;
+      const section = SECTION_DEFINITIONS[activeSection] || SECTION_DEFINITIONS.live;
+      const sectionName = section.label.toLowerCase();
+      const plural = filteredReports.length === 1 ? 'report' : 'reports';
+
+      renderWorkflowSections();
       animateNumber(document.getElementById('stat-total'), filteredReports.length);
-      animateNumber(document.getElementById('stat-pending'), pending);
-      animateNumber(document.getElementById('stat-resolved'), resolved);
+      animateNumber(document.getElementById('stat-pending'), live);
+      animateNumber(document.getElementById('stat-resolved'), done);
       animateNumber(document.getElementById('stat-critical'), critical);
-      document.getElementById('table-result-count').textContent = filteredReports.length + (filteredReports.length === 1 ? ' report shown' : ' reports shown');
-      document.getElementById('visible-live-pill').textContent = filteredReports.length + (filteredReports.length === 1 ? ' visible report' : ' visible reports');
+      document.getElementById('table-result-count').textContent = `${filteredReports.length} ${sectionName} ${plural} shown`;
+      document.getElementById('visible-live-pill').textContent = `${filteredReports.length} ${sectionName} ${plural}`;
     }
 
     function renderTable() {
       const tbody = document.getElementById('reports-table-body');
       if (!filteredReports.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="muted">No reports match the current filters.</td></tr>';
+        const section = SECTION_DEFINITIONS[activeSection] || SECTION_DEFINITIONS.live;
+        tbody.innerHTML = `<tr><td colspan="8" class="muted">${section.empty}</td></tr>`;
         return;
       }
 
@@ -1357,6 +1588,7 @@
             <td><span class="badge ${severityClass(report.severity_label)}">${escapeHtml(report.severity_label || 'Unrated')}</span></td>
             <td>
               <form class="status-form js-status-form" method="POST" action="/admin/update/${report.id}" data-report-id="${report.id}">
+                <input type="hidden" name="_csrf_token" value="${escapeHtml(CSRF_TOKEN)}">
                 <select name="status" aria-label="Status for report ${report.id}">${renderStatusOptions(report.status)}</select>
                 <button class="btn-update" type="submit"><i class="fa-solid fa-check"></i></button>
               </form>
@@ -1365,6 +1597,7 @@
             <td><a class="btn-details" href="${escapeHtml(report.detail_url)}"><i class="fa-solid fa-eye"></i> View</a></td>
             <td>
               <form class="js-delete-form" method="POST" action="/admin/delete/${report.id}" data-report-id="${report.id}">
+                <input type="hidden" name="_csrf_token" value="${escapeHtml(CSRF_TOKEN)}">
                 <button class="btn-delete" type="submit"><i class="fa-solid fa-trash"></i></button>
               </form>
             </td>
@@ -1374,7 +1607,7 @@
 
     function popupHtml(report) {
       const image = report.image_url
-        ? `<img src="${escapeHtml(report.image_url)}" alt="Report ${report.id} road preview">`
+        ? `<img src="${escapeHtml(report.image_url)}" alt="Report ${report.id} road preview" loading="lazy" decoding="async">`
         : '<div style="height:100%;display:grid;place-items:center;color:#74777d;font-weight:900;">No image preview</div>';
 
       return `
@@ -1398,6 +1631,7 @@
             <div class="popup-actions">
               <a class="popup-view-link" href="${escapeHtml(report.detail_url)}"><i class="fa-solid fa-eye"></i> View Report</a>
               <form class="map-status-form" data-report-id="${report.id}">
+                <input type="hidden" name="_csrf_token" value="${escapeHtml(CSRF_TOKEN)}">
                 <select name="status" aria-label="Update status for report ${report.id}">${renderStatusOptions(report.status)}</select>
                 <button class="map-popup-button update" type="submit">Update</button>
               </form>
@@ -1435,12 +1669,13 @@
       markersById = new Map();
 
       filteredReports.forEach((report) => {
-        if (report.lat === null || report.lng === null) {
+        const coordinates = reportCoordinates(report);
+        if (!coordinates) {
           return;
         }
 
         const marker = L.circleMarker(
-          [Number(report.lat), Number(report.lng)],
+          coordinates,
           markerStyle(report, report.id === selectedReportId)
         ).bindPopup(popupHtml(report));
         marker.on('click', () => {
@@ -1485,12 +1720,13 @@
       renderMapMarkers();
 
       const marker = markersById.get(reportId);
-      if (!marker || !adminMap) {
+      const coordinates = reportCoordinates(report);
+      if (!marker || !adminMap || !coordinates) {
         return;
       }
 
       const openPopup = () => marker.openPopup();
-      adminMap.flyTo([Number(report.lat), Number(report.lng)], Math.max(adminMap.getZoom(), 14), { duration: 0.8 });
+      adminMap.flyTo(coordinates, Math.max(adminMap.getZoom(), 14), { duration: 0.8 });
       if (markersLayer.zoomToShowLayer) {
         markersLayer.zoomToShowLayer(marker, openPopup);
       } else {
@@ -1500,10 +1736,13 @@
 
     function applyFiltersAndRender(options = {}) {
       filteredReports = reports.filter(reportMatchesFilters);
+      if (selectedReportId && !filteredReports.some((report) => report.id === selectedReportId)) {
+        selectedReportId = null;
+      }
       renderStats();
       renderTable();
       renderMapMarkers();
-      if (options.focusId) {
+      if (options.focusId && filteredReports.some((report) => report.id === Number(options.focusId))) {
         focusReport(Number(options.focusId), options.openMapView ?? false);
       }
     }
@@ -1519,7 +1758,7 @@
     async function updateReportStatus(reportId, status) {
       const response = await fetch(`/admin/reports/${reportId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
         body: JSON.stringify({ status })
       });
 
@@ -1530,9 +1769,12 @@
 
       const updated = await response.json();
       reports = reports.map((report) => report.id === updated.id ? updated : report);
-      selectedReportId = updated.id;
-      applyFiltersAndRender({ focusId: updated.id, openMapView: false });
-      showToast(`Report #${updated.id} updated to ${statusLabel(updated.status)}.`);
+      const movedSection = sectionForStatus(updated.status);
+      const isStillVisible = movedSection === activeSection;
+      selectedReportId = isStillVisible ? updated.id : null;
+      applyFiltersAndRender({ focusId: isStillVisible ? updated.id : null, openMapView: false });
+      const section = SECTION_DEFINITIONS[movedSection] || SECTION_DEFINITIONS.live;
+      showToast(`Report #${updated.id} moved to ${section.label}.`);
     }
 
     async function deleteReport(reportId) {
@@ -1541,7 +1783,7 @@
         return;
       }
 
-      const response = await fetch(`/admin/delete/${reportId}`, { method: 'POST' });
+      const response = await fetch(`/admin/delete/${reportId}`, { method: 'POST', headers: { 'X-CSRF-Token': CSRF_TOKEN } });
       if (!response.ok) {
         throw new Error('Could not delete report.');
       }
@@ -1558,12 +1800,22 @@
       button.addEventListener('click', () => switchView(button.dataset.view));
     });
 
+    document.querySelectorAll('.workflow-card').forEach((button) => {
+      button.addEventListener('click', () => {
+        activeSection = button.dataset.section || 'live';
+        selectedReportId = null;
+        applyFiltersAndRender();
+      });
+    });
+
     Object.values(filterElements).forEach((element) => {
       element.addEventListener('input', () => applyFiltersAndRender());
       element.addEventListener('change', () => applyFiltersAndRender());
     });
 
     document.getElementById('reset-filters').addEventListener('click', () => {
+      activeSection = 'live';
+      selectedReportId = null;
       Object.values(filterElements).forEach((element) => {
         element.value = '';
       });
@@ -1616,3 +1868,5 @@
   </script>
 </body>
 </html>
+
+

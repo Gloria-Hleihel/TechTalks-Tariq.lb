@@ -3,14 +3,13 @@ from pathlib import Path
 import cv2
 from ultralytics import YOLO
 
+import config
 from app.detection.severity import severity_score
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = PROJECT_ROOT / "models" / "road_damage_v3.pt"
-ANNOTATED_DIR = (
-    PROJECT_ROOT / "static" / "uploads" / "annotated"
-)
+ANNOTATED_DIR = PROJECT_ROOT / "static" / "uploads" / "annotated"
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
@@ -51,10 +50,28 @@ class InferenceError(DetectionError):
     """Raised when YOLO inference fails."""
 
 
+def _allowed_detection_roots() -> tuple[Path, ...]:
+    roots = []
+    for raw_root in getattr(config, "DETECTION_ALLOWED_ROOTS", []):
+        root = Path(raw_root)
+        if not root.is_absolute():
+            root = PROJECT_ROOT / root
+        roots.append(root.resolve())
+    return tuple(roots)
+
+
+def _is_under_allowed_root(path: Path) -> bool:
+    for root in _allowed_detection_roots():
+        try:
+            path.relative_to(root)
+            return True
+        except ValueError:
+            continue
+    return False
+
+
 def get_model():
-    """
-    Load the YOLO model once and reuse it.
-    """
+    """Load the YOLO model once and reuse it."""
     global _model
 
     if _model is not None:
@@ -76,9 +93,7 @@ def get_model():
 
 
 def validate_image(image_path: str) -> Path:
-    """
-    Validate the image path and check that the image is readable.
-    """
+    """Validate the image path and check that the image is readable."""
     if not isinstance(image_path, str) or not image_path.strip():
         raise InvalidImagePathError(
             "A valid image path is required."
@@ -90,6 +105,11 @@ def validate_image(image_path: str) -> Path:
         path = PROJECT_ROOT / path
 
     path = path.resolve()
+
+    if not _is_under_allowed_root(path):
+        raise InvalidImagePathError(
+            "The image path is outside the allowed detection folders."
+        )
 
     if not path.is_file():
         raise ImageNotFoundError(
@@ -115,9 +135,7 @@ def detect_damage(
     image_path: str,
     confidence_threshold: float = 0.30,
 ) -> dict:
-    """
-    Run YOLOv8 road-damage detection on one image.
-    """
+    """Run YOLOv8 road-damage detection on one image."""
     validated_path = validate_image(image_path)
     model = get_model()
 
@@ -201,9 +219,7 @@ def save_annotated_result(
     results,
     image_path: Path,
 ) -> str:
-    """
-    Save the first annotated YOLO result.
-    """
+    """Save the first annotated YOLO result."""
     output_path = (
         ANNOTATED_DIR
         / f"{image_path.stem}_annotated.jpg"
