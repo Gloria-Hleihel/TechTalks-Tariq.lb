@@ -159,16 +159,27 @@
 
         .input-wrapper .field-icon {
             position: absolute;
-            left: 13px;
+            left: 14px;
             top: 50%;
+            z-index: 2;
+            width: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             transform: translateY(-50%);
             color: #4a7c59;
             font-size: 14px;
+            pointer-events: none;
+        }
+
+        .input-wrapper .field-icon i {
+            position: static;
+            transform: none;
         }
 
         input {
             width: 100%;
-            padding: 12px 40px 12px 38px;
+            padding: 12px 48px 12px 46px;
             border: 1.5px solid #e8e8e8;
             border-radius: 8px;
             font-size: 14px;
@@ -183,7 +194,7 @@
 
         .password-wrapper input {
             position: relative;
-            padding-right: 54px;
+            padding-right: 58px;
         }
 
         .toggle-eye {
@@ -316,13 +327,17 @@
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <label>Username</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-user field-icon"></i>
+                    <span class="field-icon" aria-hidden="true">
+                        <i class="fa-solid fa-user"></i>
+                    </span>
                     <input type="text" name="username" placeholder="Enter username" required>
                 </div>
 
                 <label>Password</label>
                 <div class="input-wrapper password-wrapper">
-                    <i class="fa-solid fa-lock field-icon"></i>
+                    <span class="field-icon" aria-hidden="true">
+                        <i class="fa-solid fa-lock"></i>
+                    </span>
                     <input type="password" name="password" id="password" placeholder="Enter password" required>
                     <button
                         class="toggle-eye"
