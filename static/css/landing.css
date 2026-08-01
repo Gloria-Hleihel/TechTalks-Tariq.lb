@@ -196,6 +196,9 @@ svg {
 
 .nav-link {
   min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 14px;
   color: var(--dark);
   border: 1px solid transparent;
@@ -204,6 +207,7 @@ svg {
   cursor: pointer;
   font-size: 0.92rem;
   font-weight: 800;
+  text-decoration: none;
 }
 
 .nav-link:hover,
