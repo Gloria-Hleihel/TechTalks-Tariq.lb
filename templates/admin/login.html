@@ -157,7 +157,7 @@
             position: relative;
         }
 
-        .input-wrapper i {
+        .input-wrapper .field-icon {
             position: absolute;
             left: 13px;
             top: 50%;
@@ -183,14 +183,22 @@
 
         .password-wrapper input {
             position: relative;
-
-            padding-right: 40px;
+            padding-right: 54px;
         }
 
         .toggle-eye {
             position: absolute;
             right: 13px;
             top: 50%;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
             transform: translateY(-50%);
             cursor: pointer;
             color: #bbb;
@@ -198,8 +206,16 @@
             transition: color 0.2s;
         }
 
-        .toggle-eye:hover {
+        .toggle-eye:hover,
+        .toggle-eye:focus-visible {
             color: #4a7c59;
+            outline: none;
+            background: rgba(74, 124, 89, 0.08);
+        }
+
+        .toggle-eye i {
+            position: static;
+            transform: none;
         }
 
         button[type="submit"] {
@@ -300,15 +316,23 @@
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <label>Username</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-user"></i>
+                    <i class="fa-solid fa-user field-icon"></i>
                     <input type="text" name="username" placeholder="Enter username" required>
                 </div>
 
                 <label>Password</label>
                 <div class="input-wrapper password-wrapper">
-                    <i class="fa-solid fa-lock"></i>
+                    <i class="fa-solid fa-lock field-icon"></i>
                     <input type="password" name="password" id="password" placeholder="Enter password" required>
-                    <i class="fa-solid fa-eye toggle-eye" id="toggleIcon" onclick="togglePassword()"></i>
+                    <button
+                        class="toggle-eye"
+                        id="togglePasswordButton"
+                        type="button"
+                        aria-label="Show password"
+                        onclick="togglePassword()"
+                    >
+                        <i class="fa-solid fa-eye" id="toggleIcon" aria-hidden="true"></i>
+                    </button>
                 </div>
 
                 <button type="submit">
@@ -330,10 +354,16 @@
             input.type = "text";
             icon.classList.remove("fa-eye");
             icon.classList.add("fa-eye-slash");
+            document
+                .getElementById("togglePasswordButton")
+                .setAttribute("aria-label", "Hide password");
         } else {
             input.type = "password";
             icon.classList.remove("fa-eye-slash");
             icon.classList.add("fa-eye");
+            document
+                .getElementById("togglePasswordButton")
+                .setAttribute("aria-label", "Show password");
         }
     }
     </script>

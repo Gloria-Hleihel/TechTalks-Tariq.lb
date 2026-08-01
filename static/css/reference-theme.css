@@ -378,7 +378,7 @@ body.reference-theme :where(
   transition: transform var(--tariq-transition), box-shadow var(--tariq-transition), background var(--tariq-transition), color var(--tariq-transition), border-color var(--tariq-transition), filter var(--tariq-transition);
 }
 
-body.reference-theme :where(.nav-button-solid, .primary-cta, .submit-button, .popup-action, .popup-view-link, .logout-btn, .tab-btn.active, button[type="submit"]) {
+body.reference-theme :where(.nav-button-solid, .primary-cta, .button-primary, .submit-button, .popup-action, .popup-view-link, .logout-btn, .tab-btn.active, button[type="submit"]) {
   color: var(--tariq-white) !important;
   background: var(--tariq-red) !important;
   border: 1px solid var(--tariq-red) !important;
@@ -433,6 +433,7 @@ body.reference-theme :where(
 
 body.reference-theme .nav-button-solid:hover,
 body.reference-theme .primary-cta:hover,
+body.reference-theme .button-primary:hover,
 body.reference-theme .submit-button:hover,
 body.reference-theme .logout-btn:hover,
 body.reference-theme button[type="submit"]:hover {
