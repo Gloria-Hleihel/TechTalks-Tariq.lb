@@ -1,4 +1,7 @@
-{% if detection %}
+{% if
+  report.detection_status == "completed"
+  and detection
+%}
   <div class="detection-card">
     <div class="detection-header">
       <div>
@@ -47,25 +50,53 @@
     {% if detection.annotated_image_path %}
       <div class="annotated-section">
         <h3>Detected Damage</h3>
+
         <p class="muted">
           The highlighted area shows where the AI detected road damage.
         </p>
 
         <img
-  class="report-image annotated-image"
-  src="{{ url_for('static', filename=detection.annotated_image_path.replace('static/', '')) }}"
-  alt="Annotated road-damage detection result"
-/>
+          class="report-image annotated-image"
+          src="{{ url_for(
+            'static',
+            filename=detection.annotated_image_path.replace('static/', '')
+          ) }}"
+          alt="Annotated road-damage detection result"
+        >
       </div>
     {% endif %}
   </div>
 {% else %}
   <div class="detection-card empty-state">
     <div class="empty-icon">⌛</div>
+
     <h2>Detection Pending</h2>
+
     <p>
       Your report was saved successfully, but the AI result is not
       available yet.
     </p>
+
+    {% if report.detection_error %}
+      <p class="detection-error">
+        <strong>Reason:</strong>
+        {{ report.detection_error }}
+      </p>
+    {% endif %}
+
+    <form
+      method="post"
+      action="{{ url_for(
+        'reports.retry_detection',
+        report_id=report.id
+      ) }}"
+    >
+      <button
+        class="retry-button"
+        type="submit"
+      >
+        Retry Detection
+      </button>
+    </form>
   </div>
 {% endif %}

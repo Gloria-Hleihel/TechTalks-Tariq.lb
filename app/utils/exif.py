@@ -1,123 +1,206 @@
-from typing import Optional, Tuple
+"""
+EXIF GPS utilities for Tariq.lb.
+"""
 
-from PIL import ExifTags, Image
-
-
-def _as_float(value) -> float:
-    """Convert Pillow rationals or numerator/denominator pairs to float."""
-    if isinstance(value, (tuple, list)) and len(value) == 2:
-        return float(value[0]) / float(value[1])
-
-    return float(value)
+from PIL import ExifTags, Image, UnidentifiedImageError
 
 
-def _dms_to_decimal(dms) -> Optional[float]:
-    """Convert EXIF degrees/minutes/seconds to decimal degrees."""
-    try:
-        degrees = _as_float(dms[0])
-        minutes = _as_float(dms[1])
-        seconds = _as_float(dms[2])
+GPS_INFO_TAG = ExifTags.IFD.GPSInfo
 
-        return (
-            degrees
-            + (minutes / 60.0)
-            + (seconds / 3600.0)
+
+class GPSExtractionError(Exception):
+    """Raised when GPS EXIF metadata cannot be read or parsed."""
+
+
+def _decode_ref(value):
+    """Normalize EXIF GPS direction references."""
+    if isinstance(value, bytes):
+        return value.decode(
+            "utf-8",
+            errors="ignore",
         )
-    except (
-        TypeError,
-        ValueError,
-        ZeroDivisionError,
-        IndexError,
-    ):
+
+    return str(value)
+
+
+def _number_to_float(value):
+    """Convert EXIF rational-like values into floats."""
+    if hasattr(value, "numerator") and hasattr(value, "denominator"):
+        if value.denominator == 0:
+            raise GPSExtractionError(
+                "GPS metadata is incomplete or corrupted."
+            )
+
+        return float(value.numerator) / float(value.denominator)
+
+    if isinstance(value, tuple) and len(value) == 2:
+        numerator, denominator = value
+
+        if denominator == 0:
+            raise GPSExtractionError(
+                "GPS metadata is incomplete or corrupted."
+            )
+
+        return float(numerator) / float(denominator)
+
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        ) from exc
+
+
+def _dms_to_decimal(values, ref):
+    """
+    Convert GPS degrees/minutes/seconds to decimal degrees.
+    """
+    if values is None or len(values) != 3:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    degrees = _number_to_float(values[0])
+    minutes = _number_to_float(values[1])
+    seconds = _number_to_float(values[2])
+
+    if not 0 <= minutes < 60:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    if not 0 <= seconds < 60:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    decimal = (
+        degrees
+        + minutes / 60
+        + seconds / 3600
+    )
+
+    ref = _decode_ref(ref).strip().upper()
+
+    if ref in {"S", "W"}:
+        decimal = -decimal
+
+    elif ref not in {"N", "E"}:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    return decimal
+
+
+def _get_gps_ifd(exif):
+    """
+    Read the GPS IFD from a Pillow EXIF object.
+    """
+    if not exif:
         return None
 
+    try:
+        gps_ifd = exif.get_ifd(
+            GPS_INFO_TAG
+        )
+    except Exception as exc:
+        raise GPSExtractionError(
+            "GPS metadata could not be read."
+        ) from exc
 
-def extract_gps(
-    image_path: str,
-) -> Optional[Tuple[float, float]]:
-    """Return (latitude, longitude) from EXIF data, or None."""
+    if gps_ifd:
+        return gps_ifd
+
+    possible_gps = exif.get(
+        GPS_INFO_TAG
+    )
+
+    if isinstance(possible_gps, dict):
+        return possible_gps
+
+    return None
+
+
+def _normalize_gps_dict(gps_ifd):
+    """
+    Convert GPS numeric tags to readable names.
+    """
+    gps = {}
+
+    for tag_id, value in gps_ifd.items():
+        tag_name = ExifTags.GPSTAGS.get(
+            tag_id,
+            tag_id,
+        )
+
+        gps[tag_name] = value
+
+    return gps
+
+
+def extract_gps(image_path):
+    """
+    Extract decimal GPS coordinates from an image.
+
+    Returns:
+        (lat, lng) if GPS exists.
+        None if image is valid but has no GPS.
+
+    Raises:
+        GPSExtractionError if metadata exists but cannot be parsed,
+        or if the file is not a valid image.
+    """
     try:
         with Image.open(image_path) as image:
             exif = image.getexif()
 
-            if not exif:
-                return None
+    except (UnidentifiedImageError, OSError) as exc:
+        raise GPSExtractionError(
+            "GPS metadata could not be read."
+        ) from exc
 
-            gps_info = None
+    gps_ifd = _get_gps_ifd(
+        exif
+    )
 
-            gps_tag_id = next(
-                (
-                    tag_id
-                    for tag_id, name in ExifTags.TAGS.items()
-                    if name == "GPSInfo"
-                ),
-                34853,
-            )
-
-            if hasattr(exif, "get_ifd"):
-                try:
-                    gps_ifd = getattr(
-                        getattr(ExifTags, "IFD", None),
-                        "GPSInfo",
-                        gps_tag_id,
-                    )
-
-                    gps_info = exif.get_ifd(gps_ifd)
-                except (KeyError, TypeError):
-                    gps_info = None
-
-            if not gps_info:
-                gps_info = exif.get(gps_tag_id)
-
-            if not gps_info:
-                return None
-
-            gps = {
-                ExifTags.GPSTAGS.get(key, key): value
-                for key, value in gps_info.items()
-            }
-
-            lat_data = gps.get("GPSLatitude")
-            lat_ref = gps.get("GPSLatitudeRef")
-
-            lng_data = gps.get("GPSLongitude")
-            lng_ref = gps.get("GPSLongitudeRef")
-
-            if not all(
-                (
-                    lat_data,
-                    lat_ref,
-                    lng_data,
-                    lng_ref,
-                )
-            ):
-                return None
-
-            lat = _dms_to_decimal(lat_data)
-            lng = _dms_to_decimal(lng_data)
-
-            if lat is None or lng is None:
-                return None
-
-            if isinstance(lat_ref, bytes):
-                lat_ref = lat_ref.decode(errors="ignore")
-
-            if isinstance(lng_ref, bytes):
-                lng_ref = lng_ref.decode(errors="ignore")
-
-            if str(lat_ref).upper() == "S":
-                lat = -abs(lat)
-
-            if str(lng_ref).upper() == "W":
-                lng = -abs(lng)
-
-            return lat, lng
-
-    except (
-        AttributeError,
-        OSError,
-        SyntaxError,
-        TypeError,
-        ValueError,
-    ):
+    if not gps_ifd:
         return None
+
+    gps = _normalize_gps_dict(
+        gps_ifd
+    )
+
+    required_keys = {
+        "GPSLatitudeRef",
+        "GPSLatitude",
+        "GPSLongitudeRef",
+        "GPSLongitude",
+    }
+
+    if not required_keys.issubset(gps):
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    lat = _dms_to_decimal(
+        gps["GPSLatitude"],
+        gps["GPSLatitudeRef"],
+    )
+
+    lng = _dms_to_decimal(
+        gps["GPSLongitude"],
+        gps["GPSLongitudeRef"],
+    )
+
+    if not -90 <= lat <= 90:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    if not -180 <= lng <= 180:
+        raise GPSExtractionError(
+            "GPS metadata is incomplete or corrupted."
+        )
+
+    return lat, lng

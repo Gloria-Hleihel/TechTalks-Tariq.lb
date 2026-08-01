@@ -370,6 +370,14 @@
       background: var(--red-dark);
     }
 
+    input[type="file"]:focus,
+    .submit-btn:focus-visible,
+    .location-btn:focus-visible,
+    .map-link:focus-visible {
+      outline: 3px solid rgba(123, 13, 30, 0.25);
+      outline-offset: 2px;
+    }
+
     .image-preview-wrapper {
       display: none;
       margin-top: 17px;
@@ -654,6 +662,33 @@
       #map {
         height: 330px;
       }
+
+      .leaflet-control-zoom a {
+        width: 38px;
+        height: 38px;
+        line-height: 38px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .hero h1 {
+        font-size: 1.7rem;
+      }
+
+      #map {
+        height: 280px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -748,7 +783,7 @@
               </h3>
 
               <p>
-                Upload a clear JPG or PNG image showing the road
+                Upload a clear JPG, JPEG, or PNG image showing the road
                 surface.
               </p>
 
@@ -756,7 +791,7 @@
                 type="file"
                 name="image"
                 id="image"
-                accept="image/jpeg,image/png"
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                 {% if not saved_image_path %}required{% endif %}
               >
             </div>
@@ -926,7 +961,15 @@
     const defaultZoom =
       {{ config.get('MAP_DEFAULT_ZOOM', 9) }};
 
-    const map = L.map('map').setView(
+    const map = L.map(
+      'map',
+      {
+        tap: true,
+        touchZoom: true,
+        dragging: true,
+        scrollWheelZoom: true
+      }
+    ).setView(
       [defaultLat, defaultLng],
       defaultZoom
     );
@@ -940,6 +983,15 @@
     ).addTo(map);
 
     let marker = null;
+
+    const latInput =
+      document.getElementById('lat');
+
+    const lngInput =
+      document.getElementById('lng');
+
+    const selectedCoords =
+      document.getElementById('selectedCoords');
 
     const locationSourceInput =
       document.getElementById('locationSource');
@@ -965,13 +1017,11 @@
         marker = L.marker([lat, lng]).addTo(map);
       }
 
-      document.getElementById('lat').value = lat;
-      document.getElementById('lng').value = lng;
+      latInput.value = lat;
+      lngInput.value = lng;
       locationSourceInput.value = source || 'manual';
 
-      document.getElementById(
-        'selectedCoords'
-      ).textContent =
+      selectedCoords.textContent =
         lat.toFixed(6) + ', ' + lng.toFixed(6);
 
       if (shouldZoom) {
@@ -979,19 +1029,22 @@
       }
     }
 
-    map.on('click', function(event) {
-      setMarker(
-        event.latlng.lat,
-        event.latlng.lng,
-        'manual',
-        false
-      );
+    map.on(
+      'click',
+      function(event) {
+        setMarker(
+          event.latlng.lat,
+          event.latlng.lng,
+          'manual',
+          false
+        );
 
-      setLocationStatus(
-        'Map location selected.',
-        false
-      );
-    });
+        setLocationStatus(
+          'Map location selected.',
+          false
+        );
+      }
+    );
 
     useCurrentLocationButton.addEventListener(
       'click',
@@ -1077,53 +1130,99 @@
     const submitButton =
       document.getElementById('submitButton');
 
+    function fileExtension(filename) {
+      const parts =
+        String(filename || '')
+          .toLowerCase()
+          .split('.');
+
+      return parts.length > 1
+        ? parts.pop()
+        : '';
+    }
+
     function clearPreview() {
       imagePreview.removeAttribute('src');
       previewWrapper.classList.remove('visible');
     }
 
+    function setGpsStatus(message, isError) {
+      gpsStatus.textContent = message;
+      gpsStatus.className =
+        isError
+          ? 'status-box gps-box error'
+          : 'status-box gps-box info';
+    }
+
+    function validateSelectedFile(file) {
+      if (!file) {
+        {% if saved_image_path %}
+          return null;
+        {% else %}
+          return 'Please choose a JPG, JPEG, or PNG road image.';
+        {% endif %}
+      }
+
+      const allowedTypes = [
+        'image/jpeg',
+        'image/png'
+      ];
+
+      const allowedExtensions = [
+        'jpg',
+        'jpeg',
+        'png'
+      ];
+
+      const extension =
+        fileExtension(file.name);
+
+      const typeIsAcceptable =
+        !file.type ||
+        allowedTypes.includes(file.type);
+
+      if (
+        !typeIsAcceptable ||
+        !allowedExtensions.includes(extension)
+      ) {
+        return 'Invalid file type. Please choose a JPG, JPEG, or PNG image.';
+      }
+
+      if (file.size <= 0) {
+        return 'The selected file is empty. Choose another image.';
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        return 'The selected image is larger than 5 MB.';
+      }
+
+      return null;
+    }
+
     imageInput.addEventListener(
       'change',
       function() {
-        const file = imageInput.files[0];
+        const file =
+          imageInput.files[0];
+
+        const validationError =
+          validateSelectedFile(file);
 
         if (!file) {
-          gpsStatus.textContent =
-            'Choose an image.';
-
-          gpsStatus.className =
-            'status-box gps-box info';
+          setGpsStatus(
+            'Choose an image.',
+            false
+          );
 
           clearPreview();
           return;
         }
 
-        const allowedTypes = [
-          'image/jpeg',
-          'image/png'
-        ];
-
-        const maxSize =
-          5 * 1024 * 1024;
-
-        if (!allowedTypes.includes(file.type)) {
-          gpsStatus.textContent =
-            'Invalid file type. Please choose a JPG, JPEG, or PNG image.';
-
-          gpsStatus.className =
-            'status-box gps-box error';
-
-          imageInput.value = '';
-          clearPreview();
-          return;
-        }
-
-        if (file.size > maxSize) {
-          gpsStatus.textContent =
-            'The selected image is larger than 5 MB.';
-
-          gpsStatus.className =
-            'status-box gps-box error';
+        if (validationError) {
+          setGpsStatus(
+            validationError,
+            true
+          );
 
           imageInput.value = '';
           clearPreview();
@@ -1139,15 +1238,17 @@
           'visible'
         );
 
-        gpsStatus.textContent =
-          'Image selected successfully. GPS will be checked after upload.';
-
-        gpsStatus.className =
-          'status-box gps-box info';
+        setGpsStatus(
+          'Image selected successfully. GPS will be checked after upload.',
+          false
+        );
       }
     );
 
-    ['dragenter', 'dragover'].forEach(
+    [
+      'dragenter',
+      'dragover'
+    ].forEach(
       function(eventName) {
         dropZone.addEventListener(
           eventName,
@@ -1159,7 +1260,10 @@
       }
     );
 
-    ['dragleave', 'drop'].forEach(
+    [
+      'dragleave',
+      'drop'
+    ].forEach(
       function(eventName) {
         dropZone.addEventListener(
           eventName,
@@ -1191,7 +1295,24 @@
 
     uploadForm.addEventListener(
       'submit',
-      function() {
+      function(event) {
+        const file =
+          imageInput.files[0];
+
+        const validationError =
+          validateSelectedFile(file);
+
+        if (validationError) {
+          event.preventDefault();
+
+          setGpsStatus(
+            validationError,
+            true
+          );
+
+          return;
+        }
+
         submitButton.disabled = true;
         submitButton.textContent =
           'Submitting report...';
@@ -1206,6 +1327,18 @@
             map.invalidateSize();
           },
           150
+        );
+      }
+    );
+
+    window.addEventListener(
+      'resize',
+      function() {
+        setTimeout(
+          function() {
+            map.invalidateSize();
+          },
+          100
         );
       }
     );

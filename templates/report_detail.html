@@ -597,6 +597,52 @@
       line-height: 1.55;
     }
 
+    .detection-error {
+      margin: 16px 0;
+      padding: 12px 14px;
+      background: #fff0f2;
+      border: 1px solid #e7bdc4;
+      border-radius: 12px;
+      color: var(--red-dark);
+      line-height: 1.45;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    .retry-button {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 16px;
+      padding: 10px 15px;
+      background:
+        linear-gradient(
+          110deg,
+          var(--red),
+          var(--red-dark)
+        );
+      border: 0;
+      border-radius: 10px;
+      color: var(--white);
+      cursor: pointer;
+      font-weight: 800;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .retry-button:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 8px 18px rgba(123, 13, 30, 0.22);
+    }
+
+    .retry-button:focus-visible {
+      outline: 3px solid rgba(123, 13, 30, 0.25);
+      outline-offset: 2px;
+    }
+
     .actions-card {
       margin-top: 22px;
       padding: 19px;
@@ -742,8 +788,20 @@
         flex-direction: column;
       }
 
-      .button {
+      .button,
+      .retry-button {
         width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
     }
   </style>
@@ -755,9 +813,9 @@
       <div class="brand">
         <div class="logo-box">
           <img
-  src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}"
-  alt="Tariq.lb logo"
->
+            src="{{ url_for('static', filename='images/tariq-logo.jpeg') }}"
+            alt="Tariq.lb logo"
+          >
         </div>
 
         <div class="brand-copy">
@@ -786,7 +844,10 @@
 
   <main class="page-shell">
     <div class="messages">
-      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% with messages =
+        get_flashed_messages(with_categories=true)
+      %}
+
         {% if messages %}
           {% for category, message in messages %}
             <div class="msg {{ category }}">
@@ -794,6 +855,7 @@
             </div>
           {% endfor %}
         {% endif %}
+
       {% endwith %}
     </div>
 
@@ -853,6 +915,18 @@
                 <span class="detail-value">
                   <span class="status-badge">
                     {{ report.status }}
+                  </span>
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">
+                  Detection status
+                </span>
+
+                <span class="detail-value">
+                  <span class="status-badge">
+                    {{ report.detection_status }}
                   </span>
                 </span>
               </div>
@@ -920,7 +994,10 @@
             <div class="image-frame">
               <img
                 class="report-image"
-                src="{{ url_for('static', filename=report.image_path.replace('static/', '')) }}"
+                src="{{ url_for(
+                  'static',
+                  filename=report.image_path.replace('static/', '')
+                ) }}"
                 alt="Uploaded road image"
               >
             </div>
