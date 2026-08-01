@@ -1,4 +1,4 @@
-## 🛣️ Tariq.lb — Smart Road Damage Detection & Mapping Platform
+# 🛣️ Tariq.lb — Smart Road Damage Detection & Mapping Platform
 
 **Roads. Solutions. Progress.**
 
@@ -22,6 +22,15 @@ The platform helps turn scattered road complaints into one centralized, visual, 
 - Contact and feedback form for user messages
 - FAQ and support modals
 
+## 👥 Team
+
+| Member | Module | Role |
+|---|---|---|
+| Zahraa | M4 — Database & Admin | Database schema, SQLAlchemy models, admin panel |
+| Malek | M1 — Report Submission | Upload form, GPS extraction, file storage |
+| Gloria | M3 — Map & Visualization | Leaflet map, pins, filters, report detail page |
+| Majd | M2 — AI Detection Engine | YOLOv8 inference, severity scoring, detection API |
+
 ## 🛠️ Tech Stack
 
 | Area | Tools |
@@ -39,56 +48,3 @@ The platform helps turn scattered road complaints into one centralized, visual, 
 ```bash
 git clone https://github.com/Gloria-Hleihel/TechTalks-Tariq.lb.git
 cd TechTalks-Tariq.lb
-2. Create a virtual environment
-python -m venv venv
-Activate it:
-venv\Scripts\activate
-3. Install dependencies
-pip install -r requirements.txt
-4. Add the YOLO model
-Place the model file here:
-models/road_damage.pt
-5. Seed the database
-python scripts/seed.py
-6. Run the application
-python run.py
-Open:
-http://127.0.0.1:5000
-🔐 Admin Panel
-Admin login:
-http://127.0.0.1:5000/admin/login
-Default credentials:
-Username: admin
-Password: changeme
-✅ Testing
-Run:
-python -m pytest tests
-🗄️ Database
-The SQLite database includes:
-reports — submitted road damage reports
-detections — AI detection results linked to reports
-feedback_messages — contact and support messages from users
-🗺️ Map Severity Colors
-Green — Low
-Yellow — Medium
-Orange — High
-Red — Critical
-📖 Documentation
-Database Schema: docs/schema.md
-API Documentation: docs/api.md
-DB Integrity Check: docs/db_integrity_check.md
-🔧 Troubleshooting
-Port 5000 already in use
-flask run --port 3001
-No module named ultralytics
-Activate the virtual environment, then run:
-pip install -r requirements.txt
-Model file not found
-Make sure this file exists:
-models/road_damage.pt
-Map pins do not appear
-Check that reports have valid latitude and longitude values. Completed reports are intentionally hidden from the public live map.
-Map tiles do not load
-Check your internet connection because map tiles are loaded from online providers.
-⚠️ Notes
-This project is designed for local development and university submission. For production deployment, change the default admin credentials, use environment variables, and consider a production database instead of SQLite.
