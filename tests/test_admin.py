@@ -4,7 +4,7 @@ Owner: Zahraa · Week 5
 """
 import pytest
 from app import create_app
-from models import db, Report, Detection
+from models import db, Report, Detection, FeedbackMessage
 
 
 @pytest.fixture
@@ -108,6 +108,27 @@ def test_dashboard_loads_after_login(client):
     assert b'data-section="live"' in response.data
     assert b'data-section="review"' in response.data
     assert b'data-section="done"' in response.data
+
+
+def test_dashboard_shows_site_feedback_messages(client, app):
+    """Dashboard shows messages sent from the public feedback form."""
+    with app.app_context():
+        feedback = FeedbackMessage(
+            name="Citizen User",
+            email="citizen@example.com",
+            message="The report form needs help text.",
+        )
+        db.session.add(feedback)
+        db.session.commit()
+
+    login(client)
+    response = client.get("/admin/dashboard")
+
+    assert response.status_code == 200
+    assert b"Site Messages" in response.data
+    assert b"Citizen User" in response.data
+    assert b"citizen@example.com" in response.data
+    assert b"The report form needs help text." in response.data
 
 
 # --- Status update tests ---

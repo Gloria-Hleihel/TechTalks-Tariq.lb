@@ -299,6 +299,11 @@
       padding: 20px;
     }
 
+    .site-feedback-card {
+      margin-bottom: 20px;
+      padding: 20px;
+    }
+
     .breakdown-card h3,
     .panel-title h3,
     .filters-card label {
@@ -335,6 +340,108 @@
     .breakdown-count {
       color: var(--green);
       font-weight: 950;
+    }
+
+    .site-feedback-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .site-feedback-header h3 {
+      margin: 0;
+      color: var(--dark);
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    .site-feedback-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .feedback-count-pill {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      color: var(--green);
+      border: 1px solid rgba(74, 124, 89, 0.24);
+      border-radius: 999px;
+      background: rgba(74, 124, 89, 0.08);
+      font-size: 0.82rem;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .site-feedback-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .site-feedback-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid rgba(26, 26, 26, 0.08);
+      border-radius: 18px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 248, 248, 0.86));
+    }
+
+    .site-feedback-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .site-feedback-item strong {
+      color: var(--dark);
+      font-weight: 950;
+    }
+
+    .site-feedback-message {
+      margin: 0;
+      color: var(--dark);
+      font-size: 0.95rem;
+      line-height: 1.58;
+    }
+
+    .site-feedback-link,
+    .site-feedback-email {
+      color: var(--green);
+      text-decoration: none;
+      font-weight: 950;
+    }
+
+    .site-feedback-link {
+      align-self: start;
+      padding: 9px 12px;
+      border: 1px solid rgba(74, 124, 89, 0.24);
+      border-radius: 999px;
+      background: #ffffff;
+      white-space: nowrap;
+    }
+
+    .site-feedback-empty {
+      margin: 0;
+      padding: 16px;
+      color: var(--muted);
+      border: 1px dashed rgba(26, 26, 26, 0.16);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.62);
+      font-weight: 800;
     }
 
     .filters-card {
@@ -1119,6 +1226,15 @@
         grid-template-columns: 1fr;
       }
 
+      .site-feedback-header,
+      .site-feedback-item {
+        grid-template-columns: 1fr;
+      }
+
+      .site-feedback-header {
+        display: grid;
+      }
+
       .view-tabs {
         width: 100%;
         display: grid;
@@ -1212,6 +1328,50 @@
         <div class="breakdown-row"><span>Potholes</span><span class="breakdown-count">{{ damage_counts.Potholes }}</span></div>
         <div class="breakdown-row"><span>None</span><span class="breakdown-count">{{ damage_counts['None'] }}</span></div>
       </article>
+    </section>
+
+    <section class="breakdown-card site-feedback-card" aria-label="Site messages">
+      <div class="site-feedback-header">
+        <div>
+          <h3><i class="fa-solid fa-inbox"></i> Site Messages</h3>
+          <p>Messages sent from the Report Problem form on the public homepage.</p>
+        </div>
+        <span class="feedback-count-pill">
+          <i class="fa-solid fa-message"></i>
+          {{ feedback_count }} total
+        </span>
+      </div>
+
+      {% if feedback_messages %}
+        <div class="site-feedback-list">
+          {% for feedback in feedback_messages %}
+            <article class="site-feedback-item">
+              <div>
+                <div class="site-feedback-meta">
+                  <strong>{{ feedback.name }}</strong>
+                  <a class="site-feedback-email" href="mailto:{{ feedback.email }}">{{ feedback.email }}</a>
+                  <span>{{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <p class="site-feedback-message">{{ feedback.message }}</p>
+              </div>
+              {% if feedback.report_id and feedback.report %}
+                <a
+                  class="site-feedback-link"
+                  href="{{ url_for('admin.report_detail', report_id=feedback.report_id) }}"
+                >
+                  Report #{{ feedback.report_id }}
+                </a>
+              {% elif feedback.report_id %}
+                <span class="site-feedback-link">Report #{{ feedback.report_id }} deleted</span>
+              {% else %}
+                <span class="site-feedback-link">General</span>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="site-feedback-empty">No messages yet.</p>
+      {% endif %}
     </section>
 
     <section class="workflow-board" aria-label="Report workflow sections">

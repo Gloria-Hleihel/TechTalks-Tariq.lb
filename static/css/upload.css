@@ -454,6 +454,10 @@
   font-weight: 800;
 }
 
+.field-error:empty {
+  display: none;
+}
+
 .field-help {
   margin: 8px 0 0;
   color: var(--upload-muted);
@@ -899,13 +903,13 @@
   justify-content: flex-end;
 }
 .map-submit-actions {
-  margin: 14px 0 0;
-  padding: 12px;
+  margin: 16px 0 0;
+  padding: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border: 1px solid rgba(26, 26, 26, 0.08);
-  border-radius: 20px;
-  background: rgba(247, 247, 245, 0.82);
+  align-items: center;
+  border: 0;
+  background: transparent;
 }
 
 .map-submit-actions .submit-button,

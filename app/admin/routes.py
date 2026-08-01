@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash
 
 import config
 from app.security import require_csrf, validate_csrf_token
-from models import Detection, Report, db
+from models import Detection, FeedbackMessage, Report, db
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -181,6 +181,13 @@ def dashboard():
         Report.status,
         config.REPORT_STATUSES,
     )
+    feedback_messages = (
+        FeedbackMessage.query.options(selectinload(FeedbackMessage.report))
+        .order_by(FeedbackMessage.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    feedback_count = FeedbackMessage.query.count()
 
     return render_template(
         "admin/dashboard.html",
@@ -192,6 +199,8 @@ def dashboard():
         status_counts=status_counts,
         report_statuses=config.REPORT_STATUSES,
         latest_report=latest_report,
+        feedback_messages=feedback_messages,
+        feedback_count=feedback_count,
     )
 
 
