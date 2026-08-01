@@ -314,8 +314,8 @@
   const markerIcon = L.divIcon({
     className: 'road-marker',
     html: '<span></span>',
-    iconSize: [34, 34],
-    iconAnchor: [17, 17]
+    iconSize: [38, 46],
+    iconAnchor: [19, 41]
   });
 
   function highlightSelectedLocation(lat, lng, boundsData) {

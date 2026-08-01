@@ -611,6 +611,26 @@ def test_single_letter_b_search_shows_common_lebanese_places(client):
     assert "Batroun" in names
     assert "Bater" in names
 
+
+def test_search_collapses_near_duplicate_visible_places(client):
+    """The same visible locality should not appear twice under alternate names."""
+    from app.reports import location as location_module
+
+    reset_location_caches(location_module)
+
+    response = client.get("/api/lebanon-localities/search?q=Bater")
+
+    assert response.status_code == 200
+    display_names = [
+        item["display_name"]
+        for item in response.get_json()["results"]
+    ]
+
+    assert "Bater, Mount Lebanon" in display_names
+    assert "Bater ech Chouf, Mount Lebanon" not in display_names
+    assert len(display_names) == len(set(display_names))
+
+
 def geocoder_place(
     name,
     lat=33.60207,
