@@ -22,14 +22,6 @@ The platform helps turn scattered road complaints into one centralized, visual, 
 - Contact and feedback form for user messages
 - FAQ and support modals
 
-## Team
-
-| Member | Module | Role |
-|---|---|---|
-| Zahraa | M4 — Database & Admin | Database schema, SQLAlchemy models, admin panel |
-| Malek | M1 — Report Submission | Upload form, GPS extraction, file storage |
-| Gloria | M3 — Map & Visualization | Leaflet map, pins, filters, report detail page |
-| Majd | M2 — AI Detection Engine | YOLOv8 inference, severity scoring, detection API |
 
 ## Tech Stack
 
