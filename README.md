@@ -124,29 +124,9 @@ Full schema documentation is available in:
 - API Documentation: `docs/api.md`
 - DB Integrity Check: `docs/db_integrity_check.md`
 
-## Project Structure
-
-```text
-TechTalks-Tariq.lb/
-├── app/
-│   ├── admin/
-│   ├── detection/
-│   ├── reports/
-│   └── utils/
-├── models/
-│   └── road_damage.pt
-├── scripts/
-├── static/
-├── templates/
-├── tests/
-├── docs/
-├── config.py
-├── models.py
-├── requirements.txt
-└── run.py
-
 
 ## Troubleshooting
+
 
 ### Port 5000 already in use
 
@@ -181,3 +161,23 @@ The first detection may be slower because the model needs to load into memory.
 ## Notes
 
 This project is designed for local development and university submission. For production deployment, change the default admin credentials, use environment variables, and consider a production database instead of SQLite.
+
+## Project Structure
+```text
+TechTalks-Tariq.lb/
+├── app/
+│   ├── admin/
+│   ├── detection/
+│   ├── reports/
+│   └── utils/
+├── models/
+│   └── road_damage.pt
+├── scripts/
+├── static/
+├── templates/
+├── tests/
+├── docs/
+├── config.py
+├── models.py
+├── requirements.txt
+└── run.py
