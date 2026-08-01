@@ -471,9 +471,6 @@
       'manual',
       'Selected point in Lebanon',
       {
-        zoom: true,
-        zoomLevel: 18,
-        flyTo: true,
         highlight: true
       }
     );

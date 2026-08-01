@@ -57,14 +57,26 @@ svg {
   top: 12px;
   left: 12px;
   z-index: 80;
-  padding: 10px 14px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   color: var(--white);
   background: var(--dark);
   border-radius: 999px;
-  transform: translateY(-160%);
+  transform: none;
 }
 
-.skip-link:focus {
+.skip-link:focus-visible {
+  width: auto;
+  height: auto;
+  padding: 10px 14px;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
   transform: translateY(0);
 }
 
