@@ -41,7 +41,10 @@ def test_contact_modal_has_email_faq_and_feedback_form(client):
     response = client.get("/")
 
     assert response.status_code == 200
+    assert b"https://www.instagram.com/tariq.leb" in response.data
     assert b"tariqlb.contact@gmail.com" in response.data
+    assert b"LinkedIn" not in response.data
+    assert b"Facebook" not in response.data
     assert b"Quick answers" in response.data
     assert b"Report Problem" in response.data
     assert b"Contact and feedback form" in response.data

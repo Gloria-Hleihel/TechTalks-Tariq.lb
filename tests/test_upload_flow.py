@@ -90,7 +90,10 @@ def test_upload_page_has_shared_nav_modals(client):
     assert b'id="support-modal"' in response.data
     assert b"Report Problem" in response.data
     assert b"Contact and feedback form" in response.data
+    assert b"https://www.instagram.com/tariq.leb" in response.data
     assert b"tariqlb.contact@gmail.com" in response.data
+    assert b"LinkedIn" not in response.data
+    assert b"Facebook" not in response.data
     assert b'name="next" value="/upload"' in response.data
     assert b'aria-haspopup="dialog"' in response.data
     assert b'aria-controls="support-modal"' in response.data
