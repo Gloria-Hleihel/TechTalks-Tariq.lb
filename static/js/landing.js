@@ -76,6 +76,15 @@
     backdrop.addEventListener('click', closeModal);
   }
 
+  if (window.location.hash) {
+    const modalId = window.location.hash.slice(1);
+    const targetModal = document.getElementById(modalId);
+
+    if (targetModal && targetModal.classList.contains('modal')) {
+      window.requestAnimationFrame(() => openModal(modalId));
+    }
+  }
+
   window.addEventListener('scroll', updateHeaderState, { passive: true });
   updateHeaderState();
 
@@ -122,7 +131,7 @@
     '.hero-visual-card, .feature-card, .impact-card, .impact-stat, .modal-info-card, .process-step, .contact-card'
   );
   const pressableItems = document.querySelectorAll(
-    '.primary-cta, .secondary-cta, .learn-link, .nav-button'
+    '.primary-cta, .secondary-cta, .learn-link, .nav-button, .feedback-submit'
   );
   const revealItems = document.querySelectorAll(
     '.hero-copy-block, .hero-visual-card, .feature-card, .impact-card, .impact-stat, .modal-info-card, .process-step, .contact-card'
