@@ -215,7 +215,7 @@ def _save_detection(
         detection = report.detections[0]
     else:
         detection = Detection(
-            report_id=report.id,
+            report=report,
         )
 
     detection.damage_type = result[

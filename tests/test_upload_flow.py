@@ -967,6 +967,48 @@ def test_oversized_pixel_image_is_rejected_without_report(app, client):
         assert Report.query.count() == 0
 
 
+def test_detection_client_does_not_request_api_database_save(
+    app,
+    tmp_path,
+    monkeypatch,
+):
+    image_path = tmp_path / "road.png"
+    image_path.write_bytes(image_bytes().getvalue())
+    captured = {}
+
+    class ExampleReport:
+        id = 42
+
+    class FakeResponse:
+        ok = True
+
+        @staticmethod
+        def json():
+            return {
+                "success": True,
+                "damage_type": "Potholes",
+                "confidence": 0.84,
+                "severity_score": 82,
+                "severity_label": "Critical",
+                "annotated_image_path": "static/uploads/annotated/road.jpg",
+            }
+
+    def fake_post(_url, **kwargs):
+        captured.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "app.utils.detection_client.requests.post",
+        fake_post,
+    )
+
+    with app.app_context():
+        result = trigger_detection(ExampleReport(), str(image_path))
+
+    assert result["status"] == "completed"
+    assert captured["json"] == {"image_path": str(image_path)}
+
+
 def test_detection_client_timeout_returns_pending(
     app,
     tmp_path,

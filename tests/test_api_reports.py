@@ -146,6 +146,57 @@ def test_post_api_reports_accepts_valid_jpg_with_gps(app, client):
     )
 
 
+def test_post_api_reports_returns_single_completed_detection(
+    app,
+    client,
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "app.reports.routes.extract_gps",
+        lambda _path: None,
+    )
+    monkeypatch.setattr(
+        "app.reports.routes.trigger_detection",
+        lambda _report, _path: {
+            "status": "completed",
+            "damage_type": "Alligator Crack",
+            "confidence": 0.8275,
+            "severity_score": 78,
+            "severity_label": "High",
+            "annotated_image_path": "static/uploads/annotated/road.jpg",
+            "user_message": "Report submitted and detection completed.",
+        },
+    )
+
+    response = client.post(
+        "/api/reports",
+        data={
+            "image": (
+                image_bytes(),
+                "road.png",
+            ),
+            "lat": "33.8938",
+            "lng": "35.5018",
+            "location_source": "search",
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 201
+
+    payload = response.get_json()
+    detection = payload["report"]["detection"]
+
+    assert payload["ok"] is True
+    assert payload["report"]["detection_status"] == "completed"
+    assert detection["damage_type"] == "Alligator Crack"
+    assert detection["confidence"] == pytest.approx(0.8275)
+
+    with app.app_context():
+        report = Report.query.one()
+        assert Detection.query.filter_by(report_id=report.id).count() == 1
+
+
 def test_post_api_reports_accepts_valid_jpg_without_gps_using_manual_pin(
     app,
     client,
