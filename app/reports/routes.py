@@ -37,7 +37,7 @@ from app.utils.storage import (
     get_file_size,
     save_image,
 )
-from models import Detection, Report, db
+from models import Detection, FeedbackMessage, Report, db
 
 
 @dataclass
@@ -54,6 +54,8 @@ class SubmissionError(Exception):
 
 
 LEGACY_DAMAGE_TYPES = {"Pothole", "Road Crack", "Surface Wear", "Other"}
+
+MAX_FEEDBACK_MESSAGE_LENGTH = 2_000
 
 
 def _upload_context(**extra_context):
@@ -215,7 +217,7 @@ def _save_detection(
         detection = report.detections[0]
     else:
         detection = Detection(
-            report_id=report.id,
+            report=report,
         )
 
     detection.damage_type = result[
@@ -603,9 +605,122 @@ def _report_api_payload(
     }
 
 
+def _looks_like_email(value: str) -> bool:
+    """Return True for simple, user-friendly email validation."""
+    if (
+        len(value) > 255
+        or "@" not in value
+        or any(character.isspace() for character in value)
+    ):
+        return False
+
+    local_part, domain = value.rsplit("@", 1)
+    return bool(local_part and "." in domain and not domain.endswith("."))
+
+
+def _optional_feedback_report_id(value: str) -> int | None:
+    """Validate the optional report ID attached to a feedback message."""
+    if not value:
+        return None
+
+    try:
+        report_id = int(value)
+    except ValueError as exc:
+        raise SubmissionError(
+            "Report ID must be a number, or you can leave it empty.",
+        ) from exc
+
+    if report_id < 1:
+        raise SubmissionError(
+            "Report ID must be a positive number, or you can leave it empty.",
+        )
+
+    if db.session.get(Report, report_id) is None:
+        raise SubmissionError(
+            "That report ID does not exist. Please check it or leave it empty.",
+        )
+
+    return report_id
+
+
+def _feedback_redirect_target() -> str:
+    """Return a safe local page anchor for feedback form responses."""
+    target = (request.form.get("next") or "").strip()
+    allowed_targets = {
+        url_for("reports.index"),
+        url_for("reports.upload"),
+    }
+
+    if target not in allowed_targets:
+        target = url_for("reports.index")
+
+    return f"{target}#support-modal"
+
+
 @bp.route("/")
 def index():
     return render_template("index.html")
+
+
+@bp.route("/feedback", methods=["POST"])
+@require_csrf
+def submit_feedback():
+    """Store a public contact or feedback message."""
+    name = (request.form.get("name") or "").strip()
+    email = (request.form.get("email") or "").strip()
+    message = (request.form.get("message") or "").strip()
+    report_id_value = (request.form.get("report_id") or "").strip()
+    redirect_target = _feedback_redirect_target()
+
+    try:
+        if not name:
+            raise SubmissionError("Please enter your name.")
+
+        if len(name) > 120:
+            raise SubmissionError("Name must be 120 characters or fewer.")
+
+        if not email or not _looks_like_email(email):
+            raise SubmissionError("Please enter a valid email address.")
+
+        if not message:
+            raise SubmissionError("Please enter your message.")
+
+        if len(message) > MAX_FEEDBACK_MESSAGE_LENGTH:
+            raise SubmissionError(
+                "Message must be 2,000 characters or fewer.",
+            )
+
+        report_id = _optional_feedback_report_id(report_id_value)
+
+    except SubmissionError as exc:
+        flash(exc.message, "error")
+        return redirect(redirect_target)
+
+    feedback = FeedbackMessage(
+        name=name,
+        email=email,
+        message=message,
+        report_id=report_id,
+    )
+
+    try:
+        db.session.add(feedback)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to save feedback message")
+        flash(
+            "Your message could not be sent right now. Please try again.",
+            "error",
+        )
+        return redirect(redirect_target)
+
+    flash(
+        "Thanks. Your message was sent to the Tariq.lb team.",
+        "success",
+    )
+    return redirect(redirect_target)
+
 
 @bp.route(
     "/upload",

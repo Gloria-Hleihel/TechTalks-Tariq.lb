@@ -96,3 +96,41 @@ class Detection(db.Model):
             "severity_label": self.severity_label,
             "annotated_image_path": self.annotated_image_path,
         }
+
+
+class FeedbackMessage(db.Model):
+    """A contact or feedback message submitted from the public website."""
+
+    __tablename__ = "feedback_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    report_id = db.Column(
+        db.Integer,
+        db.ForeignKey("reports.id"),
+        nullable=True,
+        index=True,
+    )
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=utc_now,
+        index=True,
+    )
+
+    report = db.relationship(
+        "Report",
+        backref=db.backref("feedback_messages", lazy="dynamic"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "message": self.message,
+            "report_id": self.report_id,
+            "created_at": self.created_at.isoformat(),
+        }

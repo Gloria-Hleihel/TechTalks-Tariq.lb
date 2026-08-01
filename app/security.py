@@ -78,7 +78,7 @@ def _security_header_policy() -> str:
             "frame-ancestors 'none'",
             "form-action 'self'",
             "object-src 'none'",
-            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org",
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://server.arcgisonline.com",
             "style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com",
             "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com",
             "font-src 'self' data: https://cdnjs.cloudflare.com",

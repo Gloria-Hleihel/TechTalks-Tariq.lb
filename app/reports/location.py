@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import unicodedata
 from functools import lru_cache
@@ -93,6 +94,7 @@ LOCATION_SOURCE_ALIASES = {
 SEARCH_RESULT_LIMIT = 50
 NOMINATIM_RESULT_LIMIT = 50
 SEARCH_MIN_REMOTE_LENGTH = 2
+NEAR_DUPLICATE_DEGREES = 0.003
 
 LOCAL_LEBANESE_LOCALITIES = [
     {"name": "Beirut", "governorate": "Beirut Governorate", "lat": 33.8938, "lng": 35.5018, "type": "city"},
@@ -313,19 +315,9 @@ def _gazetteer_places() -> tuple[dict[str, Any], ...]:
     available, places = _load_gazetteer_payload()
 
     if not available or LOCALITIES_DATA_PATH != DEFAULT_LOCALITIES_DATA_PATH:
-        return places
+        return tuple(_dedupe_results(places))
 
-    merged = []
-    seen = set()
-
-    for place in (*_fallback_localities(), *places):
-        key = _result_key(place)
-        if key in seen:
-            continue
-        seen.add(key)
-        merged.append(place)
-
-    return tuple(merged)
+    return tuple(_dedupe_results((*_fallback_localities(), *places)))
 
 
 def _display_part(raw_place: dict[str, Any], keys: list[str]) -> str | None:
@@ -556,6 +548,156 @@ def _result_key(result: dict[str, Any]) -> tuple[str, str, str, float, float]:
     )
 
 
+def _safe_coordinate(value: Any) -> float | None:
+    try:
+        coordinate = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if not math.isfinite(coordinate):
+        return None
+
+    return coordinate
+
+
+def _result_names(result: dict[str, Any]) -> tuple[str, ...]:
+    values = [
+        result.get("name"),
+        result.get("name_en"),
+        result.get("ascii_name"),
+    ]
+
+    values.extend(result.get("alternate_names") or [])
+
+    normalized_values = []
+    seen = set()
+    for value in values:
+        normalized = _normalize_for_search(value)
+        if not normalized or normalized in seen:
+            continue
+
+        seen.add(normalized)
+        normalized_values.append(normalized)
+
+    return tuple(normalized_values)
+
+
+def _names_look_like_same_place(
+    left: dict[str, Any],
+    right: dict[str, Any],
+) -> bool:
+    left_names = _result_names(left)
+    right_names = _result_names(right)
+
+    for left_name in left_names:
+        for right_name in right_names:
+            if left_name == right_name:
+                return True
+
+            shorter, longer = sorted(
+                (left_name, right_name),
+                key=len,
+            )
+
+            if len(shorter) >= 3 and longer.startswith(f"{shorter} "):
+                return True
+
+    return False
+
+
+def _coordinates_are_near(
+    left: dict[str, Any],
+    right: dict[str, Any],
+) -> bool:
+    left_lat = _safe_coordinate(left.get("lat"))
+    left_lng = _safe_coordinate(left.get("lng"))
+    right_lat = _safe_coordinate(right.get("lat"))
+    right_lng = _safe_coordinate(right.get("lng"))
+
+    if None in (left_lat, left_lng, right_lat, right_lng):
+        return False
+
+    return (
+        abs(left_lat - right_lat) <= NEAR_DUPLICATE_DEGREES
+        and abs(left_lng - right_lng) <= NEAR_DUPLICATE_DEGREES
+    )
+
+
+def _same_visible_result(
+    left: dict[str, Any],
+    right: dict[str, Any],
+) -> bool:
+    left_display = _normalize_for_search(left.get("display_name"))
+    right_display = _normalize_for_search(right.get("display_name"))
+
+    if left_display and left_display == right_display:
+        return True
+
+    if _result_key(left) == _result_key(right):
+        return True
+
+    return _coordinates_are_near(left, right) and _names_look_like_same_place(left, right)
+
+
+def _coordinate_bucket(result: dict[str, Any]) -> tuple[int, int] | None:
+    lat = _safe_coordinate(result.get("lat"))
+    lng = _safe_coordinate(result.get("lng"))
+
+    if lat is None or lng is None:
+        return None
+
+    return (
+        math.floor(lat / NEAR_DUPLICATE_DEGREES),
+        math.floor(lng / NEAR_DUPLICATE_DEGREES),
+    )
+
+
+def _dedupe_results(
+    results: tuple[dict[str, Any], ...] | list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    unique_results = []
+    seen_exact_keys = set()
+    seen_display_names = set()
+    coordinate_buckets: dict[tuple[int, int], list[dict[str, Any]]] = {}
+
+    for result in results:
+        exact_key = _result_key(result)
+        display_name = _normalize_for_search(result.get("display_name"))
+
+        if exact_key in seen_exact_keys:
+            continue
+
+        if display_name and display_name in seen_display_names:
+            continue
+
+        bucket = _coordinate_bucket(result)
+        nearby_results = []
+
+        if bucket is not None:
+            bucket_lat, bucket_lng = bucket
+            for lat_offset in (-1, 0, 1):
+                for lng_offset in (-1, 0, 1):
+                    nearby_results.extend(
+                        coordinate_buckets.get(
+                            (bucket_lat + lat_offset, bucket_lng + lng_offset),
+                            [],
+                        )
+                    )
+
+        if any(_same_visible_result(result, existing) for existing in nearby_results):
+            continue
+
+        seen_exact_keys.add(exact_key)
+        if display_name:
+            seen_display_names.add(display_name)
+        unique_results.append(result)
+
+        if bucket is not None:
+            coordinate_buckets.setdefault(bucket, []).append(result)
+
+    return unique_results
+
+
 @lru_cache(maxsize=512)
 def search_lebanese_localities(query: str) -> tuple[dict[str, Any], ...]:
     normalized_query = " ".join((query or "").split())
@@ -567,39 +709,34 @@ def search_lebanese_localities(query: str) -> tuple[dict[str, Any], ...]:
     local_results = _local_search(normalized_query)
 
     if full_gazetteer_available and local_results:
-        return tuple(local_results[:SEARCH_RESULT_LIMIT])
+        return tuple(_dedupe_results(local_results)[:SEARCH_RESULT_LIMIT])
 
     if len(normalized_query) < SEARCH_MIN_REMOTE_LENGTH:
-        return tuple(local_results[:SEARCH_RESULT_LIMIT])
+        return tuple(_dedupe_results(local_results)[:SEARCH_RESULT_LIMIT])
 
     try:
         raw_results = _nominatim_request(normalized_query)
     except requests.RequestException as exc:
         if local_results or full_gazetteer_available:
-            return tuple(local_results[:SEARCH_RESULT_LIMIT])
+            return tuple(_dedupe_results(local_results)[:SEARCH_RESULT_LIMIT])
         raise GeocoderError("Failed geocoder request.") from exc
 
     results: list[dict[str, Any]] = []
-    seen = set()
 
     for raw_place in raw_results:
         result = normalize_geocoder_result(raw_place)
         if not result:
             continue
 
-        dedupe_key = _result_key(result)
-        if dedupe_key in seen:
+        if any(_same_visible_result(result, existing) for existing in results):
             continue
 
-        seen.add(dedupe_key)
         results.append(result)
 
     for result in local_results:
-        dedupe_key = _result_key(result)
-        if dedupe_key in seen:
+        if any(_same_visible_result(result, existing) for existing in results):
             continue
 
-        seen.add(dedupe_key)
         results.append(result)
 
     return tuple(results[:SEARCH_RESULT_LIMIT])

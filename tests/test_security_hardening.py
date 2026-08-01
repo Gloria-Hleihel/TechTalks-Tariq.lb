@@ -55,6 +55,7 @@ def test_security_headers_are_sent(client):
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+    assert "https://server.arcgisonline.com" in response.headers["Content-Security-Policy"]
     assert "geolocation=(self)" in response.headers["Permissions-Policy"]
 
 

@@ -217,7 +217,6 @@ def trigger_detection(
         response = requests.post(
             api_url,
             json={
-                "report_id": report.id,
                 "image_path": image_path,
             },
             timeout=timeout,

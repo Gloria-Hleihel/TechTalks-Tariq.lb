@@ -1,6 +1,12 @@
+import os
 from pathlib import Path
 
 import cv2
+
+# PyTorch 2.6+ defaults torch.load() to weights_only=True. Ultralytics
+# checkpoints are trusted app assets here, loaded only from MODEL_PATH below.
+os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+
 from ultralytics import YOLO
 
 import config

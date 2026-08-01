@@ -81,6 +81,19 @@ def completed_detection(_report, _path):
     }
 
 
+def test_upload_page_has_shared_nav_modals(client):
+    """The shared navbar modals should work on the report upload page."""
+    response = client.get("/upload")
+
+    assert response.status_code == 200
+    assert b'id="faq-modal"' in response.data
+    assert b'id="support-modal"' in response.data
+    assert b"Report Problem" in response.data
+    assert b"Contact and feedback form" in response.data
+    assert b"tariqlb.contact@gmail.com" in response.data
+    assert b'name="next" value="/upload"' in response.data
+
+
 def test_valid_exif_upload_creates_report_and_redirects(
     app,
     client,
@@ -611,6 +624,26 @@ def test_single_letter_b_search_shows_common_lebanese_places(client):
     assert "Batroun" in names
     assert "Bater" in names
 
+
+def test_search_collapses_near_duplicate_visible_places(client):
+    """The same visible locality should not appear twice under alternate names."""
+    from app.reports import location as location_module
+
+    reset_location_caches(location_module)
+
+    response = client.get("/api/lebanon-localities/search?q=Bater")
+
+    assert response.status_code == 200
+    display_names = [
+        item["display_name"]
+        for item in response.get_json()["results"]
+    ]
+
+    assert "Bater, Mount Lebanon" in display_names
+    assert "Bater ech Chouf, Mount Lebanon" not in display_names
+    assert len(display_names) == len(set(display_names))
+
+
 def geocoder_place(
     name,
     lat=33.60207,
@@ -965,6 +998,48 @@ def test_oversized_pixel_image_is_rejected_without_report(app, client):
 
     with app.app_context():
         assert Report.query.count() == 0
+
+
+def test_detection_client_does_not_request_api_database_save(
+    app,
+    tmp_path,
+    monkeypatch,
+):
+    image_path = tmp_path / "road.png"
+    image_path.write_bytes(image_bytes().getvalue())
+    captured = {}
+
+    class ExampleReport:
+        id = 42
+
+    class FakeResponse:
+        ok = True
+
+        @staticmethod
+        def json():
+            return {
+                "success": True,
+                "damage_type": "Potholes",
+                "confidence": 0.84,
+                "severity_score": 82,
+                "severity_label": "Critical",
+                "annotated_image_path": "static/uploads/annotated/road.jpg",
+            }
+
+    def fake_post(_url, **kwargs):
+        captured.update(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "app.utils.detection_client.requests.post",
+        fake_post,
+    )
+
+    with app.app_context():
+        result = trigger_detection(ExampleReport(), str(image_path))
+
+    assert result["status"] == "completed"
+    assert captured["json"] == {"image_path": str(image_path)}
 
 
 def test_detection_client_timeout_returns_pending(
