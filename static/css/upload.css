@@ -809,30 +809,43 @@
   border: 0 !important;
 }
 
-.leaflet-control-layers {
-  overflow: hidden;
-  border: 1px solid rgba(26, 26, 26, 0.12) !important;
-  border-radius: 16px !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  box-shadow: 0 12px 28px rgba(26, 26, 26, 0.12) !important;
+.map-layer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 28px rgba(26, 26, 26, 0.14);
   backdrop-filter: blur(14px);
 }
 
-.leaflet-control-layers-expanded {
-  padding: 10px 12px;
+.map-layer-toggle button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(26, 26, 26, 0.68);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.leaflet-control-layers label {
-  margin: 4px 0;
-  color: var(--upload-dark);
-  font-size: 0.82rem;
-  font-weight: 850;
+.map-layer-toggle button:hover,
+.map-layer-toggle button:focus-visible {
+  color: var(--upload-red);
+  background: rgba(123, 13, 30, 0.08);
 }
 
-.leaflet-control-layers input {
-  width: auto;
-  min-height: 0;
-  accent-color: var(--upload-green);
+.map-layer-toggle button.active {
+  color: var(--upload-white);
+  background: var(--upload-red);
+  box-shadow: 0 10px 22px rgba(123, 13, 30, 0.20);
 }
 
 .map-context-help {

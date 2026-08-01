@@ -245,25 +245,83 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const satelliteLayer = L.tileLayer(
+  const satelliteImageryLayer = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     {
       maxZoom: 20,
-      attribution: 'Tiles &copy; Esri'
+      attribution: 'Imagery &copy; Esri'
     }
   );
 
-  L.control.layers(
+  const satelliteLabelsLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     {
-      Streets: streetLayer,
-      Satellite: satelliteLayer
-    },
-    null,
-    {
-      collapsed: false,
-      position: 'topright'
+      maxZoom: 20,
+      attribution: 'Labels &copy; Esri'
     }
-  ).addTo(map);
+  );
+
+  const satelliteLayer = L.layerGroup([
+    satelliteImageryLayer,
+    satelliteLabelsLayer
+  ]);
+
+  function addBaseLayerToggle(targetMap, layers) {
+    let activeLayer = 'streets';
+    const layerControl = L.control({ position: 'topright' });
+
+    layerControl.onAdd = () => {
+      const container = L.DomUtil.create('div', 'map-layer-toggle');
+      container.setAttribute('aria-label', 'Map style');
+      container.innerHTML = `
+        <button class="active" type="button" data-layer="streets" aria-pressed="true">Map</button>
+        <button type="button" data-layer="satellite" aria-pressed="false">Satellite</button>
+      `;
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+
+      const buttons = Array.from(container.querySelectorAll('button'));
+
+      function setBaseLayer(layerName) {
+        if (layerName === activeLayer) {
+          return;
+        }
+
+        const nextLayer = layerName === 'satellite' ? layers.satellite : layers.streets;
+        const previousLayer = activeLayer === 'satellite' ? layers.satellite : layers.streets;
+
+        if (targetMap.hasLayer(previousLayer)) {
+          targetMap.removeLayer(previousLayer);
+        }
+
+        if (!targetMap.hasLayer(nextLayer)) {
+          nextLayer.addTo(targetMap);
+        }
+
+        activeLayer = layerName;
+        buttons.forEach((button) => {
+          const isActive = button.dataset.layer === activeLayer;
+          button.classList.toggle('active', isActive);
+          button.setAttribute('aria-pressed', String(isActive));
+        });
+        requestMapSizeSync();
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => setBaseLayer(button.dataset.layer));
+      });
+
+      return container;
+    };
+
+    layerControl.addTo(targetMap);
+  }
+
+  addBaseLayerToggle(map, {
+    streets: streetLayer,
+    satellite: satelliteLayer
+  });
 
   let mapSizeFrame = null;
 
