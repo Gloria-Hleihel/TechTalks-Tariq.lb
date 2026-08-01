@@ -140,7 +140,7 @@
     }
 
     if (copy) {
-      copy.textContent = `Placed at the locality center from ${resultMetaLabel(result)}. Drag the marker to the exact road-damage location before submitting.`;
+      copy.textContent = `Placed at the locality center from ${resultMetaLabel(result)}. Zoomed-in map labels show nearby roads, shops, and landmarks; drag the marker center to the exact damaged road point.`;
     }
   }
 
@@ -240,9 +240,48 @@
   }).setView([defaultLat, defaultLng], defaultZoom);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
+    maxZoom: 20,
+    maxNativeZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
+
+  let mapSizeFrame = null;
+
+  function syncMapSize() {
+    map.invalidateSize({
+      pan: false,
+      debounceMoveend: true
+    });
+  }
+
+  function requestMapSizeSync() {
+    if (mapSizeFrame) {
+      window.cancelAnimationFrame(mapSizeFrame);
+    }
+
+    mapSizeFrame = window.requestAnimationFrame(() => {
+      syncMapSize();
+      mapSizeFrame = null;
+    });
+  }
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const mapResizeObserver = new ResizeObserver(requestMapSizeSync);
+    mapResizeObserver.observe(mapElement);
+
+    const mapWrapper = mapElement.closest('.map-wrap');
+    if (mapWrapper) {
+      mapResizeObserver.observe(mapWrapper);
+    }
+  }
+
+  ['pointerenter', 'pointerdown', 'touchstart', 'focusin'].forEach((eventName) => {
+    mapElement.addEventListener(eventName, requestMapSizeSync, {
+      passive: true
+    });
+  });
+
+  window.addEventListener('resize', requestMapSizeSync);
 
   const boundary = L.polygon(polygon, {
     color: '#4a7c59',
@@ -255,8 +294,8 @@
   const markerIcon = L.divIcon({
     className: 'road-marker',
     html: '<span></span>',
-    iconSize: [34, 34],
-    iconAnchor: [17, 17]
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
   });
 
   function highlightSelectedLocation(lat, lng, boundsData) {
@@ -370,7 +409,7 @@
         latInput.value = position.lat.toFixed(6);
         lngInput.value = position.lng.toFixed(6);
         lastValidLatLng = position;
-        setMessage(locationStatus, 'Marker moved. The selected point is inside Lebanon.', 'success');
+        setMessage(locationStatus, 'Marker moved exactly to that road point. Zoom in for nearby streets, shops, and landmarks.', 'success');
         updateSelectedSearchPlace(null);
         updateSummary();
       });
@@ -411,15 +450,34 @@
       highlightSelectedLocation(numericLat, numericLng, markerOptions.bounds);
     }
 
-    setMessage(locationStatus, 'Location selected inside Lebanon. You can drag the marker to the exact road point.', 'success');
+    setMessage(locationStatus, 'Location selected inside Lebanon. The marker center is the submitted point; zoom in for nearby streets, shops, and landmarks.', 'success');
     updateSummary();
     return true;
   }
 
   map.fitBounds(boundary.getBounds(), { padding: [18, 18] });
+  requestMapSizeSync();
 
   map.on('click', (event) => {
-    const selected = moveMarker(event.latlng.lat, event.latlng.lng, 'manual', 'Selected point in Lebanon');
+    syncMapSize();
+
+    const clickedLatLng = event.originalEvent
+      ? map.mouseEventToLatLng(event.originalEvent)
+      : event.latlng;
+
+    const selected = moveMarker(
+      clickedLatLng.lat,
+      clickedLatLng.lng,
+      'manual',
+      'Selected point in Lebanon',
+      {
+        zoom: true,
+        zoomLevel: 18,
+        flyTo: true,
+        highlight: true
+      }
+    );
+
     if (selected) {
       localitySearch.value = '';
       updateSelectedSearchPlace(null);
@@ -509,6 +567,7 @@
     localityResults.hidden = true;
     localitySearch.setAttribute('aria-expanded', 'false');
     highlightedResultIndex = -1;
+    requestMapSizeSync();
   }
 
   function updateHighlightedResult() {
@@ -544,6 +603,7 @@
     localityResults.appendChild(loading);
     localityResults.hidden = false;
     localitySearch.setAttribute('aria-expanded', 'true');
+    requestMapSizeSync();
   }
 
   function renderSearchResults(results, message) {
@@ -561,6 +621,7 @@
       localityResults.appendChild(empty);
       localityResults.hidden = false;
       localitySearch.setAttribute('aria-expanded', 'true');
+      requestMapSizeSync();
       return;
     }
 
@@ -582,6 +643,7 @@
 
     localityResults.hidden = false;
     localitySearch.setAttribute('aria-expanded', 'true');
+    requestMapSizeSync();
   }
 
   async function runSearch(query) {
@@ -631,7 +693,7 @@
 
     const accepted = moveMarker(result.lat, result.lng, 'search', result.display_name, {
       zoom: true,
-      zoomLevel: 16,
+      zoomLevel: 18,
       flyTo: true,
       fitBounds: true,
       bounds: result.bounding_box,
@@ -647,7 +709,7 @@
     updateSelectedSearchPlace(result);
     setMessage(
       locationStatus,
-      `${result.display_name} selected. The marker was placed at the locality center returned by the geocoder. Drag it to the exact damaged road point before submitting.`,
+      `${result.display_name} selected. The marker was placed at the locality center; zoomed-in OpenStreetMap labels can help you use nearby roads, shops, and landmarks before submitting.`,
       'success'
     );
     hideSearchResults();
@@ -706,7 +768,9 @@
         } else {
           moveMarker(lat, lng, 'browser', 'Browser GPS location', {
             zoom: true,
-            zoomLevel: 16
+            zoomLevel: 18,
+            flyTo: true,
+            highlight: true
           });
           updateSelectedSearchPlace(null);
         }
@@ -772,7 +836,8 @@
   });
 
   window.addEventListener('load', () => {
-    setTimeout(() => map.invalidateSize(), 150);
+    setTimeout(requestMapSizeSync, 150);
+    setTimeout(requestMapSizeSync, 500);
   });
 
   updateSelectedSearchPlace(null);

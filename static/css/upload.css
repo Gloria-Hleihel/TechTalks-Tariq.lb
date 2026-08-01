@@ -676,29 +676,63 @@
   height: min(58vh, 560px);
   min-height: 430px;
   background: var(--upload-bg);
+  cursor: crosshair;
 }
 
 .road-marker {
-  width: 34px !important;
-  height: 34px !important;
+  width: 40px !important;
+  height: 40px !important;
   margin: 0 !important;
+  display: grid;
+  place-items: center;
   border-radius: 999px;
-  background: rgba(123, 13, 30, 0.18);
-  box-shadow: 0 0 0 8px rgba(74, 124, 89, 0.18), 0 14px 28px rgba(26, 26, 26, 0.25);
+  border: 2px solid rgba(123, 13, 30, 0.70);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 0 0 7px rgba(74, 124, 89, 0.18),
+    0 14px 28px rgba(26, 26, 26, 0.24);
+}
+
+.road-marker::before,
+.road-marker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  border-radius: 999px;
+  background: rgba(123, 13, 30, 0.72);
+  pointer-events: none;
+}
+
+.road-marker::before {
+  width: 26px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.road-marker::after {
+  width: 2px;
+  height: 26px;
+  transform: translate(-50%, -50%);
 }
 
 .road-marker span {
-  width: 24px;
-  height: 24px;
+  position: relative;
+  z-index: 2;
+  width: 13px;
+  height: 13px;
   display: block;
-  margin: 5px;
-  border: 7px solid var(--upload-red);
+  margin: 0;
+  border: 3px solid var(--upload-red);
   border-radius: 999px;
   background: var(--upload-white);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.88);
 }
 
 .road-marker.is-location-highlighted {
-  background: rgba(74, 124, 89, 0.24);
+  border-color: var(--upload-green);
+  background: rgba(255, 255, 255, 0.98);
   box-shadow:
     0 0 0 8px rgba(255, 255, 255, 0.95),
     0 0 0 14px rgba(123, 13, 30, 0.34),
@@ -765,6 +799,13 @@
 .leaflet-control-zoom a {
   color: var(--upload-red) !important;
   border: 0 !important;
+}
+
+.map-context-help {
+  margin: 10px 4px 0;
+  color: var(--upload-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
 .location-summary-card {
