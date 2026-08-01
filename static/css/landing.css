@@ -67,7 +67,9 @@ svg {
   color: var(--white);
   background: var(--dark);
   border-radius: 999px;
-  transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-200vw, -200vh);
 }
 
 .skip-link:focus-visible {
@@ -77,6 +79,8 @@ svg {
   overflow: visible;
   clip: auto;
   clip-path: none;
+  opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
