@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Tariq.lb - Road Damage Reporting Platform{% endblock %}
 {% block body_class %}landing-page{% endblock %}
@@ -52,10 +52,20 @@
     </div>
 
     <div class="hero-visual-card" aria-label="Road damage detection preview">
-      <img
-        src="{{ url_for('static', filename='images/landing-road-hero.png') }}"
-        alt="Lebanese mountain road with visible road surface damage"
-      >
+      <picture>
+        <source
+          srcset="{{ url_for('static', filename='images/landing-road-hero.webp') }}"
+          type="image/webp"
+        >
+        <img
+          src="{{ url_for('static', filename='images/landing-road-hero.png') }}"
+          alt="Lebanese mountain road with visible road surface damage"
+          width="1774"
+          height="887"
+          decoding="async"
+          fetchpriority="high"
+        >
+      </picture>
       <div class="hero-visual-overlay" aria-hidden="true"></div>
 
       <article class="floating-card floating-card-detection">
@@ -66,9 +76,9 @@
           </svg>
         </span>
         <div>
-          <p>AI Detection</p>
-          <strong>Pothole detected</strong>
-          <span>Confidence: 81%</span>
+          <p>Photo checked</p>
+          <strong>Road damage found</strong>
+          <span>Ready to report</span>
         </div>
       </article>
 
@@ -106,8 +116,8 @@
           <path d="M17 6h3"></path>
         </svg>
       </span>
-      <h3>AI Detection</h3>
-      <p>YOLOv8 identifies visible potholes, cracks, and severity signals from each submitted image.</p>
+      <h3>Photo Review</h3>
+      <p>Tariq.lb checks each photo and helps identify the road problem clearly.</p>
     </article>
 
     <article class="feature-card">
@@ -119,7 +129,7 @@
         </svg>
       </span>
       <h3>Live Road Map</h3>
-      <p>Every confirmed report appears on an interactive map with status, severity, and location context.</p>
+      <p>Reports appear on a shared map so road problems are easier to find and follow.</p>
     </article>
 
     <article class="feature-card">
@@ -129,28 +139,28 @@
           <path d="m9 12 2 2 4-5"></path>
         </svg>
       </span>
-      <h3>Municipality Review</h3>
-      <p>Admins can review, prioritize, update, and resolve reports from a focused dashboard.</p>
+      <h3>Road Team Review</h3>
+      <p>Reviewers can see new reports, update their progress, and mark issues as fixed.</p>
     </article>
   </div>
 </section>
 
 <section class="impact-section" aria-label="Tariq.lb impact statistics">
   <article class="impact-card">
-    <span>One platform</span>
-    <strong>Citizen reports, AI insight, and map visibility in one workflow.</strong>
+    <span>For safer roads</span>
+    <strong>Report a road problem, choose its location, and help the right people see it faster.</strong>
   </article>
   <article class="impact-stat">
-    <strong>4</strong>
-    <span>damage classes detected</span>
+    <strong>Simple</strong>
+    <span>report potholes and cracks in a few steps</span>
   </article>
   <article class="impact-stat">
-    <strong>640</strong>
-    <span>pixel model image size</span>
+    <strong>Clear</strong>
+    <span>each report shows the problem and place</span>
   </article>
   <article class="impact-stat">
-    <strong>24/7</strong>
-    <span>map access for reviewers</span>
+    <strong>Live</strong>
+    <span>road reports stay visible on the map</span>
   </article>
 </section>
 
@@ -362,3 +372,4 @@
   </div>
 </section>
 {% endblock %}
+

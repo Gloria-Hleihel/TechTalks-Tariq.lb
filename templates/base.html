@@ -6,8 +6,9 @@
   <title>{% block title %}Tariq.lb{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
   {% block head_extra %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reference-theme.css') }}">
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="reference-theme {% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="landing-header" aria-label="Primary navigation">
@@ -67,3 +68,4 @@
   {% block scripts %}{% endblock %}
 </body>
 </html>
+

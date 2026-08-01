@@ -9,7 +9,7 @@
   >
 
   <title>
-    Tariq.lb — Report #{{ report.id }}
+    Tariq.lb - Report #{{ report.id }}
   </title>
 
   <style>
@@ -805,9 +805,10 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reference-theme.css') }}">
 </head>
 
-<body>
+<body class="reference-theme reference-report-detail-page">
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">
@@ -820,7 +821,7 @@
 
         <div class="brand-copy">
           <strong>Tariq.lb</strong>
-          <span>Roads. Solutions. Progress.</span>
+          <span>Better Roads, Together</span>
         </div>
       </div>
 
@@ -871,8 +872,8 @@
           </h1>
 
           <p>
-            The road image and location have been saved.
-            The AI detection result is displayed below.
+            Your road image and location have been saved.
+            You can review the report details below.
           </p>
         </div>
 
@@ -982,7 +983,7 @@
 
         <section class="card">
           <div class="card-header">
-            <div class="card-icon">📷</div>
+            <div class="card-icon">IMG</div>
 
             <div>
               <h2>Original Road Image</h2>
@@ -999,6 +1000,8 @@
                   filename=report.image_path.replace('static/', '')
                 ) }}"
                 alt="Uploaded road image"
+                loading="lazy"
+                decoding="async"
               >
             </div>
 
@@ -1013,7 +1016,7 @@
       <div class="column">
         <section class="card">
           <div class="card-header">
-            <div class="card-icon">◇</div>
+            <div class="card-icon">AI</div>
 
             <div>
               <h2>AI Detection Analysis</h2>
@@ -1056,3 +1059,4 @@
   </main>
 </body>
 </html>
+

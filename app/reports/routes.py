@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 
 from flask import (
+    abort,
     current_app,
     flash,
     jsonify,
@@ -11,7 +12,23 @@ from flask import (
     url_for,
 )
 
+from sqlalchemy import func
+from sqlalchemy.orm import selectinload
+
+import config
 from app.reports import bp
+from app.reports.location import (
+    LEBANON_BOUNDS,
+    LEBANON_POLYGON,
+    GeocoderError,
+    LocationValidationError,
+    is_inside_lebanon,
+    is_valid_coordinate_pair,
+    normalize_location_source,
+    search_lebanese_localities,
+    validate_lebanon_coordinates,
+)
+from app.security import require_csrf
 from app.utils.detection_client import trigger_detection
 from app.utils.exif import GPSExtractionError, extract_gps
 from app.utils.storage import (
@@ -36,17 +53,22 @@ class SubmissionError(Exception):
         return self.message
 
 
-def _manual_coordinates():
-    """Parse and validate manual coordinates."""
-    lat_value = (
-        request.form.get("lat")
-        or ""
-    ).strip()
+LEGACY_DAMAGE_TYPES = {"Pothole", "Road Crack", "Surface Wear", "Other"}
 
-    lng_value = (
-        request.form.get("lng")
-        or ""
-    ).strip()
+
+def _upload_context(**extra_context):
+    context = {
+        "lebanon_bounds": LEBANON_BOUNDS,
+        "lebanon_polygon": LEBANON_POLYGON,
+    }
+    context.update(extra_context)
+    return context
+
+
+def _manual_coordinates():
+    """Parse and validate manual coordinates from the upload form."""
+    lat_value = (request.form.get("lat") or "").strip()
+    lng_value = (request.form.get("lng") or "").strip()
 
     if not lat_value or not lng_value:
         return None
@@ -54,15 +76,12 @@ def _manual_coordinates():
     try:
         lat = float(lat_value)
         lng = float(lng_value)
-    except ValueError:
-        return None
+    except ValueError as exc:
+        raise LocationValidationError(
+            "Please select valid latitude and longitude values."
+        ) from exc
 
-    if not (
-        -90 <= lat <= 90
-        and -180 <= lng <= 180
-    ):
-        return None
-
+    validate_lebanon_coordinates(lat, lng)
     return lat, lng
 
 
@@ -77,24 +96,12 @@ def _absolute_upload_path(
 
 
 def _location_source_from_form() -> str:
-    """Return whether fallback coordinates came from the browser or map."""
-    source = (
-        request.form.get("location_source")
-        or "manual"
-    ).strip().lower()
-
-    if source == "browser":
-        return "browser"
-
-    return "manual"
+    """Return where fallback coordinates came from."""
+    return normalize_location_source(request.form.get("location_source"))
 
 
 def _saved_image_is_allowed(saved_image_path: str) -> bool:
-    """
-    Validate a previously uploaded image path.
-
-    save_image() returns paths such as uploads/abc123.jpg.
-    """
+    """Validate a previously uploaded image path."""
     if not saved_image_path:
         return False
 
@@ -108,15 +115,71 @@ def _saved_image_is_allowed(saved_image_path: str) -> bool:
     if not filename:
         return False
 
-    allowed_extensions = {
-        ".jpg",
-        ".jpeg",
-        ".png",
-    }
-
+    allowed_extensions = {".jpg", ".jpeg", ".png"}
     extension = os.path.splitext(filename)[1].lower()
 
     return extension in allowed_extensions
+
+
+def _render_upload_with_saved_image(saved_rel_path: str):
+    return render_template(
+        "upload.html",
+        **_upload_context(
+            saved_image_path=saved_rel_path,
+            saved_image_name=os.path.basename(saved_rel_path),
+            estimated_wait_seconds=current_app.config.get(
+                "DETECTION_ESTIMATED_WAIT_SECONDS",
+                15,
+            ),
+        ),
+    )
+
+
+def _best_detection(report):
+    if not report.detections:
+        return None
+    return max(report.detections, key=lambda detection: detection.confidence)
+
+
+def _get_report_or_404(report_id: int) -> Report:
+    report = db.session.get(
+        Report,
+        report_id,
+        options=[selectinload(Report.detections)],
+    )
+
+    if report is None:
+        abort(404)
+
+    return report
+
+
+def _optional_float_arg(name: str) -> float | None:
+    value = (request.args.get(name) or "").strip()
+    if not value:
+        return None
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise ValueError(f"Invalid {name} value.") from exc
+
+
+def _public_report_limit() -> int:
+    default_limit = int(current_app.config.get("PUBLIC_REPORT_LIMIT", 1000))
+    raw_limit = (request.args.get("limit") or "").strip()
+
+    if not raw_limit:
+        return default_limit
+
+    try:
+        limit = int(raw_limit)
+    except ValueError as exc:
+        raise ValueError("Invalid limit value.") from exc
+
+    if limit <= 0:
+        raise ValueError("Limit must be greater than zero.")
+
+    return min(limit, default_limit)
 
 
 def _mark_detection_pending(
@@ -372,58 +435,52 @@ def _resolve_location(
     saved_rel_path: str,
     saved_abs_path: str,
 ):
-    """Use GPS first and manual/browser coordinates as fallback."""
-    manual = _manual_coordinates()
+    """Use Lebanon GPS first and valid manual/browser/search coordinates as fallback."""
+    try:
+        manual = _manual_coordinates()
+    except LocationValidationError as exc:
+        raise SubmissionError(
+            f"{exc} Your uploaded image has been kept.",
+            field="location",
+            saved_image_path=saved_rel_path,
+        ) from exc
+
     gps_warning = None
 
     try:
-        gps = extract_gps(
-            saved_abs_path
-        )
-
+        gps = extract_gps(saved_abs_path)
     except GPSExtractionError as exc:
         gps = None
         gps_warning = str(exc)
-
         current_app.logger.warning(
             "GPS extraction failed for %s: %s",
             saved_rel_path,
             exc,
         )
 
-    if gps:
+    if gps and is_inside_lebanon(*gps):
         lat, lng = gps
-
-        return (
-            lat,
-            lng,
-            "gps",
-            gps_warning,
-        )
+        return lat, lng, "gps", gps_warning
 
     if manual:
         lat, lng = manual
+        return lat, lng, _location_source_from_form(), gps_warning
 
-        return (
-            lat,
-            lng,
-            _location_source_from_form(),
-            gps_warning,
-        )
-
-    if gps_warning:
+    if gps:
         message = (
-            f"{gps_warning} "
-            "Select the road location on the map "
-            "and submit again. Your uploaded image "
-            "has been kept."
+            "Image GPS appears outside Lebanon. Select a location inside "
+            "Lebanon on the map and submit again. Your uploaded image has "
+            "been kept."
+        )
+    elif gps_warning:
+        message = (
+            f"{gps_warning} Select the road location on the map and submit "
+            "again. Your uploaded image has been kept."
         )
     else:
         message = (
-            "No GPS location was found. "
-            "Click the map to select the road location, "
-            "then submit again. Your uploaded image "
-            "has been kept."
+            "No GPS location was found. Click the map to select the road "
+            "location, then submit again. Your uploaded image has been kept."
         )
 
     raise SubmissionError(
@@ -557,11 +614,11 @@ def index():
 def upload():
     return render_template(
         "upload.html",
-        estimated_wait_seconds=(
-            current_app.config.get(
+        **_upload_context(
+            estimated_wait_seconds=current_app.config.get(
                 "DETECTION_ESTIMATED_WAIT_SECONDS",
                 15,
-            )
+            ),
         ),
     )
 
@@ -570,6 +627,7 @@ def upload():
     "/upload",
     methods=["POST"],
 )
+@require_csrf
 def create_report():
     """
     Normal HTML fallback when JavaScript is disabled.
@@ -591,19 +649,7 @@ def create_report():
             exc.field == "location"
             and exc.saved_image_path
         ):
-            return render_template(
-                "upload.html",
-                saved_image_path=exc.saved_image_path,
-                saved_image_name=os.path.basename(
-                    exc.saved_image_path
-                ),
-                estimated_wait_seconds=(
-                    current_app.config.get(
-                        "DETECTION_ESTIMATED_WAIT_SECONDS",
-                        15,
-                    )
-                ),
-            )
+            return _render_upload_with_saved_image(exc.saved_image_path)
 
         return redirect(
             url_for("reports.upload")
@@ -642,6 +688,7 @@ def create_report():
     "/api/reports",
     methods=["POST"],
 )
+@require_csrf
 def api_create_report():
     """Create a Report and return a JSON result."""
     try:
@@ -700,21 +747,57 @@ def api_create_report():
     )
 
 
+
+@bp.route("/api/lebanon-localities/search", methods=["GET"])
+def api_search_lebanon_localities():
+    query = (request.args.get("q") or "").strip()
+    max_query_length = int(current_app.config.get("SEARCH_QUERY_MAX_LENGTH", 80))
+
+    if len(query) > max_query_length:
+        return jsonify(
+            {
+                "results": [],
+                "error": f"Search text must be {max_query_length} characters or fewer.",
+            }
+        ), 400
+
+    if len(query) < 1:
+        return jsonify(
+            {
+                "results": [],
+                "message": "Type a Lebanese city or village name.",
+            }
+        )
+
+    try:
+        results = list(search_lebanese_localities(query))
+    except GeocoderError:
+        current_app.logger.exception("Lebanese locality search failed")
+        return jsonify(
+            {
+                "results": [],
+                "error": "Failed geocoder request.",
+            }
+        ), 502
+
+    if not results:
+        return jsonify(
+            {
+                "results": [],
+                "message": "No Lebanese city or village found.",
+            }
+        )
+
+    return jsonify({"results": results})
+
+
 @bp.route(
     "/reports/<int:report_id>",
     methods=["GET"],
 )
 def report_detail(report_id):
-    report = db.get_or_404(
-        Report,
-        report_id,
-    )
-
-    detection = (
-        report.detections[0]
-        if report.detections
-        else None
-    )
+    report = _get_report_or_404(report_id)
+    detection = _best_detection(report)
 
     return render_template(
         "report_detail.html",
@@ -730,37 +813,72 @@ def map_page():
 
 @bp.route("/api/reports", methods=["GET"])
 def api_reports():
-    severity = (
-        request.args.get("severity")
-        or ""
-    ).strip()
+    severity = (request.args.get("severity") or "").strip()
+    damage_type = (request.args.get("damage_type") or "").strip()
+    allowed_damage_types = set(config.DAMAGE_TYPES) | LEGACY_DAMAGE_TYPES
 
-    damage_type = (
-        request.args.get("damage_type")
-        or ""
-    ).strip()
+    if severity and severity not in config.SEVERITY_LEVELS:
+        return jsonify({"error": "Invalid severity filter."}), 400
 
-    query = db.session.query(
-        Report,
-        Detection,
-    ).outerjoin(
-        Detection,
-        Detection.report_id == Report.id,
+    if damage_type and damage_type not in allowed_damage_types:
+        return jsonify({"error": "Invalid damage_type filter."}), 400
+
+    try:
+        limit = _public_report_limit()
+        north = _optional_float_arg("north")
+        south = _optional_float_arg("south")
+        east = _optional_float_arg("east")
+        west = _optional_float_arg("west")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    bounds_values = [north, south, east, west]
+    has_bounds = any(value is not None for value in bounds_values)
+
+    if has_bounds:
+        if any(value is None for value in bounds_values):
+            return jsonify(
+                {"error": "north, south, east, and west must be provided together."}
+            ), 400
+        if south > north or west > east:
+            return jsonify({"error": "Invalid map bounds."}), 400
+        if not (
+            is_valid_coordinate_pair(float(north), float(east))
+            and is_valid_coordinate_pair(float(south), float(west))
+        ):
+            return jsonify({"error": "Invalid map bounds."}), 400
+
+    query = Report.query.options(selectinload(Report.detections)).filter(
+        ~func.lower(Report.status).in_(("resolved", "rejected", "completed", "done"))
     )
 
+    if severity or damage_type:
+        query = query.join(Detection)
+
     if severity:
-        query = query.filter(
-            Detection.severity_label == severity
-        )
+        query = query.filter(Detection.severity_label == severity)
 
     if damage_type:
+        query = query.filter(Detection.damage_type == damage_type)
+
+    if has_bounds:
         query = query.filter(
-            Detection.damage_type == damage_type
+            Report.lat <= north,
+            Report.lat >= south,
+            Report.lng <= east,
+            Report.lng >= west,
         )
 
+    reports = (
+        query.distinct()
+        .order_by(Report.created_at.desc())
+        .limit(limit)
+        .all()
+    )
     results = []
 
-    for report, detection in query.all():
+    for report in reports:
+        detection = _best_detection(report)
         results.append(
             {
                 "id": report.id,
@@ -768,21 +886,10 @@ def api_reports():
                 "lng": report.lng,
                 "status": report.status,
                 "location_source": report.location_source,
-                "damage_type": (
-                    detection.damage_type
-                    if detection
-                    else None
-                ),
-                "severity_label": (
-                    detection.severity_label
-                    if detection
-                    else None
-                ),
-                "date": (
-                    report.created_at.isoformat()
-                    if report.created_at
-                    else None
-                ),
+                "damage_type": detection.damage_type if detection else None,
+                "severity_label": detection.severity_label if detection else None,
+                "date": report.created_at.isoformat() if report.created_at else None,
+                "created_at": report.created_at.isoformat() if report.created_at else None,
             }
         )
 
@@ -794,16 +901,8 @@ def api_reports():
     methods=["GET"],
 )
 def api_report_detail(report_id):
-    report = db.get_or_404(
-        Report,
-        report_id,
-    )
-
-    detection = (
-        report.detections[0]
-        if report.detections
-        else None
-    )
+    report = _get_report_or_404(report_id)
+    detection = _best_detection(report)
 
     return jsonify(
         {
@@ -813,35 +912,15 @@ def api_report_detail(report_id):
             "image_path": report.image_path,
             "location_source": report.location_source,
             "status": report.status,
-            "date": (
-                report.created_at.isoformat()
-                if report.created_at
-                else None
-            ),
-            "damage_type": (
-                detection.damage_type
-                if detection
-                else None
-            ),
-            "confidence": (
-                detection.confidence
-                if detection
-                else None
-            ),
-            "severity_score": (
-                detection.severity_score
-                if detection
-                else None
-            ),
-            "severity_label": (
-                detection.severity_label
-                if detection
-                else None
-            ),
+            "detection_status": report.detection_status,
+            "detection_error": report.detection_error,
+            "date": report.created_at.isoformat() if report.created_at else None,
+            "damage_type": detection.damage_type if detection else None,
+            "confidence": detection.confidence if detection else None,
+            "severity_score": detection.severity_score if detection else None,
+            "severity_label": detection.severity_label if detection else None,
             "annotated_image_path": (
-                detection.annotated_image_path
-                if detection
-                else None
+                detection.annotated_image_path if detection else None
             ),
         }
     )
@@ -853,10 +932,7 @@ def api_report_detail(report_id):
 )
 def retry_detection(report_id):
     """Retry a pending detection."""
-    report = db.get_or_404(
-        Report,
-        report_id,
-    )
+    report = _get_report_or_404(report_id)
 
     if (
         report.detection_status == "completed"
